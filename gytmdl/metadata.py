@@ -254,11 +254,12 @@ MP4_TAGS_MAP = {
 	"release_date": "\xa9day",
 	"title": "\xa9nam",
 
+	# see https://github.com/OxygenCobalt/Auxio/wiki/Supported-Metadata
+	# see https://github.com/metabrainz/picard/blob/master/picard/formats/mp4.py#L115
 	"track_mbid": f"----{ITUNES_PREFIX}MusicBrainz Release Track Id",
 	"album_mbid": f"----{ITUNES_PREFIX}MusicBrainz Release Group Id",
 	"artist_mbid": f"----{ITUNES_PREFIX}MusicBrainz Artist Id",
 	"album_artist_mbid": f"----{ITUNES_PREFIX}MusicBrainz Album Artist Id",
-	
 }
 
 def clean_title(title: str):

@@ -3,6 +3,8 @@ Download YouTube Music songs/albums/playlists with tags from YouTube Music in 25
 
 ## Tagging improvements
 - uses video's `upload_date` for more precise release date when possible
+- tries to resolve MusicBrainz ID's from their api 
+  - `track`, `album`, `artist`, `albumartist` ids, falls back to `artist`, `albumartist` (sometimes artist existst in MusicBrainz DB but song doesen't)
 
 ## Why not just use yt-dlp directly?
 While this project uses yt-dlp under the hood, it has the advantage of utilizing [YouTube Music's API](https://github.com/sigma67/ytmusicapi) to get songs metadata. This includes information such as track number, square cover, lyrics, year, etc.

@@ -200,12 +200,16 @@ def smart_metadata(info):
 	md["album"], others["album"] =                  get_most_likely_tag(md_keys["album"], info, add_values["album"])
 	md["year"], others["year"] =                    get_most_likely_tag(md_keys["year"], info, add_values["year"])
 
+	# TODO rewrite
 	if isinstance(md["year"], str):
 		md["release_year"] = md["year"]
 	else:
 		md["release_year"] = md["year"]["year"]
-		day, month, year = md["year"]
-		md["release_date"] = datetime.datetime(day=int(day), month=int(month), year=int(year)).isoformat() + "Z"
+		md["release_date"] = datetime.datetime(
+			day=int(md["year"]["day"]), 
+			month=int(md["year"]["month"]), 
+			year=int(md["year"]["year"])
+		).isoformat() + "Z"
 
 
 	# remove publisher for now

@@ -14,6 +14,11 @@ While this project uses yt-dlp under the hood, it has the advantage of utilizing
 4. (optional) Set a cookies file
    * By setting a cookies file, you can download age restricted tracks, private playlists and songs in 256kbps AAC if you are a premium user. You can export your cookies to a file by using the following Google Chrome extension on YouTube Music website: https://chrome.google.com/webstore/detail/gdocmgbfkjnnpapoeobnolbbkoibbcif.
 
+## Setup (development)
+1. clone git repo
+2. `pip install -r requirements.txt`
+3. `python -m gytmdl` to run
+
 ## Usage examples
 Download a song:
 ```

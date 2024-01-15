@@ -155,8 +155,9 @@ class Dl:
 		json.dump(ytmusic_album, f, indent=4, ensure_ascii=False)
 		f.close()
 
-		mb = MBSong(title=tags["title"], artist=tags["title"], album=tags["album"])
+		mb = MBSong(title=tags["title"], artist=tags["artist"], album=tags["album"])
 		mb.fetch_song()
+		print(mb.get_mbids())
 
 		return tags
 

@@ -1,7 +1,7 @@
 import datetime
 import json
+import re
 from collections import Counter
-from difflib import SequenceMatcher
 
 import requests
 
@@ -240,8 +240,11 @@ def get_year(track: dict[str, str | int], ytmusic_album: dict[str, str | int]):
 
 	return tags
 
-def similar(a, b):
-    return round(SequenceMatcher(None, a, b).ratio(), 2)
+def clean_title(title: str):
+	return re.sub(r"\(feat\.?.+\)", "", title.strip()).strip()
+
+def check_artist_match(artist: dict[str, str], a_dict: dict[str, str]):
+	return artist == a_dict["name"] or artist.lower() == a_dict["name"].lower() or artist == a_dict["sort-name"] or artist.lower() == a_dict["sort-name"].lower()
 
 class MBSong:
 	"""MusicBrainz song item"""
@@ -253,41 +256,87 @@ class MBSong:
 	):
 		if title is None:
 			raise Exception("title is required")
-		self.title = title
+		self.title = clean_title(title)
 		self.artist = artist
 		self.album = album
 		self.base = "https://musicbrainz.org/ws/2"
 		self.default_params = { "fmt": "json" }
 
+		self.song_dict = None
+		self.artist_dict = None
+
+		self.song_mbid = None
+		self.artist_mbid = None
+		self.album_mbid = None
+
 	def fetch_song(self):
+		"""ping mb api to get song"""
 		params = {
 			"query": f'{self.title} artist:"{self.artist}" release:"{self.album}"',
 			**self.default_params
 		}
 		res = requests.get(f"{self.base}/recording", params=params)
-		print(res.url)
 		if res.status_code >= 200 and res.status_code < 300:
 			resjson = json.loads(res.text)
-			print(resjson)
-			self.pick_song(resjson["recordings"])
+			self.save_song_dict(resjson["recordings"])
 
-	def pick_song(self, tracks: list[dict[str, str]]):
+	def fetch_artist(self):
+		"""ping mb api to get artist"""
+		params = {
+			"query": self.artist,
+			**self.default_params
+		}
+		res = requests.get(f"{self.base}/artist", params=params)
+		if res.status_code >= 200 and res.status_code < 300:
+			resjson = json.loads(res.text)
+			self.save_artist_dict(resjson["artists"])
+
+	def save_song_dict(self, tracks: list[dict[str, str]]):
 		"""find the most similar song"""
-		matches = []
 		for t in tracks:
 			# skip entries with missing album or artist
 			if "artist-credit" not in t or len(t["artist-credit"]) == 0:
 				continue
 			if "releases" not in t or len(t["releases"]) == 0:
 				continue
-			matches.append([{ 
-				"title": similar(t["title"], self.title),
-				"artist": [ similar(self.artist, t["artist-credit"][x]["name"]) for x in range(len(t["artist-credit"])) ],
-				"album": [ similar(self.artist, t["releases"][x]["title"]) for x in range(len(t["releases"])) ]
-			}, t])
-		for m in matches:
-			print(m[0], m[1]["title"], m[1]["artist-credit"][0]["name"], m[1]["releases"][0]["title"])
+			
+			title_matches = t["title"] == self.title
+			artist_match = False
+			album_match = False
+			for a in t["artist-credit"]:
+				if check_artist_match(self.artist, a["artist"]):
+					self.artist_mbid = a["artist"]["id"]
+					self.artist_dict = a["artist"]
+					artist_match = True
+					break
+			for a in t["releases"]:
+				if a["title"] == self.album:
+					self.album_mbid = a["id"]
+					album_match = True
+					break
+			if title_matches and artist_match and album_match:
+				self.song_mbid = t["id"]
+				self.song_dict = t
+				break
 
-	# TODO implement artist-only id lookup for songs that are not in MusicBrainzDB yet
+		if self.song_dict is None:
+			self.fetch_artist()
+
+	def save_artist_dict(self, artists: list[dict[str, str]]):
+		"""find most similar artist"""
+		for a in artists:
+			if check_artist_match(self.artist, a):
+				self.artist_dict = a
+				self.artist_mbid = a["id"]
+				break
+
+	def get_mbids(self):
+		return {
+			"song": self.song_mbid,
+			"album": self.album_mbid,
+			"artist": self.artist_mbid
+		}
+
+	
 
 	

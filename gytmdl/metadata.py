@@ -240,6 +240,27 @@ def get_year(track: dict[str, str | int], ytmusic_album: dict[str, str | int]):
 
 	return tags
 
+# ----------- new stuff ---------------
+
+ITUNES_PREFIX = ":com.apple.iTunes:"
+MP4_TAGS_MAP = {
+	"album": "\xa9alb",
+	"album_artist": "aART",
+	"artist": "\xa9ART",
+	"comment": "\xa9cmt",
+	"lyrics": "\xa9lyr",
+	"media_type": "stik",
+	"rating": "rtng",
+	"release_date": "\xa9day",
+	"title": "\xa9nam",
+
+	"track_mbid": f"----{ITUNES_PREFIX}MusicBrainz Release Track Id",
+	"album_mbid": f"----{ITUNES_PREFIX}MusicBrainz Release Group Id",
+	"artist_mbid": f"----{ITUNES_PREFIX}MusicBrainz Artist Id",
+	"album_artist_mbid": f"----{ITUNES_PREFIX}MusicBrainz Album Artist Id",
+	
+}
+
 def clean_title(title: str):
 	return re.sub(r"\(feat\.?.+\)", "", title.strip()).strip()
 
@@ -330,11 +351,12 @@ class MBSong:
 				self.artist_mbid = a["id"]
 				break
 
-	def get_mbids(self):
+	def get_mbid_tags(self):
 		return {
-			"song": self.song_mbid,
-			"album": self.album_mbid,
-			"artist": self.artist_mbid
+			"track_mbid": self.song_mbid,
+			"album_mbid": self.album_mbid,
+			"artist_mbid": self.artist_mbid,
+			"album_artist_mbid": self.artist_mbid
 		}
 
 	

@@ -10,19 +10,7 @@ from mutagen.mp4 import MP4, MP4Cover
 from yt_dlp import YoutubeDL
 from ytmusicapi import YTMusic
 
-from .metadata import MBSong, get_year
-
-MP4_TAGS_MAP = {
-	"album": "\xa9alb",
-	"album_artist": "aART",
-	"artist": "\xa9ART",
-	"comment": "\xa9cmt",
-	"lyrics": "\xa9lyr",
-	"media_type": "stik",
-	"rating": "rtng",
-	"release_date": "\xa9day",
-	"title": "\xa9nam",
-}
+from .metadata import MP4_TAGS_MAP, MBSong, clean_title, get_year
 
 ITAG_AAC_128 = "140"
 ITAG_AAC_256 = "141"
@@ -128,7 +116,7 @@ class Dl:
 			"cover_url": f'{ytmusic_watch_playlist["tracks"][0]["thumbnail"][0]["url"].split("=")[0]}'
 			+ f'=w{self.cover_size}-l{self.cover_quality}-{"rj" if self.cover_format == "jpg" else "rp"}',
 			"media_type": 1,
-			"title": ytmusic_watch_playlist["tracks"][0]["title"],
+			"title": clean_title(ytmusic_watch_playlist["tracks"][0]["title"]),
 			"track_total": ytmusic_album["trackCount"],
 		}
 		
@@ -157,7 +145,9 @@ class Dl:
 
 		mb = MBSong(title=tags["title"], artist=tags["artist"], album=tags["album"])
 		mb.fetch_song()
-		print(mb.get_mbids())
+		for key, tag in mb.get_mbid_tags().items():
+			if tag is not None:
+				tags[key] = tag.encode("utf-8")
 
 		return tags
 
@@ -204,7 +194,11 @@ class Dl:
 		subprocess.run([*fixup, "-movflags", "+faststart", "-c", "copy", fixed_location], check=True)
 
 	def apply_tags(self, fixed_location, tags):
-		mp4_tags = {v: [tags[k]] for k, v in MP4_TAGS_MAP.items() if k not in self.exclude_tags and tags.get(k) is not None}
+		mp4_tags = {}
+		for k, v in MP4_TAGS_MAP.items():
+			if k not in self.exclude_tags and tags.get(k) is not None:
+				mp4_tags[v] = [tags[k]]
+		
 		if not {"track", "track_total"} & set(self.exclude_tags):
 			mp4_tags["trkn"] = [[0, 0]]
 		if "cover" not in self.exclude_tags:
@@ -215,6 +209,8 @@ class Dl:
 			mp4_tags["trkn"][0][0] = tags["track"]
 		if "track_total" not in self.exclude_tags:
 			mp4_tags["trkn"][0][1] = tags["track_total"]
+
+		# print(json.dumps(mp4_tags))
 		mp4 = MP4(fixed_location)
 		mp4.clear()
 		mp4.update(mp4_tags)

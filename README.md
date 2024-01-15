@@ -1,5 +1,8 @@
-# Glomatico's YouTube Music Downloader
+# Glomatico's YouTube Music Downloader (server-ified)
 Download YouTube Music songs/albums/playlists with tags from YouTube Music in 256kbps AAC/128kbps Opus/128kbps AAC.
+
+## Tagging improvements
+- uses video's `upload_date` for more precise release date when possible
 
 ## Why not just use yt-dlp directly?
 While this project uses yt-dlp under the hood, it has the advantage of utilizing [YouTube Music's API](https://github.com/sigma67/ytmusicapi) to get songs metadata. This includes information such as track number, square cover, lyrics, year, etc.
@@ -55,9 +58,9 @@ gytmdl can be configured using the command line arguments or the config file. Th
 
 ### Itags
 The following itags are available:
-- `141` (256kbps AAC)
-- `140` (128kbps AAC)
-- `251` (128kbps Opus)
+- `140` (128kbps AAC) - default, because it's the result of `bestaudio/best` on a free account
+- `141` (256kbps AAC) - use if you have premium alongside `--cookies location`
+- `251` (128kbps Opus) - most stuff will error with `Failed to check URL 1/1`. Better to use `140`
 
 ### Cover formats
 Can be either `jpg` or `png`.

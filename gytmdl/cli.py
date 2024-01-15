@@ -93,6 +93,8 @@ def cli(
 				_urls.extend(f.read().splitlines())
 		urls = tuple(_urls)
 	logger.debug("Starting downloader")
+
+	dump_json = True
 	dl = Dl(**locals())
 	download_queue = []
 	for i, url in enumerate(urls):
@@ -101,6 +103,7 @@ def cli(
 			download_queue.append(dl.get_download_queue(url))
 		except Exception:
 			logger.error(f"Failed to check URL {i + 1}/{len(urls)}", exc_info=print_exceptions)
+			# logging.exception("")
 	error_count = 0
 	for i, url in enumerate(download_queue):
 		for j, track in enumerate(url):
@@ -113,7 +116,7 @@ def cli(
 					track["id"] = dl.search_track(track["title"])
 					logger.debug(f'Video ID changed to "{track["id"]}"')
 					ytmusic_watch_playlist = dl.get_ytmusic_watch_playlist(track["id"])
-				tags = dl.get_tags(ytmusic_watch_playlist)
+				tags = dl.get_tags(ytmusic_watch_playlist, track)
 				final_location = dl.get_final_location(tags)
 				logger.debug(f'Final location is "{final_location}"')
 				if not final_location.exists() or overwrite:
@@ -142,6 +145,7 @@ def cli(
 					f'Failed to download "{track["title"]}" (track {j + 1}/{len(url)} from URL ' + f"{i + 1}/{len(download_queue)})",
 					exc_info=print_exceptions,
 				)
+				logging.exception("")
 			finally:
 				if temp_path.exists():
 					logger.debug(f'Cleaning up "{temp_path}"')

@@ -1,5 +1,5 @@
-import datetime
 import functools
+import json
 import re
 import shutil
 import subprocess
@@ -9,6 +9,8 @@ import requests
 from mutagen.mp4 import MP4, MP4Cover
 from yt_dlp import YoutubeDL
 from ytmusicapi import YTMusic
+
+from .metadata import MBSong, get_year
 
 MP4_TAGS_MAP = {
 	"album": "\xa9alb",
@@ -22,6 +24,9 @@ MP4_TAGS_MAP = {
 	"title": "\xa9nam",
 }
 
+ITAG_AAC_128 = "140"
+ITAG_AAC_256 = "141"
+ITAG_OPUS_128 = "251"
 
 class Dl:
 	def __init__(
@@ -38,8 +43,10 @@ class Dl:
 		template_file: str = None,
 		exclude_tags: str = None,
 		truncate: int = None,
+		dump_json: bool = False,
 		**kwargs,
 	):
+
 		self.ytmusic = YTMusic()
 		self.final_path = final_path
 		self.temp_path = temp_path
@@ -53,6 +60,7 @@ class Dl:
 		self.template_file = template_file
 		self.exclude_tags = [i.lower() for i in exclude_tags.split(",")] if exclude_tags is not None else []
 		self.truncate = None if truncate is not None and truncate < 4 else truncate
+		self.dump_json = dump_json
 
 	@functools.lru_cache()
 	def get_ydl_extract_info(self, url):
@@ -66,6 +74,15 @@ class Dl:
 		url = url.split("&")[0]
 		download_queue = []
 		ydl_extract_info = self.get_ydl_extract_info(url)
+		
+		if self.dump_json:
+			# audio_formats = [ x for x in ydl_extract_info["formats"] if "acodec" in x and x["acodec"] != "none" ]
+			# audio_formats = sorted(audio_formats, key = lambda x: x["quality"], reverse=True)
+
+			f = open("info.json", "w", encoding="utf8")
+			json.dump(ydl_extract_info, f, indent=4, ensure_ascii=False)
+			f.close()
+
 		if "youtube" not in ydl_extract_info["webpage_url"]:
 			raise Exception("Not a YouTube URL")
 		if "MPREb_" in ydl_extract_info["webpage_url_basename"]:
@@ -100,7 +117,7 @@ class Dl:
 	def get_cover(self, url):
 		return requests.get(url).content
 
-	def get_tags(self, ytmusic_watch_playlist):
+	def get_tags(self, ytmusic_watch_playlist, track: dict[str, str | int]):
 		video_id = ytmusic_watch_playlist["tracks"][0]["videoId"]
 		ytmusic_album = self.ytmusic.get_album(ytmusic_watch_playlist["tracks"][0]["album"]["id"])
 		tags = {
@@ -114,6 +131,7 @@ class Dl:
 			"title": ytmusic_watch_playlist["tracks"][0]["title"],
 			"track_total": ytmusic_album["trackCount"],
 		}
+		
 		for i, video in enumerate(self.get_ydl_extract_info(f'https://www.youtube.com/playlist?list={ytmusic_album["audioPlaylistId"]}')["entries"]):
 			if video["id"] == video_id:
 				try:
@@ -130,9 +148,16 @@ class Dl:
 			lyrics = self.ytmusic.get_lyrics(ytmusic_watch_playlist["lyrics"])["lyrics"]
 			if lyrics is not None:
 				tags["lyrics"] = lyrics
-		if ytmusic_album.get("year"):
-			tags["release_date"] = datetime.datetime.strptime(ytmusic_album["year"], "%Y").isoformat() + "Z"
-			tags["release_year"] = ytmusic_album["year"]
+
+		tags = {**tags, **get_year(track, ytmusic_album)}
+	
+		f = open("playlist.json", "w", encoding="utf8")
+		json.dump(ytmusic_album, f, indent=4, ensure_ascii=False)
+		f.close()
+
+		mb = MBSong(title=tags["title"], artist=tags["title"], album=tags["album"])
+		mb.fetch_song()
+
 		return tags
 
 	def get_sanizated_string(self, dirty_string, is_folder):
@@ -173,7 +198,7 @@ class Dl:
 
 	def fixup(self, temp_location, fixed_location):
 		fixup = [self.ffmpeg_location, "-loglevel", "error", "-i", temp_location]
-		if self.itag == "251":
+		if self.itag == ITAG_OPUS_128:
 			fixup.extend(["-f", "mp4"])
 		subprocess.run([*fixup, "-movflags", "+faststart", "-c", "copy", fixed_location], check=True)
 

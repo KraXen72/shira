@@ -10,7 +10,7 @@ from mutagen.mp4 import MP4, MP4Cover
 from yt_dlp import YoutubeDL
 from ytmusicapi import YTMusic
 
-from .metadata import MP4_TAGS_MAP, MBSong, clean_title, get_year
+from .metadata import MP4_TAGS_MAP, clean_title, get_year
 
 ITAG_AAC_128 = "140"
 ITAG_AAC_256 = "141"
@@ -139,16 +139,6 @@ class Dl:
 
 		tags = {**tags, **get_year(track, ytmusic_album)}
 	
-		f = open("playlist.json", "w", encoding="utf8")
-		json.dump(ytmusic_album, f, indent=4, ensure_ascii=False)
-		f.close()
-
-		mb = MBSong(title=tags["title"], artist=tags["artist"], album=tags["album"])
-		mb.fetch_song()
-		for key, tag in mb.get_mbid_tags().items():
-			if tag is not None:
-				tags[key] = tag.encode("utf-8")
-
 		return tags
 
 	def get_sanizated_string(self, dirty_string, is_folder):

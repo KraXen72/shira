@@ -7,6 +7,7 @@ import click
 
 from . import __version__
 from .dl import Dl
+from .metadata import get_mbids_for_song, smart_metadata
 
 EXCLUDED_PARAMS = ("urls", "config_location", "url_txt", "no_config_file", "version", "help")
 
@@ -111,12 +112,22 @@ def cli(
 			try:
 				logger.debug("Getting tags")
 				ytmusic_watch_playlist = dl.get_ytmusic_watch_playlist(track["id"])
+				tags = None
 				if ytmusic_watch_playlist is None:
-					logger.warning("Track is a video, using song equivalent")
-					track["id"] = dl.search_track(track["title"])
-					logger.debug(f'Video ID changed to "{track["id"]}"')
-					ytmusic_watch_playlist = dl.get_ytmusic_watch_playlist(track["id"])
-				tags = dl.get_tags(ytmusic_watch_playlist, track)
+					# logger.warning("Track is a video, using fallback tagging system 'Tiger'")
+					tag_track = track
+					if "webpage_url_domain" not in track:
+						tag_track = dl.get_ydl_extract_info(track["url"])
+					tags = smart_metadata(tag_track)
+					# TODO improve track total
+					tags["track"] = 1
+					tags["track_total"] = 1
+					# TODO ensure square cover
+					tags["cover_url"] = tag_track["thumbnail"]
+				else:
+					tags = dl.get_tags(ytmusic_watch_playlist, track)
+				# print("title", tags["title"], "album", tags["album"], track["url"])
+				tags = get_mbids_for_song(tags)
 				final_location = dl.get_final_location(tags)
 				logger.debug(f'Final location is "{final_location}"')
 				if not final_location.exists() or overwrite:

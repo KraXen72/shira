@@ -3,6 +3,7 @@ Download YouTube Music songs/albums/playlists with tags from YouTube Music in 25
 
 ## Tagging improvements
 - uses video's `upload_date` for more precise release date when possible
+- uses my custom smart-metadata system from [tiger](https://github/KraXen72/tiger) for non-music videos
 - tries to resolve MusicBrainz ID's from their api 
   - `track`, `album`, `artist`, `albumartist` ids, falls back to `artist`, `albumartist` (sometimes artist existst in MusicBrainz DB but song doesen't)
 

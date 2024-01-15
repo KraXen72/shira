@@ -11,17 +11,6 @@ import requests
 
 # based on the original https://github.com/KraXen72/tiger
 
-
-# TODO extract genre? soundccloud has it.
-md_template = {
-	"title": [],
-	"artist": [],
-	"album_artist": [],
-	"album": [],
-	"year": [],
-	"publisher": []
-}
-
 def parse_date(datestring):
 	"""
 	parses one of 3 date formats: 2020-07-01, 2020 and 20200630.
@@ -36,11 +25,11 @@ def parse_date(datestring):
 		elif len(datestring) == 8: # 20200630
 			return { "year": datestring[0:4], "month": datestring[4:6], "day": datestring[6:8] }
 
-def dash_split(string, object):
+def dash_split(string, obj):
 	split_title = string.split(" - ")
-	object["artist"].append(split_title[0])
-	object["title"].append(split_title[1])
-	return object
+	obj["artist"].append(split_title[0])
+	obj["title"].append(split_title[1])
+	return obj
 
 def get_most_likely_tag(list_of_keys, obj, additional_values = []):
 	"""
@@ -95,7 +84,7 @@ def get_most_likely_tag(list_of_keys, obj, additional_values = []):
 
 # site extractors
 def youtube_extractor(info):
-	add_values = md_template.copy()
+	add_values = { "title": [], "artist": [], "album_artist": [], "album": [], "year": [], }
 
 	# video title is: Artist - Title format
 	if info["title"].count(" - ") == 1:
@@ -120,7 +109,7 @@ def youtube_extractor(info):
 					add_values["title"].append(l1split[0])
 
 				add_values["album"].append(lines[2])
-				add_values["publisher"].append(lines[3].replace("℗ ", "").replace("℗", ""))
+				# add_values["publisher"].append(lines[3].replace("℗ ", "").replace("℗", ""))
 
 				if lines[4].startswith("Released on: "):
 					raw_date = lines[4][13:]
@@ -128,15 +117,16 @@ def youtube_extractor(info):
 					add_values["year"].append(date)
 
 	# fallback: upload date => year, only if there is no date yet
-	if ("upload_date" in info) and len(add_values["publisher"]) == 0:
+	# if ("upload_date" in info) and len(add_values["publisher"]) == 0:
+	if ("upload_date" in info):
 		add_values["year"].append(parse_date(info["upload_date"]))
 
 	return add_values
 
 def soundcloud_extractor(info):
-	add_values = md_template.copy()
+	add_values = { "title": [], "artist": [], "album_artist": [], "album": [], "year": [], }
 
-	add_values["publisher"] = f"{info['uploader']} via SoundCloud."
+	# add_values["publisher"] = f"{info['uploader']} via SoundCloud."
 	# TODO finish soundcloud extractor
 	return add_values
 
@@ -157,11 +147,17 @@ def smart_metadata(info):
 	# publisher (record label)
 
 	md = {}
-	md_keys = md_template.copy() # keys to check from the 'info object'. site specific.
-	add_values = md_template.copy()
-	others = md_template.copy()
+	md_keys = { "title": [], "artist": [], "album_artist": [], "album": [], "year": [], } # keys to check from the 'info object'. site specific.
+	add_values = { "title": [], "artist": [], "album_artist": [], "album": [], "year": [], }
+	others = { "title": [], "artist": [], "album_artist": [], "album": [], "year": [], }
 
+	# f = open("playlist.json", "w", encoding="utf8")
+	# json.dump(info, f, indent=4, ensure_ascii=False)
+	# f.close()
+	# print("webpage_url_domain" in info, info.get("webpage_url_domain"), info.keys())
 	domain = info["webpage_url_domain"]
+	
+
 	# TODO extract this
 	match domain:
 		case "soundcloud.com":
@@ -171,7 +167,7 @@ def smart_metadata(info):
 				"album_artist": ["uploader"],
 				"album": [], # soundcloud doesen't expose album metadata?
 				"year": ["upload_date"],
-				"publisher": []
+				# "publisher": []
 			}
 			add_values = soundcloud_extractor(info)
 		case _:
@@ -183,7 +179,7 @@ def smart_metadata(info):
 				"album_artist": [],
 				"album": ["album"],
 				"year": ["release_date", "release_year"],
-				"publisher": []
+				# "publisher": []
 			}
 			add_values = youtube_extractor(info)
 
@@ -195,6 +191,8 @@ def smart_metadata(info):
 	md["artist"], others["artist"] =                get_most_likely_tag(md_keys["artist"], info, add_values["artist"])
 	md["album_artist"], others["album_artist"] =    get_most_likely_tag(md_keys["album_artist"], info, [md["artist"]] + add_values["album_artist"])
 
+	md["title"] = clean_title(md["title"])
+
 	# fallback: title (Single) => album, only if there is no album yet
 	if ("album" not in info) and len(add_values["album"]) == 0:
 		add_values["album"].append(f"{md['title']} (Single)")
@@ -202,17 +200,19 @@ def smart_metadata(info):
 	md["album"], others["album"] =                  get_most_likely_tag(md_keys["album"], info, add_values["album"])
 	md["year"], others["year"] =                    get_most_likely_tag(md_keys["year"], info, add_values["year"])
 
-	if type(md["year"]) is str:
+	if isinstance(md["year"], str):
 		md["year"] = { "year": md["year"] }
 
-	if len(add_values["publisher"]) == 0: # published from album_artist, only if there is no publisher yet
-		add_values["publisher"].append(md["album_artist"])
+	# remove publisher for now
+	# if len(add_values["publisher"]) == 0: # published from album_artist, only if there is no publisher yet
+	# 	add_values["publisher"].append(md["album_artist"])
 
-	md["publisher"], others["publisher"] =          get_most_likely_tag(md_keys["publisher"], info, add_values["publisher"])
+	# md["publisher"], others["publisher"] =          get_most_likely_tag(md_keys["publisher"], info, add_values["publisher"])
 
 	# fix ups
-	if md["publisher"] == f"{md['year']['year']} {md['artist']}":
-		md["publisher"] = md["artist"]
+	# if md["publisher"] == f"{md['year']['year']} {md['artist']}":
+	# 	md["publisher"] = md["artist"]
+	
 
 	# print(others)
 	return md
@@ -242,7 +242,6 @@ def get_year(track: dict[str, str | int], ytmusic_album: dict[str, str | int]):
 
 # ----------- new stuff ---------------
 
-ITUNES_PREFIX = ":com.apple.iTunes:"
 MP4_TAGS_MAP = {
 	"album": "\xa9alb",
 	"album_artist": "aART",
@@ -256,14 +255,15 @@ MP4_TAGS_MAP = {
 
 	# see https://github.com/OxygenCobalt/Auxio/wiki/Supported-Metadata
 	# see https://github.com/metabrainz/picard/blob/master/picard/formats/mp4.py#L115
-	"track_mbid": f"----{ITUNES_PREFIX}MusicBrainz Release Track Id",
-	"album_mbid": f"----{ITUNES_PREFIX}MusicBrainz Release Group Id",
-	"artist_mbid": f"----{ITUNES_PREFIX}MusicBrainz Artist Id",
-	"album_artist_mbid": f"----{ITUNES_PREFIX}MusicBrainz Album Artist Id",
+	"track_mbid": "----:com.apple.iTunes:MusicBrainz Release Track Id",
+	"album_mbid": "----:com.apple.iTunes:MusicBrainz Release Group Id",
+	"artist_mbid": "----:com.apple.iTunes:MusicBrainz Artist Id",
+	"album_artist_mbid": "----:com.apple.iTunes:MusicBrainz Album Artist Id",
 }
 
 def clean_title(title: str):
-	return re.sub(r"\(feat\.?.+\)", "", title.strip()).strip()
+	"""horrible regex"""
+	return re.sub(r"(?:\[|\(|【)(?:feat\.?.+|[\w\s]+)(?:\)|\]|】)", "", title.strip()).replace("_", "-").strip()
 
 def check_artist_match(artist: dict[str, str], a_dict: dict[str, str]):
 	return artist == a_dict["name"] or artist.lower() == a_dict["name"].lower() or artist == a_dict["sort-name"] or artist.lower() == a_dict["sort-name"].lower()
@@ -353,6 +353,7 @@ class MBSong:
 				break
 
 	def get_mbid_tags(self):
+		"""get mbid tags with proper keys"""
 		return {
 			"track_mbid": self.song_mbid,
 			"album_mbid": self.album_mbid,
@@ -360,6 +361,14 @@ class MBSong:
 			"album_artist_mbid": self.artist_mbid
 		}
 
-	
+def get_mbids_for_song(tags: dict[str, str]):
+	"""takes in a tags dict, adds mbid tags to it, returns it"""
+	mb = MBSong(title=tags["title"], artist=tags["artist"], album=tags["album"])
+	mb.fetch_song()
+	for key, tag in mb.get_mbid_tags().items():
+		if tag is not None:
+			tags[key] = tag.encode("utf-8")
+
+	return tags
 
 	

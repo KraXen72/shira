@@ -201,7 +201,12 @@ def smart_metadata(info):
 	md["year"], others["year"] =                    get_most_likely_tag(md_keys["year"], info, add_values["year"])
 
 	if isinstance(md["year"], str):
-		md["year"] = { "year": md["year"] }
+		md["release_year"] = md["year"]
+	else:
+		md["release_year"] = md["year"]["year"]
+		day, month, year = md["year"]
+		md["release_date"] = datetime.datetime(day=int(day), month=int(month), year=int(year)).isoformat() + "Z"
+
 
 	# remove publisher for now
 	# if len(add_values["publisher"]) == 0: # published from album_artist, only if there is no publisher yet

@@ -1,4 +1,4 @@
-# Glomatico's YouTube Music Downloader (server-ified)
+# Glomatico's YouTube Music Downloader (serverified, WIP)
 Download YouTube Music songs/albums/playlists with tags from YouTube Music in 256kbps AAC/128kbps Opus/128kbps AAC.
 
 ## Tagging improvements

@@ -8,6 +8,7 @@ import click
 from . import __version__
 from .dl import Dl
 from .metadata import get_mbids_for_song, smart_metadata
+from .tagging import tagger_mp4
 
 EXCLUDED_PARAMS = ("urls", "config_location", "url_txt", "no_config_file", "version", "help")
 
@@ -27,8 +28,8 @@ def no_config_callback(ctx: click.Context, param: click.Parameter, no_config_fil
 	with open(ctx.params["config_location"], "r") as f:
 		config_file = dict(json.load(f))
 	for param in ctx.command.params:
-		if config_file.get(param.name) is not None and ctx.get_parameter_source(param.name) != click.core.ParameterSource.COMMANDLINE:
-			ctx.params[param.name] = param.type_cast_value(ctx, config_file[param.name])
+		if config_file.get(param.name) is not None and ctx.get_parameter_source(param.name) != click.core.ParameterSource.COMMANDLINE: # type: ignore
+			ctx.params[param.name] = param.type_cast_value(ctx, config_file[param.name]) # type: ignore
 	return ctx
 
 
@@ -56,7 +57,7 @@ def no_config_callback(ctx: click.Context, param: click.Parameter, no_config_fil
 @click.version_option(__version__)
 @click.help_option("-h", "--help")
 def cli(
-	urls: tuple[str],
+	urls: tuple[str, ...],
 	final_path: Path,
 	temp_path: Path,
 	cookies_location: Path,
@@ -119,11 +120,6 @@ def cli(
 					if "webpage_url_domain" not in track:
 						tag_track = dl.get_ydl_extract_info(track["url"])
 					tags = smart_metadata(tag_track)
-					# TODO improve track total
-					tags["track"] = 1
-					tags["track_total"] = 1
-					# TODO ensure square cover
-					tags["cover_url"] = tag_track["thumbnail"]
 				else:
 					tags = dl.get_tags(ytmusic_watch_playlist, track)
 				# print("title", tags["title"], "album", tags["album"], track["url"])
@@ -138,7 +134,7 @@ def cli(
 					logger.debug(f'Remuxing to "{fixed_location}"')
 					dl.fixup(temp_location, fixed_location)
 					logger.debug("Applying tags")
-					dl.apply_tags(fixed_location, tags)
+					tagger_mp4(tags, fixed_location, dl.exclude_tags, dl.cover_format)
 					logger.debug("Moving to final location")
 					dl.move_to_final_location(fixed_location, final_location)
 				else:

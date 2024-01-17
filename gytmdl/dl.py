@@ -5,12 +5,11 @@ import shutil
 import subprocess
 from pathlib import Path
 
-import requests
-from mutagen.mp4 import MP4, MP4Cover
 from yt_dlp import YoutubeDL
 from ytmusicapi import YTMusic
 
-from .metadata import MP4_TAGS_MAP, clean_title, get_year
+from .metadata import clean_title, get_year
+from .tagging import Tags, get_cover
 
 ITAG_AAC_128 = "140"
 ITAG_AAC_256 = "141"
@@ -19,18 +18,18 @@ ITAG_OPUS_128 = "251"
 class Dl:
 	def __init__(
 		self,
-		final_path: Path = None,
-		temp_path: Path = None,
-		cookies_location: Path = None,
-		ffmpeg_location: str = None,
-		itag: str = None,
-		cover_size: int = None,
-		cover_format: str = None,
-		cover_quality: int = None,
-		template_folder: str = None,
-		template_file: str = None,
-		exclude_tags: str = None,
-		truncate: int = None,
+		final_path: Path,
+		temp_path: Path,
+		cookies_location: Path,
+		ffmpeg_location: str,
+		itag: str,
+		cover_size: int,
+		cover_format: str,
+		cover_quality: int,
+		template_folder: str,
+		template_file: str,
+		exclude_tags: str | None,
+		truncate: int,
 		dump_json: bool = False,
 		**kwargs,
 	):
@@ -48,20 +47,25 @@ class Dl:
 		self.template_file = template_file
 		self.exclude_tags = [i.lower() for i in exclude_tags.split(",")] if exclude_tags is not None else []
 		self.truncate = None if truncate is not None and truncate < 4 else truncate
-		self.dump_json = dump_json
 
-	@functools.lru_cache()
-	def get_ydl_extract_info(self, url):
-		ydl_opts = {"quiet": True, "no_warnings": True, "extract_flat": True}
+		self.dump_json = dump_json
+		self.__tags: Tags | None = None 
+
+	# @functools.lru_cache()
+	def get_ydl_extract_info(self, url) -> dict:
+		ydl_opts: dict[str, str | bool] = {"quiet": True, "no_warnings": True, "extract_flat": True}
 		if self.cookies_location is not None:
 			ydl_opts["cookiefile"] = str(self.cookies_location)
 		with YoutubeDL(ydl_opts) as ydl:
-			return ydl.extract_info(url, download=False)
+			info = ydl.extract_info(url, download=False)
+			if info is None:
+				raise Exception(f"Failed to extract info for id {url}")
+			return info
 
 	def get_download_queue(self, url):
 		url = url.split("&")[0]
 		download_queue = []
-		ydl_extract_info = self.get_ydl_extract_info(url)
+		ydl_extract_info: dict = self.get_ydl_extract_info(url)
 		
 		if self.dump_json:
 			# audio_formats = [ x for x in ydl_extract_info["formats"] if "acodec" in x and x["acodec"] != "none" ]
@@ -88,39 +92,52 @@ class Dl:
 
 	def get_ytmusic_watch_playlist(self, video_id):
 		ytmusic_watch_playlist = self.ytmusic.get_watch_playlist(video_id)
-		if not ytmusic_watch_playlist["tracks"][0]["length"] and ytmusic_watch_playlist["tracks"][0].get("album"):
-			raise Exception("Track is not available")
-		if not ytmusic_watch_playlist["tracks"][0].get("album"):
+		if ytmusic_watch_playlist is None or isinstance(ytmusic_watch_playlist, str):
+			raise Exception(f"Track is not available (None or string) {video_id}")
+		
+		if not ytmusic_watch_playlist["tracks"][0]["length"] and ytmusic_watch_playlist["tracks"][0].get("album"): # type: ignore
+			raise Exception(f"Track is not available {video_id}")
+		if not ytmusic_watch_playlist["tracks"][0].get("album"): # type: ignore
 			return None
 		return ytmusic_watch_playlist
 
 	def search_track(self, title):
 		return self.ytmusic.search(title, "songs")[0]["videoId"]
 
-	@functools.lru_cache()
+	@functools.lru_cache
 	def get_ytmusic_album(self, browse_id):
 		return self.ytmusic.get_album(browse_id)
 
-	@functools.lru_cache()
-	def get_cover(self, url):
-		return requests.get(url).content
-
-	def get_tags(self, ytmusic_watch_playlist, track: dict[str, str | int]):
+	def get_tags(self, ytmusic_watch_playlist, track: dict[str, str | int]) -> Tags:
+		if self.__tags is None:
+			return self.__collect_tags(ytmusic_watch_playlist, track)
+		else:
+			return self.__tags
+		
+	def __collect_tags(self, ytmusic_watch_playlist, track: dict[str, str | int]):
+		"""collects tag information into self.tags"""
+		if self.__tags is not None:
+			return self.__tags
+		
 		video_id = ytmusic_watch_playlist["tracks"][0]["videoId"]
-		ytmusic_album = self.ytmusic.get_album(ytmusic_watch_playlist["tracks"][0]["album"]["id"])
-		tags = {
+		ytmusic_album: dict = self.ytmusic.get_album(ytmusic_watch_playlist["tracks"][0]["album"]["id"])
+
+		_release_year, _release_date = get_year(track, ytmusic_album)
+		tags: Tags = {
+			"title": clean_title(ytmusic_watch_playlist["tracks"][0]["title"]),
 			"album": ytmusic_album["title"],
 			"album_artist": self.get_artist(ytmusic_album["artists"]),
 			"artist": self.get_artist(ytmusic_watch_playlist["tracks"][0]["artists"]),
 			"comment": f"https://music.youtube.com/watch?v={video_id}",
-			"cover_url": f'{ytmusic_watch_playlist["tracks"][0]["thumbnail"][0]["url"].split("=")[0]}'
-			+ f'=w{self.cover_size}-l{self.cover_quality}-{"rj" if self.cover_format == "jpg" else "rp"}',
-			"media_type": 1,
-			"title": clean_title(ytmusic_watch_playlist["tracks"][0]["title"]),
+			"track": 1,
 			"track_total": ytmusic_album["trackCount"],
+			"release_date": _release_date,
+			"release_year": _release_year,
+			"cover_url": f'{ytmusic_watch_playlist["tracks"][0]["thumbnail"][0]["url"].split("=")[0]}'
+		+ f'=w{self.cover_size}-l{self.cover_quality}-{"rj" if self.cover_format == "jpg" else "rp"}'
 		}
-		
-		for i, video in enumerate(self.get_ydl_extract_info(f'https://www.youtube.com/playlist?list={ytmusic_album["audioPlaylistId"]}')["entries"]):
+
+		for i, video in enumerate(self.get_ydl_extract_info(f'https://www.youtube.com/playlist?list={str(ytmusic_album["audioPlaylistId"])}')["entries"]):
 			if video["id"] == video_id:
 				try:
 					if ytmusic_album["tracks"][i]["isExplicit"]:
@@ -136,10 +153,9 @@ class Dl:
 			lyrics = self.ytmusic.get_lyrics(ytmusic_watch_playlist["lyrics"])["lyrics"]
 			if lyrics is not None:
 				tags["lyrics"] = lyrics
-
-		tags = {**tags, **get_year(track, ytmusic_album)}
-	
-		return tags
+		
+		self.__tags = tags
+		return self.__tags
 
 	def get_sanizated_string(self, dirty_string, is_folder):
 		dirty_string = re.sub(r'[\\/:*?"<>|;]', "_", dirty_string)
@@ -181,30 +197,7 @@ class Dl:
 		fixup = [self.ffmpeg_location, "-loglevel", "error", "-i", temp_location]
 		if self.itag == ITAG_OPUS_128:
 			fixup.extend(["-f", "mp4"])
-		subprocess.run([*fixup, "-movflags", "+faststart", "-c", "copy", fixed_location], check=True)
-
-	def apply_tags(self, fixed_location, tags):
-		mp4_tags = {}
-		for k, v in MP4_TAGS_MAP.items():
-			if k not in self.exclude_tags and tags.get(k) is not None:
-				mp4_tags[v] = [tags[k]]
-		
-		if not {"track", "track_total"} & set(self.exclude_tags):
-			mp4_tags["trkn"] = [[0, 0]]
-		if "cover" not in self.exclude_tags:
-			mp4_tags["covr"] = [
-				MP4Cover(self.get_cover(tags["cover_url"]), imageformat=MP4Cover.FORMAT_JPEG if self.cover_format == "jpg" else MP4Cover.FORMAT_PNG)
-			]
-		if "track" not in self.exclude_tags:
-			mp4_tags["trkn"][0][0] = tags["track"]
-		if "track_total" not in self.exclude_tags:
-			mp4_tags["trkn"][0][1] = tags["track_total"]
-
-		# print(json.dumps(mp4_tags))
-		mp4 = MP4(fixed_location)
-		mp4.clear()
-		mp4.update(mp4_tags)
-		mp4.save()
+		subprocess.run([*fixup, "-movflags", "+faststart", "-c", "copy", fixed_location], check=True)	
 
 	def move_to_final_location(self, fixed_location, final_location):
 		final_location.parent.mkdir(parents=True, exist_ok=True)
@@ -212,7 +205,7 @@ class Dl:
 
 	def save_cover(self, tags, cover_location):
 		with open(cover_location, "wb") as f:
-			f.write(self.get_cover(tags["cover_url"]))
+			f.write(get_cover(tags["cover_url"]))
 
 	def cleanup(self):
 		shutil.rmtree(self.temp_path)

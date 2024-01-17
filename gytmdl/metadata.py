@@ -2,8 +2,11 @@ import datetime
 import json
 import re
 from collections import Counter
+from typing import TypedDict
 
 import requests
+
+from gytmdl.tagging import Tags
 
 # this file parses the extract_info object provided by yt_dlp for informations
 # grabs as much info as it can from all over the place: yt music tags, channel name, video title, description and other fields
@@ -23,6 +26,7 @@ def parse_date(datestring):
 		if len(datestring) == 4: # 2020
 			return { "year": datestring }
 		elif len(datestring) == 8: # 20200630
+			# TODO change to ints, use in get_year
 			return { "year": datestring[0:4], "month": datestring[4:6], "day": datestring[6:8] }
 
 def dash_split(string, obj):
@@ -31,14 +35,14 @@ def dash_split(string, obj):
 	obj["title"].append(split_title[1])
 	return obj
 
-def get_most_likely_tag(list_of_keys, obj, additional_values = []):
+def get_most_likely_tag(list_of_keys: list[str], data_obj: dict, additional_values: list[str]):
 	"""
 	counts how many times each value occurs and returns the value that occurs the most
 	"""
-	tags = [*additional_values]
+	tags = additional_values if additional_values is not None else []
 	for item in list_of_keys:
-		if item in obj:
-			tags.append(obj[item])
+		if item in data_obj:
+			tags.append(data_obj[item])
 
 	# stringify the dict into json so Counter doesen't freak out
 	for i, tag in enumerate(tags):
@@ -55,15 +59,15 @@ def get_most_likely_tag(list_of_keys, obj, additional_values = []):
 	sorted_counts = sorted(counts_entries, key = lambda x: x[1]) # sort it (ascending)
 	descending_counts = list(reversed(sorted_counts)) # reverse (descending)
 
-	dehashed_counts = [] # re-parse jsons
+	dehashed_counts: list[tuple[dict[str, str] | str, int]] = [] # re-parse jsons
 	for count_tuple in descending_counts:
 		val = count_tuple[0]
 		count = count_tuple[1]
 
 		if val.startswith("{") and val.endswith("}"):
 			try:
-				obj = json.loads(val)
-				dehashed_counts.append((obj, count))
+				data_obj = json.loads(val)
+				dehashed_counts.append((data_obj, count))
 			except:
 				dehashed_counts.append(count_tuple)
 		else:
@@ -80,6 +84,7 @@ def get_most_likely_tag(list_of_keys, obj, additional_values = []):
 		if isinstance(top_result, str) and isinstance(second_result, dict):
 			top_result, second_result = second_result, top_result
 
+    # TODO rewrite so top_result is always string and not the year thingy
 	return top_result, cleaned_tags
 
 # site extractors
@@ -146,7 +151,17 @@ def smart_metadata(info):
 	# additional
 	# publisher (record label)
 
-	md = {}
+	md: Tags = {
+		"title": "",
+		"artist": "",
+		"album": "",
+		"album_artist": "",
+		"track": 1,
+		"track_total": 1,
+		"release_year": "",
+		"release_date": "",
+		"cover_url": info["thumbnail"]
+	}
 	md_keys = { "title": [], "artist": [], "album_artist": [], "album": [], "year": [], } # keys to check from the 'info object'. site specific.
 	add_values = { "title": [], "artist": [], "album_artist": [], "album": [], "year": [], }
 	others = { "title": [], "artist": [], "album_artist": [], "album": [], "year": [], }
@@ -186,106 +201,89 @@ def smart_metadata(info):
 	# pass all the vales to get_most_likely_tag
 	# which counts how many times each value occurs and returns the value that occurs the most
 	# also dumps all the other possibilities into the other dictionary
+	
+	md["title"], others["title"] = get_most_likely_tag(md_keys["title"], info, add_values["title"])
+	md["artist"], others["artist"] = get_most_likely_tag(md_keys["artist"], info, add_values["artist"])
+	md["album_artist"], others["album_artist"] = get_most_likely_tag(md_keys["album_artist"], info, [md["artist"]] + add_values["album_artist"])
 
-	md["title"], others["title"] =                  get_most_likely_tag(md_keys["title"], info, add_values["title"])
-	md["artist"], others["artist"] =                get_most_likely_tag(md_keys["artist"], info, add_values["artist"])
-	md["album_artist"], others["album_artist"] =    get_most_likely_tag(md_keys["album_artist"], info, [md["artist"]] + add_values["album_artist"])
-
-	md["title"] = clean_title(md["title"])
+	md["title"] = clean_title(str(md["title"]))
 
 	# fallback: title (Single) => album, only if there is no album yet
 	if ("album" not in info) and len(add_values["album"]) == 0:
 		add_values["album"].append(f"{md['title']} (Single)")
 
-	md["album"], others["album"] =                  get_most_likely_tag(md_keys["album"], info, add_values["album"])
-	md["year"], others["year"] =                    get_most_likely_tag(md_keys["year"], info, add_values["year"])
+	md["album"], others["album"] = get_most_likely_tag(md_keys["album"], info, add_values["album"])
+	tdate, others["year"] = get_most_likely_tag(md_keys["year"], info, add_values["year"])
 
-	# TODO rewrite
-	if isinstance(md["year"], str):
-		md["release_year"] = md["year"]
+	if isinstance(tdate, str):
+		md["release_year"] = tdate
 	else:
-		md["release_year"] = md["year"]["year"]
+		md["release_year"] = tdate["year"]
 		md["release_date"] = datetime.datetime(
-			day=int(md["year"]["day"]), 
-			month=int(md["year"]["month"]), 
-			year=int(md["year"]["year"])
+			day=int(tdate["day"]), 
+			month=int(tdate["month"]), 
+			year=int(tdate["year"])
 		).isoformat() + "Z"
 
-
-	# remove publisher for now
-	# if len(add_values["publisher"]) == 0: # published from album_artist, only if there is no publisher yet
-	# 	add_values["publisher"].append(md["album_artist"])
-
-	# md["publisher"], others["publisher"] =          get_most_likely_tag(md_keys["publisher"], info, add_values["publisher"])
-
-	# fix ups
-	# if md["publisher"] == f"{md['year']['year']} {md['artist']}":
-	# 	md["publisher"] = md["artist"]
-	
-
-	# print(others)
 	return md
 
+MBArtist = TypedDict("MBArtist", { 
+	"id": str,
+	"name": str, 
+	"sort-name": str, 
+})
+
+MBArtistCredit = TypedDict("MBArtistCredit", { 
+	"name": str, 
+	"sort-name": str, 
+	"artist": MBArtist
+})
+
+MBRecording = TypedDict("MBRecording", {
+	"id": str,
+	"title": str,
+	"artist-credit": list[MBArtistCredit],
+	"releases": list[dict[str, str]]
+})
 
 def get_year(track: dict[str, str | int], ytmusic_album: dict[str, str | int]):
-	tags = { }
 	date = {
-		"day": None,
-		"month": None,
-		"year": None
+		"day": "01",
+		"month": "01",
+		"year": ""
 	}		
+	release_date = ""
+	release_year = ""
+
 	upload_date = track.get("release_date") or track.get("upload_date")
 	upload_date = str(upload_date) if upload_date is not None else None
 	if upload_date: # YYYYMMDD
-		date = { "year": int(upload_date[0:4]), "month": int(upload_date[4:6]), "day": int(upload_date[6:8]) }
+		date = { "year": upload_date[0:4], "month": upload_date[4:6], "day": upload_date[6:8] }
 	else: # only year
-		date["year"] = ytmusic_album.get("year") or track.get("release_year")
-		date["year"] = int(date["year"]) if date["year"] is not None else None
+		date["year"] = str(ytmusic_album.get("year") or track.get("release_year"))
 
-	if date["year"] is not None:
-		tags["release_year"] = date["year"]
-		if date["month"] is not None and date["day"] is not None:
-			tags["release_date"] = datetime.datetime(day=date["day"], month=date["month"], year=date["year"]).isoformat() + "Z"
-
-	return tags
-
-# ----------- new stuff ---------------
-
-MP4_TAGS_MAP = {
-	"album": "\xa9alb",
-	"album_artist": "aART",
-	"artist": "\xa9ART",
-	"comment": "\xa9cmt",
-	"lyrics": "\xa9lyr",
-	"media_type": "stik",
-	"rating": "rtng",
-	"release_date": "\xa9day",
-	"title": "\xa9nam",
-
-	# see https://github.com/OxygenCobalt/Auxio/wiki/Supported-Metadata
-	# see https://github.com/metabrainz/picard/blob/master/picard/formats/mp4.py#L115
-	"track_mbid": "----:com.apple.iTunes:MusicBrainz Release Track Id",
-	"album_mbid": "----:com.apple.iTunes:MusicBrainz Release Group Id",
-	"artist_mbid": "----:com.apple.iTunes:MusicBrainz Artist Id",
-	"album_artist_mbid": "----:com.apple.iTunes:MusicBrainz Album Artist Id",
-}
+	release_year = date["year"]
+	release_date = datetime.datetime(day=int(date["day"]), month=int(date["month"]), year=int(date["year"])).isoformat() + "Z"
+			
+	return release_year, release_date
 
 def clean_title(title: str):
 	"""horrible regex"""
 	return re.sub(r"(?:\[|\(|【)(?:feat\.?.+|[\w\s]+)(?:\)|\]|】)", "", title.strip()).replace("_", "-").strip()
 
-def check_artist_match(artist: dict[str, str], a_dict: dict[str, str]):
+def check_artist_match(artist: str, a_dict: MBArtist):
 	return artist == a_dict["name"] or artist.lower() == a_dict["name"].lower() or artist == a_dict["sort-name"] or artist.lower() == a_dict["sort-name"].lower()
+	
 
 class MBSong:
 	"""MusicBrainz song item"""
 	def __init__(
 		self,
-		title: str = None,
-		artist: str = None,
-		album: str = None
+		title: str = "",
+		artist: str = "",
+		album: str = ""
 	):
-		if title is None:
+		if title == "":
 			raise Exception("title is required")
 		self.title = clean_title(title)
 		self.artist = artist
@@ -322,18 +320,16 @@ class MBSong:
 			resjson = json.loads(res.text)
 			self.save_artist_dict(resjson["artists"])
 
-	def save_song_dict(self, tracks: list[dict[str, str]]):
+	def save_song_dict(self, tracks: list[MBRecording]):
 		"""find the most similar song"""
 		for t in tracks:
 			# skip entries with missing album or artist
-			if "artist-credit" not in t or len(t["artist-credit"]) == 0:
+			if ("artist-credit" not in t) or (len(t["artist-credit"]) == 0) or ("releases" not in t) or (len(t["releases"]) == 0):
 				continue
-			if "releases" not in t or len(t["releases"]) == 0:
-				continue
-			
 			title_matches = t["title"] == self.title
 			artist_match = False
 			album_match = False
+			
 			for a in t["artist-credit"]:
 				if check_artist_match(self.artist, a["artist"]):
 					self.artist_mbid = a["artist"]["id"]
@@ -353,7 +349,7 @@ class MBSong:
 		if self.song_dict is None:
 			self.fetch_artist()
 
-	def save_artist_dict(self, artists: list[dict[str, str]]):
+	def save_artist_dict(self, artists: list[MBArtist]):
 		"""find most similar artist"""
 		for a in artists:
 			if check_artist_match(self.artist, a):
@@ -370,7 +366,7 @@ class MBSong:
 			"album_artist_mbid": self.artist_mbid
 		}
 
-def get_mbids_for_song(tags: dict[str, str]):
+def get_mbids_for_song(tags: Tags):
 	"""takes in a tags dict, adds mbid tags to it, returns it"""
 	mb = MBSong(title=tags["title"], artist=tags["artist"], album=tags["album"])
 	mb.fetch_song()

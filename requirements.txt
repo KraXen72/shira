@@ -2,3 +2,4 @@ click
 yt-dlp
 ytmusicapi
 requests
+typing-extensions

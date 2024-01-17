@@ -15,7 +15,7 @@ Download YouTube Music songs/albums/playlists with tags from YouTube Music in 25
 While this project uses yt-dlp under the hood, it has the advantage of utilizing [YouTube Music's API](https://github.com/sigma67/ytmusicapi) to get songs metadata. This includes information such as track number, square cover, lyrics, year, etc.
 
 ## Setup
-1. Install Python 3.8 or higher
+1. Install Python 3.8 or higher (3.11+ recommended)
 2. Install gytmdl with pip
     ```
     pip install gytmdl

@@ -159,16 +159,6 @@ def smart_metadata(info):
 	grabs as much info as it can from all over the place
 	gets the most likely tag and returns a dict
 	"""
-	# metadata we care about:
-	# title
-	# artist
-	# album_artist
-	# album
-	# year
-	# genre (inputted by user cause no way of telling)
-
-	# additional
-	# publisher (record label)
 
 	md: Tags = {
 		"title": "",

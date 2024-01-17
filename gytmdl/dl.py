@@ -134,7 +134,7 @@ class Dl:
 			"release_date": _release_date,
 			"release_year": _release_year,
 			"cover_url": f'{ytmusic_watch_playlist["tracks"][0]["thumbnail"][0]["url"].split("=")[0]}'
-		+ f'=w{self.cover_size}-l{self.cover_quality}-{"rj" if self.cover_format == "jpg" else "rp"}'
+			+ f'=w{self.cover_size}-l{self.cover_quality}-{"rj" if self.cover_format == "jpg" else "rp"}'
 		}
 
 		for i, video in enumerate(self.get_ydl_extract_info(f'https://www.youtube.com/playlist?list={str(ytmusic_album["audioPlaylistId"])}')["entries"]):

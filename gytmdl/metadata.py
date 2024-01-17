@@ -6,13 +6,32 @@ from typing import TypedDict
 
 import requests
 
-from gytmdl.tagging import Tags
+from .tagging import Tags
 
 # this file parses the extract_info object provided by yt_dlp for informations
 # grabs as much info as it can from all over the place: yt music tags, channel name, video title, description and other fields
 # puts all of these strings into an array, count how many times each value occurs and the one that occurs most is the most likely result
 
 # based on the original https://github.com/KraXen72/tiger
+
+MBArtist = TypedDict("MBArtist", { 
+	"id": str,
+	"name": str, 
+	"sort-name": str, 
+})
+
+MBArtistCredit = TypedDict("MBArtistCredit", { 
+	"name": str, 
+	"sort-name": str, 
+	"artist": MBArtist
+})
+
+MBRecording = TypedDict("MBRecording", {
+	"id": str,
+	"title": str,
+	"artist-credit": list[MBArtistCredit],
+	"releases": list[dict[str, str]]
+})
 
 def parse_date(datestring):
 	"""
@@ -226,25 +245,6 @@ def smart_metadata(info):
 		).isoformat() + "Z"
 
 	return md
-
-MBArtist = TypedDict("MBArtist", { 
-	"id": str,
-	"name": str, 
-	"sort-name": str, 
-})
-
-MBArtistCredit = TypedDict("MBArtistCredit", { 
-	"name": str, 
-	"sort-name": str, 
-	"artist": MBArtist
-})
-
-MBRecording = TypedDict("MBRecording", {
-	"id": str,
-	"title": str,
-	"artist-credit": list[MBArtistCredit],
-	"releases": list[dict[str, str]]
-})
 
 def get_year(track: dict[str, str | int], ytmusic_album: dict[str, str | int]):
 	date = {

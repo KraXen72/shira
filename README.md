@@ -2,7 +2,7 @@
 Download YouTube Music songs/albums/playlists with tags from YouTube Music in 256kbps AAC/128kbps Opus/128kbps AAC.
 
 ## Added features
-- Soundcloud support (later, not implemented yet)
+- Soundcloud support (later)
 
 ## Tagging improvements
 - uses video's `upload_date` for more precise release date when possible

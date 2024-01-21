@@ -280,7 +280,6 @@ def clean_title(title: str, artist: str | None):
 			if "cover" in m.group(0).lower() or re.match(r"^[一-龠]+|[ぁ-ゔ]+|[ァ-ヴー]+|[々〆〤ヶ]+|\s+$", m.group(1)) is not None:
 				subs = f"[{m.group(1)}]"
 			title = title.replace(m.group(0), subs)
-			print("s", subs, "t", title)
 	
 	# title = title.replace("by {artist}", "")
 	title = re.sub(r"(\S)\[", r"\g<1>" + " [", title, flags=re.MULTILINE) # jap title whitespace fix

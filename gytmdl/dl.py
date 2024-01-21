@@ -50,6 +50,7 @@ class Dl:
 
 		self.dump_json = dump_json
 		self.tags: Tags | None = None 
+		self.soundcloud = False
 
 	# @functools.lru_cache()
 	def get_ydl_extract_info(self, url) -> dict:
@@ -59,7 +60,7 @@ class Dl:
 		with YoutubeDL(ydl_opts) as ydl:
 			info = ydl.extract_info(url, download=False)
 			if info is None:
-				raise Exception(f"Failed to extract info for id {url}")
+				raise Exception(f"Failed to extract info for {url}")
 			return info
 
 	def get_download_queue(self, url):
@@ -75,13 +76,14 @@ class Dl:
 			json.dump(ydl_extract_info, f, indent=4, ensure_ascii=False)
 			f.close()
 
-		if "youtube" not in ydl_extract_info["webpage_url"]:
-			raise Exception("Not a YouTube URL")
+		if "soundcloud" in ydl_extract_info["webpage_url"] :
+			# raise Exception("Not a YouTube URL")
+			self.soundcloud = True
 		if "MPREb_" in ydl_extract_info["webpage_url_basename"]:
 			ydl_extract_info = self.get_ydl_extract_info(ydl_extract_info["url"])
 		if "playlist" in ydl_extract_info["webpage_url_basename"]:
 			download_queue.extend(ydl_extract_info["entries"])
-		if "watch" in ydl_extract_info["webpage_url_basename"]:
+		if "watch" in ydl_extract_info["webpage_url_basename"] or self.soundcloud:
 			download_queue.append(ydl_extract_info)
 		return download_queue
 
@@ -91,6 +93,8 @@ class Dl:
 		return ", ".join([i["name"] for i in artist_list][:-1]) + f' & {artist_list[-1]["name"]}'
 
 	def get_ytmusic_watch_playlist(self, video_id):
+		if self.soundcloud:
+			return None
 		ytmusic_watch_playlist = self.ytmusic.get_watch_playlist(video_id)
 		if ytmusic_watch_playlist is None or isinstance(ytmusic_watch_playlist, str):
 			raise Exception(f"Track is not available (None or string) {video_id}")
@@ -187,6 +191,7 @@ class Dl:
 		return final_location.parent / f"Cover.{self.cover_format}"
 
 	def download(self, video_id, temp_location):
+		# TODO finish soundcloud support
 		ydl_opts = {"quiet": True, "no_warnings": True, "fixup": "never", "format": self.itag, "outtmpl": str(temp_location)}
 		if self.cookies_location is not None:
 			ydl_opts["cookiefile"] = str(self.cookies_location)

@@ -271,7 +271,7 @@ def get_year(track: dict[str, str | int], ytmusic_album: dict[str, str | int]):
 
 def clean_title(title: str):
 	"""horrible regex"""
-	return re.sub(r"(?:\[|\(|【)(?:feat\.?.+|[\w\s]+)(?:\)|\]|】)", "", title.strip()).replace("_", "-").strip()
+	return re.sub(r"(?:\[|\(|【)(?:(?:feat|prod)\.?.+|[\w\s]+)(?:\)|\]|】)", "", title.strip()).replace("_", "-").strip()
 
 def check_artist_match(artist: str, a_dict: MBArtist):
 	return artist == a_dict["name"] or artist.lower() == a_dict["name"].lower() or artist == a_dict["sort-name"] or artist.lower() == a_dict["sort-name"].lower()

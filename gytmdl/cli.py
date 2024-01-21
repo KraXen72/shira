@@ -47,7 +47,7 @@ def no_config_callback(ctx: click.Context, param: click.Parameter, no_config_fil
 @click.option("--template-folder", type=str, default="{album_artist}/{album}", help="Template of the album folders as a format string.")
 @click.option("--template-file", type=str, default="{track:02d} {title}", help="Template of the song files as a format string.")
 @click.option("--exclude-tags", "-e", type=str, default=None, help="List of tags to exclude from file tagging separated by commas without spaces.")
-@click.option("--truncate", type=int, default=40, help="Maximum length of the file/folder names.")
+@click.option("--truncate", type=int, default=60, help="Maximum length of the file/folder names.")
 @click.option("--log-level", "-l", type=click.Choice(["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"]), default="INFO", help="Log level.")
 @click.option("--save-cover", "-s", is_flag=True, help="Save cover as a separate file.")
 @click.option("--overwrite", "-o", is_flag=True, help="Overwrite existing files.")

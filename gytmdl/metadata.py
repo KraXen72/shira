@@ -222,7 +222,7 @@ def smart_metadata(info):
 	md["artist"], others["artist"] = get_most_likely_tag(md_keys["artist"], info, add_values["artist"])
 	md["album_artist"], others["album_artist"] = get_most_likely_tag(md_keys["album_artist"], info, [md["artist"]] + add_values["album_artist"])
 
-	md["title"] = clean_title(str(md["title"]))
+	md["title"] = clean_title(str(md["title"]), str(md["artist"]))
 
 	# fallback: title (Single) => album, only if there is no album yet
 	if ("album" not in info) and len(add_values["album"]) == 0:
@@ -269,9 +269,23 @@ def get_year(track: dict[str, str | int], ytmusic_album: dict[str, str | int]):
 			
 	return release_year, release_date
 
-def clean_title(title: str):
-	"""horrible regex"""
-	return re.sub(r"(?:\[|\(|【)(?:(?:feat|prod)\.?.+|[\w\s]+)(?:\)|\]|】)", "", title.strip()).replace("_", "-").strip()
+def clean_title(title: str, artist: str | None):
+	"""do you love regex?"""
+
+	brackets =[["[", "]"], ["(", ")"], ["【", "】"], ["「", "」"]]
+	for lb, rb in brackets: 
+		lbe, rbe = re.escape(lb), re.escape(rb) # check for all matching variations of brackets
+		for m in re.finditer(rf"{lbe}([^{lbe}{rbe}]+){rbe}", title):
+			subs = "" # preserve info about a song cover or it's japanese title
+			if "cover" in m.group(0).lower() or re.match(r"^[一-龠]+|[ぁ-ゔ]+|[ァ-ヴー]+|[々〆〤ヶ]+|\s+$", m.group(1)) is not None:
+				subs = f"[{m.group(1)}]"
+			title = title.replace(m.group(0), subs)
+			print("s", subs, "t", title)
+	
+	# title = title.replace("by {artist}", "")
+	title = re.sub(r"(\S)\[", r"\g<1>" + " [", title, flags=re.MULTILINE) # jap title whitespace fix
+	title = re.sub(r"\s{2,}", " ", title) # multiple spaces fix
+	return title.replace("_", "-").strip()
 
 def check_artist_match(artist: str, a_dict: MBArtist):
 	return artist == a_dict["name"] or artist.lower() == a_dict["name"].lower() or artist == a_dict["sort-name"] or artist.lower() == a_dict["sort-name"].lower()
@@ -287,7 +301,7 @@ class MBSong:
 	):
 		if title == "":
 			raise Exception("title is required")
-		self.title = clean_title(title)
+		self.title = clean_title(title, artist)
 		self.artist = artist
 		self.album = album
 		self.base = "https://musicbrainz.org/ws/2"

@@ -9,6 +9,8 @@ Download YouTube Music songs/albums/playlists with tags from YouTube Music in 25
 - uses my custom smart-metadata system from [tiger](https://github/KraXen72/tiger) for non-music videos
 - tries to resolve MusicBrainz ID's from their api 
   - `track`, `album`, `artist`, `albumartist` ids, falls back to `artist`, `albumartist` (sometimes artist existst in MusicBrainz DB but song doesen't)
+- cleans up crazy titles like `IDOL【ENGLISH EDM COVER】「アイドル」 by YOASOBI【Aries Shepard x @djJoMusicChannel 】` into:
+  - `IDOL [ENGLISH EDM COVER] [アイドル] by YOASOBI`
 
 
 ## Why not just use yt-dlp directly?

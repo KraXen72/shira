@@ -222,7 +222,7 @@ def smart_metadata(info):
 	md["artist"], others["artist"] = get_most_likely_tag(md_keys["artist"], info, add_values["artist"])
 	md["album_artist"], others["album_artist"] = get_most_likely_tag(md_keys["album_artist"], info, [md["artist"]] + add_values["album_artist"])
 
-	md["title"] = clean_title(str(md["title"]), str(md["artist"]))
+	md["title"] = clean_title(str(md["title"]))
 
 	# fallback: title (Single) => album, only if there is no album yet
 	if ("album" not in info) and len(add_values["album"]) == 0:
@@ -269,7 +269,7 @@ def get_year(track: dict[str, str | int], ytmusic_album: dict[str, str | int]):
 			
 	return release_year, release_date
 
-def clean_title(title: str, artist: str | None):
+def clean_title(title: str):
 	"""do you love regex?"""
 
 	brackets =[["[", "]"], ["(", ")"], ["【", "】"], ["「", "」"]]
@@ -300,7 +300,7 @@ class MBSong:
 	):
 		if title == "":
 			raise Exception("title is required")
-		self.title = clean_title(title, artist)
+		self.title = clean_title(title)
 		self.artist = artist
 		self.album = album
 		self.base = "https://musicbrainz.org/ws/2"

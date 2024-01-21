@@ -113,6 +113,8 @@ def cli(
 			try:
 				logger.debug("Getting tags")
 				ytmusic_watch_playlist = dl.get_ytmusic_watch_playlist(track["id"])
+
+				dl.tags = None
 				tags = None
 				if ytmusic_watch_playlist is None:
 					# logger.warning("Track is a video, using fallback tagging system 'Tiger'")
@@ -122,8 +124,10 @@ def cli(
 					tags = smart_metadata(tag_track)
 				else:
 					tags = dl.get_tags(ytmusic_watch_playlist, track)
+				# logger.debug("tags before mbid", json.dumps(tags))
 				# print("title", tags["title"], "album", tags["album"], track["url"])
 				tags = get_mbids_for_song(tags)
+				# logger.debug("tags after mbid", json.dumps(tags))
 				final_location = dl.get_final_location(tags)
 				logger.debug(f'Final location is "{final_location}"')
 				if not final_location.exists() or overwrite:
@@ -158,3 +162,4 @@ def cli(
 					logger.debug(f'Cleaning up "{temp_path}"')
 					dl.cleanup()
 	logger.info(f"Done ({error_count} error(s))")
+

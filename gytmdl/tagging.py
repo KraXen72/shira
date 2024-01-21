@@ -59,6 +59,8 @@ def tagger_mp4(tags: Tags, fixed_location: Path, exclude_tags: list[str], cover_
 	if "track_total" not in exclude_tags:
 		mp4_tags["trkn"][0][1] = tags["track_total"]
 
+	mp4_tags["disk"] = [[1, 1]]
+
 	mp4 = MP4(fixed_location)
 	mp4.clear()
 	mp4.update(mp4_tags)

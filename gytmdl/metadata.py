@@ -26,11 +26,18 @@ MBArtistCredit = TypedDict("MBArtistCredit", {
 	"artist": MBArtist
 })
 
+MBRelease = TypedDict("MBRelease", {
+	"id": str,
+	"title": str,
+	"artist-credit": list[MBArtistCredit],
+	"release-group": dict[str, str]
+})
+
 MBRecording = TypedDict("MBRecording", {
 	"id": str,
 	"title": str,
 	"artist-credit": list[MBArtistCredit],
-	"releases": list[dict[str, str]]
+	"releases": list[MBRelease]
 })
 
 def parse_date(datestring):
@@ -245,6 +252,11 @@ def get_year(track: dict[str, str | int], ytmusic_album: dict[str, str | int]):
 	release_date = ""
 	release_year = ""
 
+	# f = open("album.json", "w", encoding="utf8")
+	# json.dump(ytmusic_album, f, indent=4, ensure_ascii=False)
+	# f.close()
+	
+
 	upload_date = track.get("release_date") or track.get("upload_date")
 	upload_date = str(upload_date) if upload_date is not None else None
 	if upload_date: # YYYYMMDD
@@ -283,6 +295,7 @@ class MBSong:
 
 		self.song_dict = None
 		self.artist_dict = None
+		self.album_dict = None
 
 		self.song_mbid = None
 		self.artist_mbid = None
@@ -328,7 +341,8 @@ class MBSong:
 					break
 			for a in t["releases"]:
 				if a["title"] == self.album:
-					self.album_mbid = a["id"]
+					self.album_mbid = a["release-group"]["id"]
+					self.album_dict = a
 					album_match = True
 					break
 			if title_matches and artist_match and album_match:
@@ -349,6 +363,12 @@ class MBSong:
 
 	def get_mbid_tags(self):
 		"""get mbid tags with proper keys"""
+
+		f = open("rec.json", "w", encoding="utf8")
+		json.dump(self.album_dict, f, indent=4, ensure_ascii=False)
+		f.close()
+		
+		
 		return {
 			"track_mbid": self.song_mbid,
 			"album_mbid": self.album_mbid,

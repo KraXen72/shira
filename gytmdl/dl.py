@@ -49,7 +49,7 @@ class Dl:
 		self.truncate = None if truncate is not None and truncate < 4 else truncate
 
 		self.dump_json = dump_json
-		self.__tags: Tags | None = None 
+		self.tags: Tags | None = None 
 
 	# @functools.lru_cache()
 	def get_ydl_extract_info(self, url) -> dict:
@@ -109,15 +109,15 @@ class Dl:
 		return self.ytmusic.get_album(browse_id)
 
 	def get_tags(self, ytmusic_watch_playlist, track: dict[str, str | int]) -> Tags:
-		if self.__tags is None:
+		if self.tags is None:
 			return self.__collect_tags(ytmusic_watch_playlist, track)
 		else:
-			return self.__tags
+			return self.tags
 		
 	def __collect_tags(self, ytmusic_watch_playlist, track: dict[str, str | int]):
 		"""collects tag information into self.tags"""
-		if self.__tags is not None:
-			return self.__tags
+		if self.tags is not None:
+			return self.tags
 		
 		video_id = ytmusic_watch_playlist["tracks"][0]["videoId"]
 		ytmusic_album: dict = self.ytmusic.get_album(ytmusic_watch_playlist["tracks"][0]["album"]["id"])
@@ -154,8 +154,8 @@ class Dl:
 			if lyrics is not None:
 				tags["lyrics"] = lyrics
 		
-		self.__tags = tags
-		return self.__tags
+		self.tags = tags
+		return self.tags
 
 	def get_sanizated_string(self, dirty_string, is_folder):
 		dirty_string = re.sub(r'[\\/:*?"<>|;]', "_", dirty_string)

@@ -1,8 +1,11 @@
-# Glomatico's YouTube Music Downloader (serverified, WIP)
+# Glomatico's YouTube Music Downloader (KraXen's Fork)
 Download YouTube Music songs/albums/playlists with tags from YouTube Music in 256kbps AAC/128kbps Opus/128kbps AAC.
+This fork adds several new features as well as many song tagging improvements.
 
-## Added features
-- Soundcloud support (later)
+## New Features
+- GUI to crop thumbnail for non-music videos (planned)
+- GUI to confirm tags for non-music videos (planned)
+- Soundcloud support (less tags) (planned)
 
 ## Tagging improvements
 - uses video's `upload_date` for more precise release date when possible

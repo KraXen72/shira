@@ -3,3 +3,4 @@ yt-dlp
 ytmusicapi
 requests
 typing-extensions
+websocket_server

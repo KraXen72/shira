@@ -163,6 +163,3 @@ def cli(
 					log("dbg", f'Cleaning up "{temp_path}"')
 					dl.cleanup()
 	log("log", f"Done ({error_count} error(s))")
-
-def runtime(*args, **kwargs):
-

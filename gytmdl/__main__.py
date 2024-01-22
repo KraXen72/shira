@@ -1,17 +1,18 @@
-from websocket_server import WebsocketServer
 
-from .cli import runtime
+from .cli import cli
 
-WSHOST = "localhost"
-WSPORT = 8765
+cli()
 
-server = WebsocketServer(host=WSHOST, port=WSPORT)
-print(f"created websocket server on ws://{WSHOST}:{WSPORT}")
-print("waiting for atleast one client")
+# WSHOST = "localhost"
+# WSPORT = 8765
 
-def new_client(client, server):
-	runtime(wsserver=server)
+# server = WebsocketServer(host=WSHOST, port=WSPORT)
+# print(f"created websocket server on ws://{WSHOST}:{WSPORT}")
+# print("waiting for atleast one client")
 
-server.set_fn_new_client(new_client)
-server.run_forever()
+# def new_client(client, server):
+# 	runtime(wsserver=server)
+
+# server.set_fn_new_client(new_client)
+# server.run_forever()
 

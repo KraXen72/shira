@@ -1,18 +1,12 @@
 
+from sys import argv
+
 from .cli import cli
+from .server import server
 
-cli()
-
-# WSHOST = "localhost"
-# WSPORT = 8765
-
-# server = WebsocketServer(host=WSHOST, port=WSPORT)
-# print(f"created websocket server on ws://{WSHOST}:{WSPORT}")
-# print("waiting for atleast one client")
-
-# def new_client(client, server):
-# 	runtime(wsserver=server)
-
-# server.set_fn_new_client(new_client)
-# server.run_forever()
+# print(argv)
+if argv[1] == "server" or argv[1] == "server.py":
+	server()
+else:
+	cli()
 

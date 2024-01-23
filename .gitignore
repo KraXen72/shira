@@ -5,3 +5,6 @@ __pycache__
 !pyproject.toml
 !README.md
 !requirements.txt
+!solidui
+solidui/node_modules
+solidui/dist

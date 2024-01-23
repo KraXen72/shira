@@ -8,7 +8,6 @@ import click
 from . import __version__
 from .dl import Dl
 from .metadata import get_mbids_for_song, smart_metadata
-from .server import local_logger_factory, websocket_logger_factory
 from .tagging import tagger_mp4
 
 EXCLUDED_PARAMS = ("urls", "config_location", "url_txt", "no_config_file", "version", "help")
@@ -33,10 +32,10 @@ def no_config_callback(ctx: click.Context, param: click.Parameter, no_config_fil
 			ctx.params[param.name] = param.type_cast_value(ctx, config_file[param.name]) # type: ignore
 	return ctx
 
+
 @click.command()
 @click.argument("urls", nargs=-1, type=str, required=True)
 @click.option("--final-path", "-f", type=Path, default="./YouTube Music", help="Path where the downloaded files will be saved.")
-@click.option("--server", "-w", is_flag=True, help="start (websocket) server")
 @click.option("--temp-path", "-t", type=Path, default="./temp", help="Path where the temporary files will be saved.")
 @click.option("--cookies-location", "-c", type=Path, default=None, help="Location of the cookies file.")
 @click.option("--ffmpeg-location", type=Path, default="ffmpeg", help="Location of the FFmpeg binary.")
@@ -60,7 +59,6 @@ def no_config_callback(ctx: click.Context, param: click.Parameter, no_config_fil
 def cli(
 	urls: tuple[str, ...],
 	final_path: Path,
-	server: bool,
 	temp_path: Path,
 	cookies_location: Path,
 	ffmpeg_location: Path,
@@ -80,89 +78,88 @@ def cli(
 	url_txt: bool,
 	no_config_file: bool,
 ):
-	# TODO pass wsserver
-	log = local_logger_factory(log_level) if server is False else websocket_logger_factory(wsserver)
+	logging.basicConfig(format="[%(levelname)-8s %(asctime)s] %(message)s", datefmt="%H:%M:%S")
+	logger = logging.getLogger(__name__)
+	logger.setLevel(log_level)
 	if not shutil.which(str(ffmpeg_location)):
-		log("err", f'FFmpeg not found at "{ffmpeg_location}"')
+		logger.critical(f'FFmpeg not found at "{ffmpeg_location}"')
 		return
 	if cookies_location is not None and not cookies_location.exists():
-		log("err", f'Cookies file not found at "{cookies_location}"')
+		logger.critical(f'Cookies file not found at "{cookies_location}"')
 		return
 	if url_txt:
-		log("dbg", "Reading URLs from text files")
+		logger.debug("Reading URLs from text files")
 		_urls = []
 		for url in urls:
 			with open(url, "r") as f:
 				_urls.extend(f.read().splitlines())
 		urls = tuple(_urls)
-	log("dbg", "Starting downloader")
+	logger.debug("Starting downloader")
 
 	dump_json = True
-	dl = Dl(**locals()) # TODO rewrite somehow
+	dl = Dl(**locals())
 	download_queue = []
 	for i, url in enumerate(urls):
 		try:
-			log("dbg", f'Checking "{url}" (URL {i + 1}/{len(urls)})')
+			logger.debug(f'Checking "{url}" (URL {i + 1}/{len(urls)})')
 			download_queue.append(dl.get_download_queue(url))
 		except Exception:
-			log("err", f"Failed to check URL {i + 1}/{len(urls)}", exc_info=print_exceptions)
+			logger.error(f"Failed to check URL {i + 1}/{len(urls)}", exc_info=print_exceptions)
 			logging.exception("")
 	error_count = 0
 	for i, url in enumerate(download_queue):
 		for j, track in enumerate(url):
-			log("dlstart", f'Downloading "{track["title"]}" (track {j + 1}/{len(url)} from URL {i + 1}/{len(download_queue)})')
+			logger.info(f'Downloading "{track["title"]}" (track {j + 1}/{len(url)} from URL {i + 1}/{len(download_queue)})')
 			try:
-				log("dbg", "Getting tags")
+				logger.debug("Getting tags")
 				ytmusic_watch_playlist = dl.get_ytmusic_watch_playlist(track["id"])
 
 				dl.tags = None
 				tags = None
 				if ytmusic_watch_playlist is None:
-					# log("info", "Track is a video, using fallback tagging system 'Tiger'")
+					# logger.warning("Track is a video, using fallback tagging system 'Tiger'")
 					tag_track = track
 					if "webpage_url_domain" not in track:
 						tag_track = dl.get_ydl_extract_info(track["url"])
 					tags = smart_metadata(tag_track)
 				else:
 					tags = dl.get_tags(ytmusic_watch_playlist, track)
-				# log("dbg", "tags before mbid", json.dumps(tags))
+				# logger.debug("tags before mbid", json.dumps(tags))
 				# print("title", tags["title"], "album", tags["album"], track["url"])
 				tags = get_mbids_for_song(tags)
-				# log("dbg", "tags after mbid", json.dumps(tags))
+				# logger.debug("tags after mbid", json.dumps(tags))
 				final_location = dl.get_final_location(tags)
-				log("dbg", f'Final location is "{final_location}"')
+				logger.debug(f'Final location is "{final_location}"')
 				if not final_location.exists() or overwrite:
 					temp_location = dl.get_temp_location(track["id"])
-					log("dbg", f'Downloading to "{temp_location}"')
+					logger.debug(f'Downloading to "{temp_location}"')
 					dl.download(track["id"], temp_location)
 					fixed_location = dl.get_fixed_location(track["id"])
-					log("dbg", f'Remuxing to "{fixed_location}"')
+					logger.debug(f'Remuxing to "{fixed_location}"')
 					dl.fixup(temp_location, fixed_location)
-					log("dbg", "Applying tags")
+					logger.debug("Applying tags")
 					tagger_mp4(tags, fixed_location, dl.exclude_tags, dl.cover_format)
-					log("dbg", "Moving to final location")
+					logger.debug("Moving to final location")
 					dl.move_to_final_location(fixed_location, final_location)
 				else:
-					log("log", "File already exists at final location, skipping")
+					logger.warning("File already exists at final location, skipping")
 				if save_cover:
 					cover_location = dl.get_cover_location(final_location)
 					if not cover_location.exists() or overwrite:
-						log("dbg", f'Saving cover to "{cover_location}"')
+						logger.debug(f'Saving cover to "{cover_location}"')
 						dl.save_cover(tags, cover_location)
 					else:
-						log("dbg", f'File already exists at "{cover_location}", skipping')
+						logger.debug(f'File already exists at "{cover_location}", skipping')
 			except Exception:
 				error_count += 1
-				log("err", 
+				logger.error(
 					f'Failed to download "{track["title"]}" (track {j + 1}/{len(url)} from URL ' + f"{i + 1}/{len(download_queue)})",
 					exc_info=print_exceptions,
 				)
 				logging.exception("")
 			finally:
 				if temp_path.exists():
-					log("dbg", f'Cleaning up "{temp_path}"')
+					logger.debug(f'Cleaning up "{temp_path}"')
 					dl.cleanup()
-	log("log", f"Done ({error_count} error(s))")
-
-def runtime(*args, **kwargs):
+	logger.info(f"Done ({error_count} error(s))")
 

@@ -1,47 +1,57 @@
-import logging
-from typing import Literal
+# import datetime
+import json
 
-LogPurpose = Literal["log", "dbg", "err", "dlprog", "dlstart", "dlend"]
+from websocket_server import WebsocketServer
 
-def local_logger_factory(loglevel: Literal["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"] | str = "INFO"):
-	logging.basicConfig(format="[%(levelname)-8s %(asctime)s] %(message)s", datefmt="%H:%M:%S")
-	logger = logging.getLogger(__name__)
-	logger.setLevel(loglevel)
+WSHOST = "localhost"
+WSPORT = 8765
 
-	def local_logger(purpose: LogPurpose, message, **kwargs):
-		match purpose:
-			case "log":
-				logger.info(msg=message, **kwargs)
-			case "dbg":
-				logger.debug(msg=message, **kwargs)
-			case "err":
-				logger.critical(msg=message, **kwargs)
-			case "dlprog" | "dlstart" | "dlend":
-				logger.info(msg=message, **kwargs)
-			case _:
-				logger.warning(msg=f"Unknown purpose: {purpose}", **kwargs)
-	return local_logger
+global c,s
 
-def websocket_logger_factory(server):
-	def websocket_logger(purpose: LogPurpose, data, **kwargs):
-		default_message = {"type": "info"}
-		full_message = {**default_message, "data": data}
+def send(server: WebsocketServer, data):
+	server.send_message_to_all(json.dumps(data))
+
+# async def send_heartbeat():
+# 	while True:
+# 		send(s, datetime.datetime.utcnow().isoformat())
+# 		await asyncio.sleep(3)
+
+# async def capture_incoming():
+# 	while True:
+# 		data = c.recv(WSPORT)
+# 		if data:
+# 			print(data)
+# 			data = ""
+	
+
+# async def new_client(client, server: WebsocketServer):
+# 	print("client connected", client["id"])
+# 	global c
+# 	global s
+# 	c = client
+# 	s = server
+# 	while True:
+# 		await asyncio.gather(send_heartbeat(), capture_incoming())
+	
+def message_received(client, server, message):
+    if len(message) > 200:
+        message = message[:200]+"..."
+    print(f"Client({client["id"]}) said: {message}")
+	
+def nclient(client, server: WebsocketServer):
+	print("new client joined:", client["id"])
+	send(server, json.dumps(f"hello from server! you are client {client["id"]}"))
+
+def lclient(client, server: WebsocketServer):
+	print(f"client {client["id"]} disconnected")
 		
-		match purpose:
-			case "log":
-				server.send_message_to_all(full_message)
-			case "dbg":
-				server.send_message_to_all({**default_message, "type": "debug", "data": data})
-			case "err":
-				server.send_message_to_all({**default_message, "type": "critical", "data": data})
-			case "dlprog":
-				server.send_message_to_all({**full_message, "type": "progress"})
-			case "dlstart":
-				server.send_message_to_all({**full_message, "type": "start"})
-			case "dlend":
-				server.send_message_to_all({**full_message, "type": "end"})
-			case _:
-				print(f"Unknown purpose: {purpose}")
 
-	return websocket_logger
+def server():
+	server = WebsocketServer(host=WSHOST, port=WSPORT)
+	print(f"created websocket server on ws://{WSHOST}:{WSPORT}")
+	print("waiting for atleast one client")
 
+	server.set_fn_new_client(nclient)
+	server.set_fn_client_left(lclient)
+	server.set_fn_message_received(message_received)
+	server.run_forever()

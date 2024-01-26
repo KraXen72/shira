@@ -1,4 +1,3 @@
-# import datetime
 import json
 
 from websocket_server import WebsocketServer
@@ -10,28 +9,6 @@ global c,s
 
 def send(server: WebsocketServer, data):
 	server.send_message_to_all(json.dumps(data))
-
-# async def send_heartbeat():
-# 	while True:
-# 		send(s, datetime.datetime.utcnow().isoformat())
-# 		await asyncio.sleep(3)
-
-# async def capture_incoming():
-# 	while True:
-# 		data = c.recv(WSPORT)
-# 		if data:
-# 			print(data)
-# 			data = ""
-	
-
-# async def new_client(client, server: WebsocketServer):
-# 	print("client connected", client["id"])
-# 	global c
-# 	global s
-# 	c = client
-# 	s = server
-# 	while True:
-# 		await asyncio.gather(send_heartbeat(), capture_incoming())
 	
 def message_received(client, server, message):
     if len(message) > 200:

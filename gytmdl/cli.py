@@ -10,6 +10,11 @@ from .dl import Dl
 from .metadata import get_mbids_for_song, smart_metadata
 from .tagging import tagger_mp4
 
+logging.basicConfig(
+	format="[%(levelname)-8s %(asctime)s] %(message)s",
+	datefmt="%H:%M:%S",
+)
+
 EXCLUDED_PARAMS = ("urls", "config_location", "url_txt", "no_config_file", "version", "help")
 
 
@@ -78,7 +83,6 @@ def cli(
 	url_txt: bool,
 	no_config_file: bool,
 ):
-	logging.basicConfig(format="[%(levelname)-8s %(asctime)s] %(message)s", datefmt="%H:%M:%S")
 	logger = logging.getLogger(__name__)
 	logger.setLevel(log_level)
 	if not shutil.which(str(ffmpeg_location)):

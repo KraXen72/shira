@@ -287,7 +287,12 @@ def clean_title(title: str):
 	return title.replace("_", "-").strip()
 
 def check_artist_match(artist: str, a_dict: MBArtist):
-	return artist == a_dict["name"] or artist.lower() == a_dict["name"].lower() or artist == a_dict["sort-name"] or artist.lower() == a_dict["sort-name"].lower()
+	return artist == a_dict["name"] or artist.lower() == a_dict["name"].lower() \
+		or artist == a_dict["sort-name"] or artist.lower() == a_dict["sort-name"].lower()
+
+def check_album_match(album: str, r_dict: MBRelease):
+	return album == r_dict["title"] or album.replace("(Single)", "").strip() == r_dict["title"] \
+		or album.lower() == r_dict["title"].lower() or album.replace("(Single)", "").strip().lower() == r_dict["title"].lower()
 	
 
 class MBSong:
@@ -342,7 +347,8 @@ class MBSong:
 			# skip entries with missing album or artist
 			if ("artist-credit" not in t) or (len(t["artist-credit"]) == 0) or ("releases" not in t) or (len(t["releases"]) == 0):
 				continue
-			title_matches = t["title"] == self.title
+
+			title_match = t["title"] == self.title
 			artist_match = False
 			album_match = False
 			
@@ -353,12 +359,13 @@ class MBSong:
 					artist_match = True
 					break
 			for a in t["releases"]:
-				if a["title"] == self.album:
+				if check_album_match(self.album, a):
 					self.album_mbid = a["release-group"]["id"]
 					self.album_dict = a
 					album_match = True
 					break
-			if title_matches and artist_match and album_match:
+
+			if title_match and artist_match and album_match:
 				self.song_mbid = t["id"]
 				self.song_dict = t
 				break
@@ -377,10 +384,9 @@ class MBSong:
 	def get_mbid_tags(self):
 		"""get mbid tags with proper keys"""
 
-		f = open("rec.json", "w", encoding="utf8")
-		json.dump(self.album_dict, f, indent=4, ensure_ascii=False)
-		f.close()
-		
+		# f = open("rec.json", "w", encoding="utf8")
+		# json.dump(self.album_dict, f, indent=4, ensure_ascii=False)
+		# f.close()
 		
 		return {
 			"track_mbid": self.song_mbid,
@@ -389,14 +395,18 @@ class MBSong:
 			"album_artist_mbid": self.artist_mbid
 		}
 
-def get_mbids_for_song(tags: Tags):
+def get_mbids_for_song(tags: Tags, do_encode = True):
 	"""takes in a tags dict, adds mbid tags to it, returns it"""
 	mb = MBSong(title=tags["title"], artist=tags["artist"], album=tags["album"])
 	mb.fetch_song()
+	
 	for key, tag in mb.get_mbid_tags().items():
 		if tag is not None:
-			tags[key] = tag.encode("utf-8")
-
+			if do_encode is False:
+				tags[key] = tag
+			else:
+				tags[key] = tag.encode("utf-8")
+	
 	return tags
 
 	

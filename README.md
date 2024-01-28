@@ -3,9 +3,10 @@ Download YouTube Music songs/albums/playlists with tags from YouTube Music in 25
 This fork adds several new features as well as many song tagging improvements.
 
 ## New Features
+- Soundcloud support
+- WebUI based on WebSockers (WIP/alpha)
 - GUI to crop thumbnail for non-music videos (planned)
 - GUI to confirm tags for non-music videos (planned)
-- Soundcloud support (less tags) (planned)
 
 ## Tagging improvements
 - uses video's `upload_date` for more precise release date when possible
@@ -74,6 +75,10 @@ The following itags are available:
 - `140` (128kbps AAC) - default, because it's the result of `bestaudio/best` on a free account
 - `141` (256kbps AAC) - use if you have premium alongside `--cookies location`
 - `251` (128kbps Opus) - most stuff will error with `Failed to check URL 1/1`. Better to use `140`
+  
+SoundCloud will (for now) always download in 128kbps MP3
+> SoundCloud also offers OPUS, however, [some people were complaining](https://www.factmag.com/2018/01/04/soundcloud-mp3-opus-format-sound-quality-change-64-128-kbps/) that the quality is worse
+> These are questionable claims at best, but better safe than sorry. SoundCloud OPUS support might come later.
 
 ### Cover formats
 Can be either `jpg` or `png`.

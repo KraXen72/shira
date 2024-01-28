@@ -8,7 +8,7 @@ import click
 from . import __version__
 from .dl import Dl
 from .metadata import get_mbids_for_song, smart_metadata
-from .tagging import tagger_mp4
+from .tagging import tagger_m4a, tagger_mp3
 
 logging.basicConfig(
 	format="[%(levelname)-8s %(asctime)s] %(message)s",
@@ -130,19 +130,26 @@ def cli(
 					tags = dl.get_tags(ytmusic_watch_playlist, track)
 				# logger.debug("tags before mbid", json.dumps(tags))
 				# print("title", tags["title"], "album", tags["album"], track["url"])
-				tags = get_mbids_for_song(tags)
+				tags = get_mbids_for_song(tags, not dl.soundcloud)
 				# logger.debug("tags after mbid", json.dumps(tags))
-				final_location = dl.get_final_location(tags)
+				final_location = dl.get_final_location(tags, ".mp3" if dl.soundcloud is True else ".m4a")
 				logger.debug(f'Final location is "{final_location}"')
+				temp_location = dl.get_temp_location(track["id"])	
 				if not final_location.exists() or overwrite:
-					temp_location = dl.get_temp_location(track["id"])
 					logger.debug(f'Downloading to "{temp_location}"')
-					dl.download(track["id"], temp_location)
+					if dl.soundcloud is False:
+						dl.download(track["id"], temp_location)
+					else:
+						dl.download_souncloud(track.get("original_url") or track["webpage_url"], temp_location)
+					
 					fixed_location = dl.get_fixed_location(track["id"])
 					logger.debug(f'Remuxing to "{fixed_location}"')
 					dl.fixup(temp_location, fixed_location)
 					logger.debug("Applying tags")
-					tagger_mp4(tags, fixed_location, dl.exclude_tags, dl.cover_format)
+					if dl.soundcloud is False:
+						tagger_m4a(tags, fixed_location, dl.exclude_tags, dl.cover_format)
+					else:
+						tagger_mp3(tags, fixed_location, dl.exclude_tags, dl.cover_format)
 					logger.debug("Moving to final location")
 					dl.move_to_final_location(fixed_location, final_location)
 				else:

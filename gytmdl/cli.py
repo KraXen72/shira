@@ -125,7 +125,7 @@ def cli(
 					tag_track = track
 					if "webpage_url_domain" not in track:
 						tag_track = dl.get_ydl_extract_info(track["url"])
-					tags = smart_metadata(tag_track)
+					tags = smart_metadata(tag_track, temp_path, "JPEG" if dl.cover_format == "jpg" else "PNG")
 				else:
 					tags = dl.get_tags(ytmusic_watch_playlist, track)
 				# logger.debug("tags before mbid", json.dumps(tags))

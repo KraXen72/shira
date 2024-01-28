@@ -1,12 +1,14 @@
 import datetime
 import json
+import random
 import re
 from collections import Counter
+from pathlib import Path
 from typing import TypedDict
 
 import requests
 
-from .tagging import Tags
+from .tagging import Tags, get_cover_with_padding
 
 # this file parses the extract_info object provided by yt_dlp for informations
 # grabs as much info as it can from all over the place: yt music tags, channel name, video title, description and other fields
@@ -161,7 +163,7 @@ def soundcloud_extractor(info):
 	# TODO finish soundcloud extractor
 	return add_values
 
-def smart_metadata(info):
+def smart_metadata(info, temp_location: Path, cover_format = "JPEG"):
 	"""
 	grabs as much info as it can from all over the place
 	gets the most likely tag and returns a dict
@@ -176,7 +178,8 @@ def smart_metadata(info):
 		"track_total": 1,
 		"release_year": "",
 		"release_date": "",
-		"cover_url": info["thumbnail"]
+		"cover_url": info["thumbnail"],
+		"cover_1x1": get_cover_with_padding(info["thumbnail"], temp_location, info.get("id") or clean_title(info.get("title")) or str(random.randint(0, 9) * "16"), cover_format)
 	}
 	md_keys = { "title": [], "artist": [], "album_artist": [], "album": [], "year": [], } # keys to check from the 'info object'. site specific.
 	add_values = { "title": [], "artist": [], "album_artist": [], "album": [], "year": [], }
@@ -269,17 +272,22 @@ def get_year(track: dict[str, str | int], ytmusic_album: dict[str, str | int]):
 			
 	return release_year, release_date
 
+bracket_tuples =[["[", "]"], ["(", ")"], ["【", "】"], ["「", "」"]]
+title_banned_chars = ["♪"]
+
 def clean_title(title: str):
 	"""do you love regex?"""
 
-	brackets =[["[", "]"], ["(", ")"], ["【", "】"], ["「", "」"]]
-	for lb, rb in brackets: 
+	for lb, rb in bracket_tuples: 
 		lbe, rbe = re.escape(lb), re.escape(rb) # check for all matching variations of brackets
 		for m in re.finditer(rf"{lbe}([^{lbe}{rbe}]+){rbe}", title):
 			subs = "" # preserve info about a song cover or it's japanese title
 			if "cover" in m.group(0).lower() or re.match(r"^[一-龠]+|[ぁ-ゔ]+|[ァ-ヴー]+|[々〆〤ヶ]+|\s+$", m.group(1)) is not None:
 				subs = f"[{m.group(1)}]"
 			title = title.replace(m.group(0), subs)
+	
+	for ch in title_banned_chars:
+		title = title.replace(ch, "")
 	
 	# title = title.replace("by {artist}", "")
 	title = re.sub(r"(\S)\[", r"\g<1>" + " [", title, flags=re.MULTILINE) # jap title whitespace fix

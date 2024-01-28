@@ -1,11 +1,13 @@
 from __future__ import annotations
 
 import functools
+from io import BytesIO
 from pathlib import Path
 
 import requests
 from mutagen.id3 import ID3, Frames
 from mutagen.mp4 import MP4, MP4Cover
+from PIL import Image, ImageOps
 from typing_extensions import NotRequired, TypedDict  # noqa: UP035
 
 
@@ -19,6 +21,7 @@ class Tags(TypedDict):
 	release_year: str
 	release_date: str
 	cover_url: str
+	cover_1x1: NotRequired[bytes]
 	rating: NotRequired[int]
 	comment: NotRequired[str]
 	lyrics: NotRequired[str]
@@ -84,12 +87,13 @@ def tagger_mp3(tags: Tags, fixed_location: Path, exclude_tags: list[str], cover_
 		mp3.add(Frames["TRCK"](encoding=3, text=f"{tags["track"]}/{tags["track_total"]}"))
 
 	if "cover" not in exclude_tags:
+		cover_bytes = tags.get("cover_1x1") or get_cover(tags["cover_url"])
 		mp3.add(Frames["APIC"](
 			encoding=3, 
 			mime="image/jpeg" if cover_format == "jpg" else "image/png",
 			type=3,
 			desc="Cover",
-			data=get_cover(tags["cover_url"])
+			data=cover_bytes
 		))
 
 	mp3.add(Frames["TPOS"](encoding=3, text="1/1"))
@@ -105,8 +109,9 @@ def tagger_m4a(tags: Tags, fixed_location: Path, exclude_tags: list[str], cover_
 	if not {"track", "track_total"} & set(exclude_tags):
 		mp4_tags["trkn"] = [[0, 0]]
 	if "cover" not in exclude_tags:
+		cover_bytes = tags.get("cover_1x1") or get_cover(tags["cover_url"])
 		mp4_tags["covr"] = [
-			MP4Cover(get_cover(tags["cover_url"]), imageformat=MP4Cover.FORMAT_JPEG if cover_format == "jpg" else MP4Cover.FORMAT_PNG)
+			MP4Cover(cover_bytes, imageformat=MP4Cover.FORMAT_JPEG if cover_format == "jpg" else MP4Cover.FORMAT_PNG)
 		]
 	if "track" not in exclude_tags:
 		mp4_tags["trkn"][0][0] = tags["track"]
@@ -123,3 +128,37 @@ def tagger_m4a(tags: Tags, fixed_location: Path, exclude_tags: list[str], cover_
 @functools.lru_cache
 def get_cover(url):
 	return requests.get(url).content
+
+def get_dominant_color(pil_img):
+    img = pil_img.copy()
+    img = img.convert("RGBA")
+    img = img.resize((1, 1), resample=0)
+    dominant_color = img.getpixel((0, 0))
+    return dominant_color
+
+def get_cover_with_padding(url: str, temp_location: Path, uniqueid: str, cover_format = "JPEG"):
+	image_bytes = requests.get(url).content
+	image = Image.open(BytesIO(image_bytes))
+
+	width, height = image.size
+	aspect_ratio = width / height
+
+	if aspect_ratio == 1:
+		return image_bytes
+	
+	# if temp_location.is_dir() is False:
+	# 	os.mkdir(temp_location)
+
+	# temp_path = temp_location / f"{uniqueid}.{cover_format.lower()}"
+	# with open(temp_path, "wb") as temp_file:
+	# 	temp_file.write(image_bytes)
+
+	dominant_color = get_dominant_color(image)
+	width, height = image.size
+	padded_image = ImageOps.pad(image, (width, width), color=dominant_color, centering=(0.5, 0.5))
+
+	output_bytes = BytesIO()
+	padded_image.save(output_bytes, format=cover_format)
+	output_bytes.seek(0)
+
+	return output_bytes.read()

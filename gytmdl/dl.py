@@ -21,7 +21,7 @@ class Dl:
 		final_path: Path,
 		temp_path: Path,
 		cookies_location: Path,
-		ffmpeg_location: str,
+		ffmpeg_location: Path,
 		itag: str,
 		cover_size: int,
 		cover_format: str,

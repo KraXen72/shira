@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import functools
+import os
 from io import BytesIO
 from pathlib import Path
 
@@ -21,7 +22,7 @@ class Tags(TypedDict):
 	release_year: str
 	release_date: str
 	cover_url: str
-	cover_1x1: NotRequired[bytes]
+	cover_bytes: NotRequired[bytes]
 	rating: NotRequired[int]
 	comment: NotRequired[str]
 	lyrics: NotRequired[str]
@@ -87,7 +88,7 @@ def tagger_mp3(tags: Tags, fixed_location: Path, exclude_tags: list[str], cover_
 		mp3.add(Frames["TRCK"](encoding=3, text=f"{tags["track"]}/{tags["track_total"]}"))
 
 	if "cover" not in exclude_tags:
-		cover_bytes = tags.get("cover_1x1") or get_cover(tags["cover_url"])
+		cover_bytes = tags.get("cover_bytes") or get_cover(tags["cover_url"])
 		mp3.add(Frames["APIC"](
 			encoding=3, 
 			mime="image/jpeg" if cover_format == "jpg" else "image/png",
@@ -109,7 +110,7 @@ def tagger_m4a(tags: Tags, fixed_location: Path, exclude_tags: list[str], cover_
 	if not {"track", "track_total"} & set(exclude_tags):
 		mp4_tags["trkn"] = [[0, 0]]
 	if "cover" not in exclude_tags:
-		cover_bytes = tags.get("cover_1x1") or get_cover(tags["cover_url"])
+		cover_bytes = tags.get("cover_bytes") or get_cover(tags["cover_url"])
 		mp4_tags["covr"] = [
 			MP4Cover(cover_bytes, imageformat=MP4Cover.FORMAT_JPEG if cover_format == "jpg" else MP4Cover.FORMAT_PNG)
 		]
@@ -130,11 +131,23 @@ def get_cover(url):
 	return requests.get(url).content
 
 def get_dominant_color(pil_img):
-    img = pil_img.copy()
-    img = img.convert("RGBA")
-    img = img.resize((1, 1), resample=0)
-    dominant_color = img.getpixel((0, 0))
-    return dominant_color
+	img = pil_img.copy()
+	img = img.convert("RGBA")
+	img = img.resize((1, 1), resample=0)
+	dominant_color = img.getpixel((0, 0))
+	return dominant_color
+
+def get_cover_local(file_path: Path, id_or_url: str, is_soundcloud: bool):
+	if file_path.is_file():
+		return file_path.read_bytes()
+	elif file_path.is_dir():
+		for filename in os.listdir(file_path):
+			fp = file_path / filename
+			if (not fp.is_file()) or (fp.suffix.lower() not in [".jpg", ".jpeg", ".png"]):
+				continue
+			if (is_soundcloud and id_or_url.split("/")[-1] == fp.stem) or (is_soundcloud is False and id_or_url == fp.stem):
+				return fp.read_bytes()
+	return None
 
 def get_cover_with_padding(url: str, temp_location: Path, uniqueid: str, cover_format = "JPEG"):
 	image_bytes = requests.get(url).content

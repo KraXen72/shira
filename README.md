@@ -11,6 +11,7 @@ This fork adds several new features as well as many song tagging improvements.
 ## Tagging improvements
 - uses video's `upload_date` for more precise release date when possible
 - uses my custom smart-metadata system from [tiger](https://github.com/KraXen72/tiger) for non-music videos
+  - video thumbnails get padded to 1:1 aspect ratio with image's dominant color
 - tries to resolve MusicBrainz ID's from their api 
   - `track`, `album`, `artist`, `albumartist` ids, falls back to `artist`, `albumartist` (sometimes artist existst in MusicBrainz DB but song doesen't)
 - cleans up crazy titles into more reasonable ones:
@@ -59,6 +60,7 @@ gytmdl can be configured using the command line arguments or the config file. Th
 | `--cover-size` / `cover_size` | Size of the cover.  [0<=x<=16383] | `1200` |
 | `--cover-format` / `cover_format` | Format of the cover. | `jpg` |
 | `--cover-quality` / `cover_quality` | JPEG quality of the cover.  [1<=x<=100] | `94` |
+| `--cover-img` / `cover_img` | Path to image or folder of images named video/song id  | `null` |
 | `--template-folder` / `template_folder` | Template of the album folders as a format string. | `{album_artist}/{album}` |
 | `--template-file` / `template_file` | Template of the song files as a format string. | `{track:02d} {title}` |
 | `-e`, `--exclude-tags` / `exclude_tags` | List of tags to exclude from file tagging separated by commas without spaces. | `null` |
@@ -82,6 +84,13 @@ SoundCloud will (for now) always download in 128kbps MP3
 
 ### Cover formats
 Can be either `jpg` or `png`.
+
+### Cover img
+- If you pass in a path to an image file, it will get used for all of the songs you're currently downloading.
+- If you pass in a path to a folder, the script will look in the folder and use the first image matching the song/video id and of jpeg/png format as a cover
+  - You don't have to create covers for all songs in the playlist/album/etc. you're downloading.
+  - SoundCloud will also consider images based on the URL slug
+    - for example: `https://soundcloud.com/yatashi-gang-63564467/lovely-bastards-yatashigang` => `lovely-bastards-yatashigang.jpg/png`
 
 ### Tag variables
 The following variables can be used in the template folder/file and/or in the `exclude_tags` list:

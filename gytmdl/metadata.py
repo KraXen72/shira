@@ -57,10 +57,16 @@ def parse_date(datestring):
 			# TODO change to ints, use in get_year
 			return { "year": datestring[0:4], "month": datestring[4:6], "day": datestring[6:8] }
 
-def dash_split(string, obj):
-	split_title = string.split(" - ")
-	obj["artist"].append(split_title[0])
-	obj["title"].append(split_title[1])
+def dash_split(info, title_key: str,  obj):
+	split_title = info[title_key].split(" - ")
+
+	if "animatic" in info[title_key].lower():
+		obj["artist"].append(info["channel"])
+		obj["title"].append(split_title[0] if "animatic" in split_title[1].lower() else split_title[0])
+	else:
+		obj["artist"].append(split_title[0])
+		obj["title"].append(split_title[1])
+	
 	return obj
 
 def get_most_likely_tag(list_of_keys: list[str], data_obj: dict, additional_values: list[str]):
@@ -121,10 +127,9 @@ def youtube_extractor(info):
 
 	# video title is: Artist - Title format
 	if info["title"].count(" - ") == 1:
-		add_values = dash_split(info["title"], add_values)
-
+		add_values = dash_split(info, "title", add_values)
 	if info["fulltitle"].count(" - ") == 1:
-		add_values = dash_split(info["title"], add_values)
+		add_values = dash_split(info, "fulltitle", add_values)
 
 	# channel is: Artist - Topic
 	if info["uploader"].endswith(" - Topic"):
@@ -179,7 +184,7 @@ def smart_metadata(info, temp_location: Path, cover_format = "JPEG"):
 		"release_year": "",
 		"release_date": "",
 		"cover_url": info["thumbnail"],
-		"cover_1x1": get_cover_with_padding(info["thumbnail"], temp_location, info.get("id") or clean_title(info.get("title")) or str(random.randint(0, 9) * "16"), cover_format)
+		"cover_bytes": get_cover_with_padding(info["thumbnail"], temp_location, info.get("id") or clean_title(info.get("title")) or str(random.randint(0, 9) * "16"), cover_format)
 	}
 	md_keys = { "title": [], "artist": [], "album_artist": [], "album": [], "year": [], } # keys to check from the 'info object'. site specific.
 	add_values = { "title": [], "artist": [], "album_artist": [], "album": [], "year": [], }
@@ -233,6 +238,9 @@ def smart_metadata(info, temp_location: Path, cover_format = "JPEG"):
 
 	md["album"], others["album"] = get_most_likely_tag(md_keys["album"], info, add_values["album"])
 	tdate, others["year"] = get_most_likely_tag(md_keys["year"], info, add_values["year"])
+
+	print(others)
+	print({**md, "cover_bytes": ""})
 
 	if isinstance(tdate, str):
 		md["release_year"] = tdate

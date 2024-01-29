@@ -90,7 +90,7 @@ Can be either `jpg` or `png`.
 - If you pass in a path to a folder, the script will look in the folder and use the first image matching the song/video id and of jpeg/png format as a cover
   - You don't have to create covers for all songs in the playlist/album/etc. you're downloading.
   - SoundCloud will also consider images based on the URL slug
-    - for example: `https://soundcloud.com/yatashi-gang-63564467/lovely-bastards-yatashigang` => `lovely-bastards-yatashigang.jpg/png`
+    - for example: `https://soundcloud.com/yatashi-gang-63564467/lovely-bastards-yatashigang` => `lovely-bastards-yatashigang.jpg` or `.png`
 
 ### Tag variables
 The following variables can be used in the template folder/file and/or in the `exclude_tags` list:

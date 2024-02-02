@@ -94,9 +94,10 @@ The following itags are available:
 - `141` (256kbps AAC) - use if you have premium alongside `--cookies location`
 - `251` (128kbps Opus) - most stuff will error with `Failed to check URL 1/1`. Better to use `140`
   
-SoundCloud will (for now) always download in 128kbps MP3
+SoundCloud will always download in 128kbps MP3
 > SoundCloud also offers OPUS, however, [some people were complaining](https://www.factmag.com/2018/01/04/soundcloud-mp3-opus-format-sound-quality-change-64-128-kbps/) that the quality is worse  
-> These are questionable claims at best, but better safe than sorry. SoundCloud OPUS support might come later.  
+> [These are questionable claims](https://old.reddit.com/r/Techno/comments/bzodax/soundcloud_compression_128kbps_mp3_vs_64_kbps/) at best, but better safe than sorry.  
+> SoundCloud OPUS support might come later.  
 
 ### Cover formats
 Can be either `jpg` or `png`.

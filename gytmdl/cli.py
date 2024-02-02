@@ -125,7 +125,7 @@ def cli(
 			download_queue.append(dl.get_download_queue(url))
 		except Exception:
 			logger.error(f"Failed to check URL {i + 1}/{len(urls)}", exc_info=print_exceptions)
-			logging.exception("")
+			# logging.exception("")
 	error_count = 0
 	for i, url in enumerate(download_queue):
 		for j, track in enumerate(url):

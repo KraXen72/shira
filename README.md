@@ -6,9 +6,10 @@ This fork adds several new features as well as many song tagging improvements.
 - Downloading from Soundcloud supported
 - Downloading of non-music youtube videos as music supported
 - Added more cli options & flags
-- WebUI based on WebSockers (WIP/alpha)
-- GUI to crop thumbnail for non-music videos (planned)
-- GUI to confirm tags for non-music videos (planned)
+- planned/wip
+  - WebUI based on WebSockers (WIP/alpha)
+  - GUI to crop thumbnail for non-music videos
+  - GUI to confirm tags for non-music videos
 
 ## Tagging improvements
 - uses video's `upload_date` for more precise release date when possible
@@ -109,16 +110,19 @@ Can be either `jpg` or `png`.
 
 ### Tag variables
 The following variables can be used in the template folder/file and/or in the `exclude_tags` list:
+
+- `title`
 - `album`
-- `album_artist`
 - `artist`
-- `comment`
+- `album_artist`
+- `track`
+- `track_total`
+- `release_year`
+- `release_date`
 - `cover`
+- `comment`
 - `lyrics`
 - `media_type`
 - `rating`
-- `release_date`
-- `release_year`
-- `title`
 - `track`
 - `track_total`

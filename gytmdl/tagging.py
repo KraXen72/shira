@@ -141,6 +141,10 @@ def get_dominant_color(pil_img):
 	return dominant_color
 
 def get_cover_local(file_path: Path, id_or_url: str, is_soundcloud: bool):
+	"""
+	reads a local image as bytes.  
+	if given a directory, finds the matching image by filename stem matching id_or_url
+	"""
 	if file_path.is_file():
 		return file_path.read_bytes()
 	elif file_path.is_dir():
@@ -152,9 +156,14 @@ def get_cover_local(file_path: Path, id_or_url: str, is_soundcloud: bool):
 				return fp.read_bytes()
 	return None
 
-# TODO use this
-def determine_crop_method(image_path: str):
-	pil_img = Image.open(image_path)
+def determine_image_crop(image_bytes: bytes):
+	"""
+	samples 4 pixels from the corners of an image (smoothed and reduced to 64 colors)
+
+	returns crop if average of standard deviation of r, g and b color channels 
+	from each sample point is lower than a than a treshold, otherwise returns pad
+	"""
+	pil_img = Image.open(BytesIO(image_bytes))
 	filt_image = pil_img.filter(ImageFilter.SMOOTH).convert("P", palette=Image.ADAPTIVE, colors=64)
 	rgb_filt_image = filt_image.convert("RGB")
 	
@@ -172,8 +181,6 @@ def determine_crop_method(image_path: str):
 	for sx, sy in sample_regions:
 		r, g, b = rgb_filt_image.getpixel((sx, sy))
 		sample_colors.append((r, g, b))
-		# print(terminal_rgb(r, g, b) + "__________" + RESET)
-	# print(sample_colors)
 
 	reds, greens, blues = [], [], []
 	for r,g,b in sample_colors:
@@ -189,17 +196,11 @@ def determine_crop_method(image_path: str):
 	# print("average:", avg_dev, "colors:", dev_red, dev_green, dev_blue)
 
 	if avg_dev < AVG_THRESHOLD and dev_red < CHANNEL_THRESHOLD and dev_green < CHANNEL_THRESHOLD and dev_blue < CHANNEL_THRESHOLD:
-		width, height = pil_img.size
-		img_half = round(width / 2)
-		rect_half = round(height / 2)
-		cropped_image = pil_img.crop((img_half - rect_half, 0, img_half + rect_half, height))
-		return cropped_image
+		return "crop"
 	else:
-		average_color = tuple(int(sum(channel) // len(channel)) for channel in zip(*sample_colors, strict=False))
-		padded_image = ImageOps.pad(pil_img, (width, width), color=average_color, centering=(0.5, 0.5))
-		return padded_image
+		return "pad"
 
-def get_cover_with_padding(url: str, temp_location: Path, uniqueid: str, cover_format = "JPEG", cover_crop_method = "auto"):
+def get_1x1_cover(url: str, temp_location: Path, uniqueid: str, cover_format = "JPEG", cover_crop_method = "auto"):
 	image_bytes = requests.get(url).content
 	pil_img = Image.open(BytesIO(image_bytes))
 
@@ -208,24 +209,19 @@ def get_cover_with_padding(url: str, temp_location: Path, uniqueid: str, cover_f
 
 	if aspect_ratio == 1:
 		return image_bytes
-	
-	# if temp_location.is_dir() is False:
-	# 	os.mkdir(temp_location)
-
-	# temp_path = temp_location / f"{uniqueid}.{cover_format.lower()}"
-	# with open(temp_path, "wb") as temp_file:
-	# 	temp_file.write(image_bytes)
 
 	width, height = pil_img.size
 
-	# for now, auto defaults to pad
-	if cover_crop_method == "auto" or cover_crop_method == "pad": 
-		dominant_color = get_dominant_color(pil_img)
-		pil_img = ImageOps.pad(pil_img, (width, width), color=dominant_color, centering=(0.5, 0.5))
-	elif cover_crop_method == "crop":
+	if cover_crop_method == "auto":
+		cover_crop_method = determine_image_crop(image_bytes)
+	
+	if cover_crop_method == "crop":
 		img_half = round(width / 2)
 		rect_half = round(height / 2)
 		pil_img = pil_img.crop((img_half - rect_half, 0, img_half + rect_half, height))
+	else:
+		dominant_color = get_dominant_color(pil_img)
+		pil_img = ImageOps.pad(pil_img, (width, width), color=dominant_color, centering=(0.5, 0.5))
 
 	output_bytes = BytesIO()
 	pil_img.save(output_bytes, format=cover_format)

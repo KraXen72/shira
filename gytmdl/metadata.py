@@ -8,7 +8,7 @@ from typing import TypedDict
 
 import requests
 
-from .tagging import Tags, get_cover_with_padding
+from .tagging import Tags, get_1x1_cover
 
 # this file parses the extract_info object provided by yt_dlp for informations
 # grabs as much info as it can from all over the place: yt music tags, channel name, video title, description and other fields
@@ -184,7 +184,7 @@ def smart_metadata(info, temp_location: Path, cover_format = "JPEG", cover_crop_
 		"release_year": "",
 		"release_date": "",
 		"cover_url": info["thumbnail"],
-		"cover_bytes": get_cover_with_padding(
+		"cover_bytes": get_1x1_cover(
 			info["thumbnail"], 
 			temp_location, 
 			info.get("id") or clean_title(info.get("title")) or str(random.randint(0, 9) * "16"), 

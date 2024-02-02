@@ -50,6 +50,7 @@ def no_config_callback(ctx: click.Context, param: click.Parameter, no_config_fil
 @click.option("--cover-format", type=click.Choice(["jpg", "png"]), default="jpg", help="Format of the cover.")
 @click.option("--cover-quality", type=click.IntRange(1, 100), default=94, help="JPEG quality of the cover.")
 @click.option("--cover-img", type=Path, default=None, help="Path to image or folder of images named video/song id")
+@click.option("--cover-crop", type=click.Choice(["auto", "crop", "pad"]), default="auto", help="'crop' takes a 1:1 square from the center, pad always pads top & bottom")
 @click.option("--template-folder", type=str, default="{album_artist}/{album}", help="Template of the album folders as a format string.")
 @click.option("--template-file", type=str, default="{track:02d} {title}", help="Template of the song files as a format string.")
 @click.option("--exclude-tags", "-e", type=str, default=None, help="List of tags to exclude from file tagging separated by commas without spaces.")
@@ -74,6 +75,7 @@ def cli(
 	cover_format: str,
 	cover_quality: int,
 	cover_img: Path,
+	cover_crop: str,
 	template_folder: str,
 	template_file: str,
 	exclude_tags: str,
@@ -139,7 +141,7 @@ def cli(
 					tag_track = track
 					if "webpage_url_domain" not in track:
 						tag_track = dl.get_ydl_extract_info(track["url"])
-					tags = smart_metadata(tag_track, temp_path, "JPEG" if dl.cover_format == "jpg" else "PNG")
+					tags = smart_metadata(tag_track, temp_path, "JPEG" if dl.cover_format == "jpg" else "PNG", cover_crop)
 				else:
 					tags = dl.get_tags(ytmusic_watch_playlist, track)
 				tags = get_mbids_for_song(tags, not dl.soundcloud)

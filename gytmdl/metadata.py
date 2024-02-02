@@ -168,7 +168,7 @@ def soundcloud_extractor(info):
 	# TODO finish soundcloud extractor
 	return add_values
 
-def smart_metadata(info, temp_location: Path, cover_format = "JPEG"):
+def smart_metadata(info, temp_location: Path, cover_format = "JPEG", cover_crop_method = "auto"):
 	"""
 	grabs as much info as it can from all over the place
 	gets the most likely tag and returns a dict
@@ -184,7 +184,13 @@ def smart_metadata(info, temp_location: Path, cover_format = "JPEG"):
 		"release_year": "",
 		"release_date": "",
 		"cover_url": info["thumbnail"],
-		"cover_bytes": get_cover_with_padding(info["thumbnail"], temp_location, info.get("id") or clean_title(info.get("title")) or str(random.randint(0, 9) * "16"), cover_format)
+		"cover_bytes": get_cover_with_padding(
+			info["thumbnail"], 
+			temp_location, 
+			info.get("id") or clean_title(info.get("title")) or str(random.randint(0, 9) * "16"), 
+			cover_format, 
+			cover_crop_method
+		)
 	}
 	md_keys = { "title": [], "artist": [], "album_artist": [], "album": [], "year": [], } # keys to check from the 'info object'. site specific.
 	add_values = { "title": [], "artist": [], "album_artist": [], "album": [], "year": [], }
@@ -211,7 +217,7 @@ def smart_metadata(info, temp_location: Path, cover_format = "JPEG"):
 			add_values = soundcloud_extractor(info)
 		case _:
 			if domain != "youtube.com":
-				print("[warning] unsupported domain:", domain, "using youtube extractor as fallback.")
+				print("[warning] unsupported domain:", str(domain), "using youtube extractor as fallback.")
 			md_keys = {
 				"title": ["title", "track", "alt_title"],
 				"artist": ["artist", "channel", "creator"],
@@ -239,8 +245,8 @@ def smart_metadata(info, temp_location: Path, cover_format = "JPEG"):
 	md["album"], others["album"] = get_most_likely_tag(md_keys["album"], info, add_values["album"])
 	tdate, others["year"] = get_most_likely_tag(md_keys["year"], info, add_values["year"])
 
-	print(others)
-	print({**md, "cover_bytes": ""})
+	# print(others)
+	# print({**md, "cover_bytes": ""})
 
 	if isinstance(tdate, str):
 		md["release_year"] = tdate

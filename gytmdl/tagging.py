@@ -4,13 +4,16 @@ import functools
 import os
 from io import BytesIO
 from pathlib import Path
+from statistics import mean, stdev
 
 import requests
 from mutagen.id3 import ID3, Frames
 from mutagen.mp4 import MP4, MP4Cover
-from PIL import Image, ImageOps
+from PIL import Image, ImageFilter, ImageOps
 from typing_extensions import NotRequired, TypedDict  # noqa: UP035
 
+AVG_THRESHOLD = 10
+CHANNEL_THRESHOLD = 15
 
 class Tags(TypedDict):
 	title: str
@@ -149,11 +152,58 @@ def get_cover_local(file_path: Path, id_or_url: str, is_soundcloud: bool):
 				return fp.read_bytes()
 	return None
 
-def get_cover_with_padding(url: str, temp_location: Path, uniqueid: str, cover_format = "JPEG"):
-	image_bytes = requests.get(url).content
-	image = Image.open(BytesIO(image_bytes))
+# TODO use this
+def determine_crop_method(image_path: str):
+	pil_img = Image.open(image_path)
+	filt_image = pil_img.filter(ImageFilter.SMOOTH).convert("P", palette=Image.ADAPTIVE, colors=64)
+	rgb_filt_image = filt_image.convert("RGB")
+	
+	width, height = rgb_filt_image.size
 
-	width, height = image.size
+	border_offset = 10
+	sample_regions = [
+		(border_offset, border_offset), # topleft
+		(width - border_offset, border_offset), #topright
+		(border_offset, height - border_offset),   #botleft
+		(width - border_offset, height - border_offset), #botright
+	]
+	
+	sample_colors = []
+	for sx, sy in sample_regions:
+		r, g, b = rgb_filt_image.getpixel((sx, sy))
+		sample_colors.append((r, g, b))
+		# print(terminal_rgb(r, g, b) + "__________" + RESET)
+	# print(sample_colors)
+
+	reds, greens, blues = [], [], []
+	for r,g,b in sample_colors:
+		reds.append(r)
+		greens.append(g)
+		blues.append(b)
+
+	dev_red = stdev(reds)
+	dev_green = stdev(greens)
+	dev_blue = stdev(blues)
+	avg_dev = mean([dev_red, dev_green, dev_blue])
+
+	# print("average:", avg_dev, "colors:", dev_red, dev_green, dev_blue)
+
+	if avg_dev < AVG_THRESHOLD and dev_red < CHANNEL_THRESHOLD and dev_green < CHANNEL_THRESHOLD and dev_blue < CHANNEL_THRESHOLD:
+		width, height = pil_img.size
+		img_half = round(width / 2)
+		rect_half = round(height / 2)
+		cropped_image = pil_img.crop((img_half - rect_half, 0, img_half + rect_half, height))
+		return cropped_image
+	else:
+		average_color = tuple(int(sum(channel) // len(channel)) for channel in zip(*sample_colors, strict=False))
+		padded_image = ImageOps.pad(pil_img, (width, width), color=average_color, centering=(0.5, 0.5))
+		return padded_image
+
+def get_cover_with_padding(url: str, temp_location: Path, uniqueid: str, cover_format = "JPEG", cover_crop_method = "auto"):
+	image_bytes = requests.get(url).content
+	pil_img = Image.open(BytesIO(image_bytes))
+
+	width, height = pil_img.size
 	aspect_ratio = width / height
 
 	if aspect_ratio == 1:
@@ -166,12 +216,19 @@ def get_cover_with_padding(url: str, temp_location: Path, uniqueid: str, cover_f
 	# with open(temp_path, "wb") as temp_file:
 	# 	temp_file.write(image_bytes)
 
-	dominant_color = get_dominant_color(image)
-	width, height = image.size
-	padded_image = ImageOps.pad(image, (width, width), color=dominant_color, centering=(0.5, 0.5))
+	width, height = pil_img.size
+
+	# for now, auto defaults to pad
+	if cover_crop_method == "auto" or cover_crop_method == "pad": 
+		dominant_color = get_dominant_color(pil_img)
+		pil_img = ImageOps.pad(pil_img, (width, width), color=dominant_color, centering=(0.5, 0.5))
+	elif cover_crop_method == "crop":
+		img_half = round(width / 2)
+		rect_half = round(height / 2)
+		pil_img = pil_img.crop((img_half - rect_half, 0, img_half + rect_half, height))
 
 	output_bytes = BytesIO()
-	padded_image.save(output_bytes, format=cover_format)
+	pil_img.save(output_bytes, format=cover_format)
 	output_bytes.seek(0)
 
 	return output_bytes.read()

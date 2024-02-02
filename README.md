@@ -4,6 +4,7 @@ This fork adds several new features as well as many song tagging improvements.
 
 ## New Features
 - Soundcloud support
+- Added more cli options
 - WebUI based on WebSockers (WIP/alpha)
 - GUI to crop thumbnail for non-music videos (planned)
 - GUI to confirm tags for non-music videos (planned)
@@ -58,9 +59,10 @@ gytmdl can be configured using the command line arguments or the config file. Th
 | `--config-location` / - | Location of the config file. | `<home folder>/.gytmdl/config.json` |
 | `-i`, `--itag` / `itag` | Itag (audio quality). | `140` |
 | `--cover-size` / `cover_size` | Size of the cover.  [0<=x<=16383] | `1200` |
-| `--cover-format` / `cover_format` | Format of the cover. | `jpg` |
+| `--cover-format` / `cover_format` | Format of the cover. [jpg\|png] | `jpg` |
 | `--cover-quality` / `cover_quality` | JPEG quality of the cover.  [1<=x<=100] | `94` |
 | `--cover-img` / `cover_img` | Path to image or folder of images named video/song id  | `null` |
+| `--cover-crop` / `cover_crop` |  'crop' takes a 1:1 square from the center, pad always pads top & bottom [auto\|crop\|pad] | `auto` |
 | `--template-folder` / `template_folder` | Template of the album folders as a format string. | `{album_artist}/{album}` |
 | `--template-file` / `template_file` | Template of the song files as a format string. | `{track:02d} {title}` |
 | `-e`, `--exclude-tags` / `exclude_tags` | List of tags to exclude from file tagging separated by commas without spaces. | `null` |

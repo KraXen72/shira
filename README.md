@@ -3,9 +3,9 @@ Download YouTube Music songs/albums/playlists with tags from YouTube Music in 25
 This fork adds several new features as well as many song tagging improvements.
 
 ## New Features
-- Soundcloud support
-- Downloading of non-music youtube videos as music supported (more info below)
-- Added more cli options
+- Downloading from Soundcloud supported
+- Downloading of non-music youtube videos as music supported
+- Added more cli options & flags
 - WebUI based on WebSockers (WIP/alpha)
 - GUI to crop thumbnail for non-music videos (planned)
 - GUI to confirm tags for non-music videos (planned)
@@ -20,7 +20,7 @@ This fork adds several new features as well as many song tagging improvements.
 - uses my custom smart-metadata system from [tiger](https://github.com/KraXen72/tiger) for non-music videos
 - uses a smart algorithm to determine if video's thumbnail should be cropped or padded to 1:1 aspect ratio
   
-<details>
+<details id="smartcrop">
 <summary>More info about cropping algorithm</summary>
 <ul>
 <li>samples 4 pixels near the corners of the thumbnail (smoothed and reduced to 64 colors).</li>
@@ -33,20 +33,23 @@ This fork adds several new features as well as many song tagging improvements.
 ## Why not just use yt-dlp directly?
 While this project uses yt-dlp under the hood, it has the advantage of utilizing [YouTube Music's API](https://github.com/sigma67/ytmusicapi) to get songs metadata. This includes information such as track number, square cover, lyrics, year, etc.
 
+## Setup (development)
+1. clone git repo
+2. have `python` and `ffmpeg` installed, as mentioned below
+3. `pip install -r requirements.txt`
+4. `python -m gytmdl <link>` to run
+
 ## Setup
+> currently, this fork is not published on pip
 1. Install Python 3.8 or higher (3.11+ recommended)
 2. Install gytmdl with pip
     ```
     pip install gytmdl
     ```
-3. Add FFmpeg to PATH or specify the location using the command line arguments or the config file (see [Configuration](#configuration))
+3. Add FFmpeg to PATH or specify the location using the command line arguments or the [config file](#configuration)
+   - to easily install ffmpeg on windows, you can install [scoop](https://scoop.sh) and run `scoop install main/ffmpeg`
 4. (optional) Set a cookies file
    * By setting a cookies file, you can download age restricted tracks, private playlists and songs in 256kbps AAC if you are a premium user. You can export your cookies to a file by using the following Google Chrome extension on YouTube Music website: https://chrome.google.com/webstore/detail/gdocmgbfkjnnpapoeobnolbbkoibbcif.
-
-## Setup (development)
-1. clone git repo
-2. `pip install -r requirements.txt`
-3. `python -m gytmdl` to run
 
 ## Usage examples
 Download a song:
@@ -72,7 +75,7 @@ gytmdl can be configured using the command line arguments or the config file. Th
 | `--cover-format` / `cover_format` | Format of the cover. [jpg\|png] | `jpg` |
 | `--cover-quality` / `cover_quality` | JPEG quality of the cover.  [1<=x<=100] | `94` |
 | `--cover-img` / `cover_img` | Path to image or folder of images named video/song id  | `null` |
-| `--cover-crop` / `cover_crop` |  'crop' takes a 1:1 square from the center, pad always pads top & bottom [auto\|crop\|pad] | `auto` |
+| `--cover-crop` / `cover_crop` |  'crop' takes a 1:1 square from the center, pad always pads top & bottom [auto\|crop\|pad] | `auto` - [more](#smartcrop) |
 | `--template-folder` / `template_folder` | Template of the album folders as a format string. | `{album_artist}/{album}` |
 | `--template-file` / `template_file` | Template of the song files as a format string. | `{track:02d} {title}` |
 | `-e`, `--exclude-tags` / `exclude_tags` | List of tags to exclude from file tagging separated by commas without spaces. | `null` |

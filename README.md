@@ -4,6 +4,7 @@ This fork adds several new features as well as many song tagging improvements.
 
 ## New Features
 - Soundcloud support
+- Downloading of non-music youtube videos as music supported (more info below)
 - Added more cli options
 - WebUI based on WebSockers (WIP/alpha)
 - GUI to crop thumbnail for non-music videos (planned)
@@ -11,13 +12,22 @@ This fork adds several new features as well as many song tagging improvements.
 
 ## Tagging improvements
 - uses video's `upload_date` for more precise release date when possible
-- uses my custom smart-metadata system from [tiger](https://github.com/KraXen72/tiger) for non-music videos
-  - video thumbnails get padded to 1:1 aspect ratio with image's dominant color
 - tries to resolve MusicBrainz ID's from their api 
   - `track`, `album`, `artist`, `albumartist` ids, falls back to `artist`, `albumartist` (sometimes artist existst in MusicBrainz DB but song doesen't)
-- cleans up crazy titles into more reasonable ones:
+- cleans up messy titles into more reasonable ones:
   - `IDOL【ENGLISH EDM COVER】「アイドル」 by YOASOBI【Aries Shepard x @djJoMusicChannel 】` =>
   - `IDOL [ENGLISH EDM COVER] [アイドル] by YOASOBI`
+- uses my custom smart-metadata system from [tiger](https://github.com/KraXen72/tiger) for non-music videos
+- uses a smart algorithm to determine if video's thumbnail should be cropped or padded to 1:1 aspect ratio
+  
+<details>
+<summary>More info about cropping algorithm</summary>
+<ul>
+<li>samples 4 pixels near the corners of the thumbnail (smoothed and reduced to 64 colors).</li>
+<li>decides to crop if average of standard deviations of r, g and b color channels from each sample point is lower than a than a treshold</li>
+<li>otherwise pads the image to 1:1 with it's dominant color</li>
+</ul>
+</details>
 
 
 ## Why not just use yt-dlp directly?

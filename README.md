@@ -127,3 +127,7 @@ The following variables can be used in the template folder/file and/or in the `e
 - `rating`
 - `track`
 - `track_total`
+- `track_mbid`
+- `album_mbid`
+- `artist_mbid`
+- `album_artist_mbid`

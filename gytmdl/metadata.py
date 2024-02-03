@@ -421,17 +421,17 @@ class MBSong:
 			"album_artist_mbid": self.artist_mbid
 		}
 
-def get_mbids_for_song(tags: Tags, do_encode = True):
+def get_mbids_for_song(tags: Tags, skip_encode = False, exclude_tags: list[str] = []):
 	"""takes in a tags dict, adds mbid tags to it, returns it"""
 	mb = MBSong(title=tags["title"], artist=tags["artist"], album=tags["album"])
 	mb.fetch_song()
 	
 	for key, tag in mb.get_mbid_tags().items():
-		if tag is not None:
-			if do_encode is False:
-				tags[key] = tag
-			else:
+		if tag is not None and key not in exclude_tags:
+			if skip_encode is False:
 				tags[key] = tag.encode("utf-8")
+			else:
+				tags[key] = tag
 	
 	return tags
 

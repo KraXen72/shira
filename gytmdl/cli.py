@@ -144,7 +144,7 @@ def cli(
 					tags = smart_metadata(tag_track, temp_path, "JPEG" if dl.cover_format == "jpg" else "PNG", cover_crop)
 				else:
 					tags = dl.get_tags(ytmusic_watch_playlist, track)
-				tags = get_mbids_for_song(tags, not dl.soundcloud)
+				tags = get_mbids_for_song(tags, dl.soundcloud, dl.exclude_tags)
 				if cover_img:
 					local_img_bytes = get_cover_local(cover_img, track["url"] if dl.soundcloud else track["id"], dl.soundcloud)
 					if local_img_bytes is not None:

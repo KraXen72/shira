@@ -116,7 +116,7 @@ def cli(
 		template_file, 
 		exclude_tags, 
 		truncate, 
-		dump_json=False
+		dump_json=log_level == "DEBUG"
 	)
 	download_queue = []
 	for i, url in enumerate(urls):

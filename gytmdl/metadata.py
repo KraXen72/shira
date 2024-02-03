@@ -60,16 +60,20 @@ def parse_date(datestring):
 def dash_split(info, title_key: str,  obj):
 	split_title = info[title_key].split(" - ")
 
-	if "animatic" in info[title_key].lower():
-		obj["artist"].append(info["channel"])
-		obj["title"].append(split_title[0] if "animatic" in split_title[1].lower() else split_title[0])
-	else:
+	classic_ordering = True
+	for keyword in ["animatic", "remix"]:
+		if keyword in info[title_key].lower():
+			obj["artist"].append(info["channel"])
+			obj["title"].append(split_title[0] if keyword in split_title[1].lower() else split_title[0])
+			classic_ordering = False
+			break
+	if classic_ordering:
 		obj["artist"].append(split_title[0])
 		obj["title"].append(split_title[1])
 	
 	return obj
 
-def get_most_likely_tag(list_of_keys: list[str], data_obj: dict, additional_values: list[str]):
+def smart_tag(list_of_keys: list[str], data_obj: dict, additional_values: list[str]):
 	"""
 	counts how many times each value occurs and returns the value that occurs the most
 	"""
@@ -232,9 +236,9 @@ def smart_metadata(info, temp_location: Path, cover_format = "JPEG", cover_crop_
 	# which counts how many times each value occurs and returns the value that occurs the most
 	# also dumps all the other possibilities into the other dictionary
 	
-	md["title"], others["title"] = get_most_likely_tag(md_keys["title"], info, add_values["title"])
-	md["artist"], others["artist"] = get_most_likely_tag(md_keys["artist"], info, add_values["artist"])
-	md["album_artist"], others["album_artist"] = get_most_likely_tag(md_keys["album_artist"], info, [md["artist"]] + add_values["album_artist"])
+	md["title"], others["title"] = smart_tag(md_keys["title"], info, add_values["title"])
+	md["artist"], others["artist"] = smart_tag(md_keys["artist"], info, add_values["artist"])
+	md["album_artist"], others["album_artist"] = smart_tag(md_keys["album_artist"], info, [md["artist"]] + add_values["album_artist"])
 
 	md["title"] = clean_title(str(md["title"]))
 
@@ -242,8 +246,8 @@ def smart_metadata(info, temp_location: Path, cover_format = "JPEG", cover_crop_
 	if ("album" not in info) and len(add_values["album"]) == 0:
 		add_values["album"].append(f"{md['title']} (Single)")
 
-	md["album"], others["album"] = get_most_likely_tag(md_keys["album"], info, add_values["album"])
-	tdate, others["year"] = get_most_likely_tag(md_keys["year"], info, add_values["year"])
+	md["album"], others["album"] = smart_tag(md_keys["album"], info, add_values["album"])
+	tdate, others["year"] = smart_tag(md_keys["year"], info, add_values["year"])
 
 	# print(others)
 	# print({**md, "cover_bytes": ""})

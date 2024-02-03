@@ -53,7 +53,6 @@ class Dl:
 		self.soundcloud = False
 		self.default_ydl_opts = {"quiet": True, "no_warnings": True, "fixup": "never"}
 
-	# @functools.lru_cache()
 	def get_ydl_extract_info(self, url) -> dict:
 		ydl_opts: dict[str, str | bool] = {"quiet": True, "no_warnings": True, "extract_flat": True}
 		if self.cookies_location is not None:

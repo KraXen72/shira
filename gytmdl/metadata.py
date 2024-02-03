@@ -130,7 +130,6 @@ def smart_tag(list_of_keys: list[str], data_obj: dict, additional_values: list[s
 		if isinstance(top_result, str) and isinstance(second_result, dict):
 			top_result, second_result = second_result, top_result
 
-    # TODO rewrite so top_result is always string and not the year thingy
 	return top_result, cleaned_tags
 
 # site extractors

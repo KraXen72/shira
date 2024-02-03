@@ -169,12 +169,15 @@ def determine_image_crop(image_bytes: bytes):
 	
 	width, height = rgb_filt_image.size
 
-	border_offset = 10
+	border_offset = 10 
+	border_slice_center = (width/2 - height/2)/2
 	sample_regions = [
 		(border_offset, border_offset), # topleft
 		(width - border_offset, border_offset), #topright
 		(border_offset, height - border_offset),   #botleft
 		(width - border_offset, height - border_offset), #botright
+		(border_slice_center, height/2), #left center
+		(width/2 + height/2 + border_slice_center, height/2) #right center
 	]
 	
 	sample_colors = []

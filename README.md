@@ -24,7 +24,7 @@ This fork adds several new features as well as many song tagging improvements.
 <details id="smartcrop">
 <summary>More info about cropping algorithm</summary>
 <ul>
-<li>samples 4 pixels near the corners of the thumbnail (smoothed and reduced to 64 colors).</li>
+<li>samples 4 pixels near the corners and 2 from centers of side slices of the thumbnail (which is first smoothed and reduced to 64 colors).</li>
 <li>decides to crop if average of standard deviations of r, g and b color channels from each sample point is lower than a than a treshold</li>
 <li>otherwise pads the image to 1:1 with it's dominant color</li>
 </ul>

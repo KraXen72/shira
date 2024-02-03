@@ -158,7 +158,7 @@ def get_cover_local(file_path: Path, id_or_url: str, is_soundcloud: bool):
 
 def determine_image_crop(image_bytes: bytes):
 	"""
-	samples 4 pixels from the corners of an image (smoothed and reduced to 64 colors)
+	samples 4 pixels near the corners and 2 from centers of side slices of the thumbnail (which is first smoothed and reduced to 64 colors)
 
 	returns crop if average of standard deviation of r, g and b color channels 
 	from each sample point is lower than a than a treshold, otherwise returns pad

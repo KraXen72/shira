@@ -154,7 +154,6 @@ def cli(
 					local_img_bytes = get_cover_local(cover_img, track["url"] if dl.soundcloud else track["id"], dl.soundcloud)
 					if local_img_bytes is not None:
 						tags["cover_bytes"] = local_img_bytes
-				
 				final_location = dl.get_final_location(tags, ".mp3" if dl.soundcloud is True else ".m4a", is_single, single_folder)
 				logger.debug(f'Final location is "{final_location}"')
 				temp_location = dl.get_temp_location(track["id"])	

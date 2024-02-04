@@ -92,10 +92,7 @@ def smart_tag(list_of_keys: list[str], data_obj: dict, additional_values: list[s
 		if item in data_obj:
 			tags.append(data_obj[item])
 
-	# stringify the dict into json so Counter doesen't freak out
 	for i, tag in enumerate(tags):
-		# if isinstance(tag, dict):
-		# 	tags[i] = json.dumps(tag, separators=(",", ":"))
 		if isinstance(tag, int):
 			tags[i] = str(tag)
 
@@ -107,26 +104,11 @@ def smart_tag(list_of_keys: list[str], data_obj: dict, additional_values: list[s
 	sorted_counts = sorted(counts_entries, key = lambda x: x[1]) # sort it (ascending)
 	dehashed_counts = list(reversed(sorted_counts)) # reverse (descending)
 
-	# dehashed_counts: list[tuple[dict[str, str] | str, int]] = [] # re-parse jsons
-	# for count_tuple in descending_counts:
-	# 	val = count_tuple[0]
-	# 	count = count_tuple[1]
-
-	# 	if val.startswith("{") and val.endswith("}"):
-	# 		try:
-	# 			data_obj = json.loads(val)
-	# 			dehashed_counts.append((data_obj, count))
-	# 		except:
-	# 			dehashed_counts.append(count_tuple)
-	# 	else:
-	# 		dehashed_counts.append(count_tuple)
-
 	top_result = dehashed_counts[0][0]
 
 	# resolve conficlics
 	if len(dehashed_counts) > 1 and dehashed_counts[0][1] == dehashed_counts[1][1]:
 		second_result = dehashed_counts[1][0]
-		# print("top 2 tags have the same count:", dehashed_counts)
 
 		# for example if years look like this: [('2017', 1), ({'year': '2017', 'month': '10', 'day': '19'}, 1)]
 		if isinstance(top_result, str) and isinstance(second_result, dict):
@@ -235,13 +217,21 @@ def clean_title(title: str):
 	title = re.sub(r"\s{2,}", " ", title) # multiple spaces fix
 	return title.replace("_", "-").strip()
 
+def digits_match(in1: str, in2: str):
+	leading0re = r"(?<=\b)0+(?=[1-9])"
+	return re.sub(leading0re, "", in1.lower().strip()) == re.sub(leading0re, "", in2.lower().strip())
+
 def check_artist_match(artist: str, a_dict: MBArtist):
 	return artist == a_dict["name"] or artist.lower() == a_dict["name"].lower() \
 		or artist == a_dict["sort-name"] or artist.lower() == a_dict["sort-name"].lower()
 
 def check_album_match(album: str, r_dict: MBRelease):
 	return album == r_dict["title"] or album.replace("(Single)", "").strip() == r_dict["title"] \
-		or album.lower() == r_dict["title"].lower() or album.replace("(Single)", "").strip().lower() == r_dict["title"].lower()
+		or album.lower() == r_dict["title"].lower() or album.replace("(Single)", "").strip().lower() == r_dict["title"].lower() \
+		or digits_match(album, r_dict["title"])
+
+def check_title_match(title: str, r_dict: MBRecording):
+	return title == r_dict["title"] or title.lower() == r_dict["title"].lower() or digits_match(title, r_dict["title"])
 	
 
 class MBSong:
@@ -297,7 +287,7 @@ class MBSong:
 			if ("artist-credit" not in t) or (len(t["artist-credit"]) == 0) or ("releases" not in t) or (len(t["releases"]) == 0):
 				continue
 
-			title_match = t["title"] == self.title
+			title_match = check_title_match(self.title, t)
 			artist_match = False
 			album_match = False
 			
@@ -311,9 +301,10 @@ class MBSong:
 				if check_album_match(self.album, a):
 					self.album_mbid = a["release-group"]["id"]
 					self.album_dict = a
+					# print(json.dumps(self.album_dict))
 					album_match = True
 					break
-
+				
 			if title_match and artist_match and album_match:
 				self.song_mbid = t["id"]
 				self.song_dict = t

@@ -51,7 +51,7 @@ class Dl:
 		self.dump_json = dump_json
 		self.tags: Tags | None = None 
 		self.soundcloud = False
-		self.default_ydl_opts = {"quiet": True, "no_warnings": True, "fixup": "never"}
+		self.default_ydl_opts = {"progress": True, "quiet": True, "no_warnings": True, "fixup": "never"}
 
 	def get_ydl_extract_info(self, url) -> dict:
 		ydl_opts: dict[str, str | bool] = {"quiet": True, "no_warnings": True, "extract_flat": True}
@@ -201,7 +201,6 @@ class Dl:
 		final_location_file = [self.get_sanizated_string(i.format(**tags), True) for i in final_location_file[:-1]] + [
 			self.get_sanizated_string(final_location_file[-1].format(**tags), False) + extension
 		]
-		print()
 		return self.final_path.joinpath(*final_location_folder).joinpath(*final_location_file)
 
 	def get_cover_location(self, final_location):

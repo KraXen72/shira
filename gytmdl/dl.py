@@ -9,7 +9,7 @@ from yt_dlp import YoutubeDL
 from ytmusicapi import YTMusic
 
 from .metadata import clean_title, get_year
-from .tagging import Tags, get_cover
+from .tagging import ARITST_SEPARATOR, Tags, get_cover
 
 ITAG_AAC_128 = "140"
 ITAG_AAC_256 = "141"
@@ -200,7 +200,7 @@ class Dl:
 		filename_safe_tags: dict[str, str] = {}
 		for k, v in tags.items(): # join artists with & so filenames aren't like ['Artist1', 'Artist2'] but rather Artist1 & Artist2
 			if isinstance(v, list):
-				filename_safe_tags[k] = " & ".join([ vv if isinstance(vv, str) else vv.decode("utf-8") for vv in v ])
+				filename_safe_tags[k] = ARITST_SEPARATOR.join([ vv if isinstance(vv, str) else vv.decode("utf-8") for vv in v ])
 			else:
 				filename_safe_tags[k] = v
 

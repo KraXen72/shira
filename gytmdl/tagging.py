@@ -14,12 +14,13 @@ from typing_extensions import NotRequired, TypedDict  # noqa: UP035
 
 AVG_THRESHOLD = 10
 CHANNEL_THRESHOLD = 15
+ARITST_SEPARATOR = " & "
 
 class Tags(TypedDict):
 	title: str
 	album: str
-	artist: str | list[str]
-	album_artist: str | list[str]
+	artist: str #| list[str]
+	album_artist: str #| list[str]
 	track: int
 	track_total: int
 	release_year: str
@@ -106,14 +107,18 @@ def tagger_mp3(tags: Tags, fixed_location: Path, exclude_tags: list[str], cover_
 
 def tagger_m4a(tags: Tags, fixed_location: Path, exclude_tags: list[str], cover_format: str):
 	mp4_tags = {}
+	# FIXME currently, multiple artist tags crash auxio??
+	# for k, v in MP4_TAGS_MAP.items():
+	# 	if k not in exclude_tags and tags.get(k) is not None:
+	# 		val = tags[k] if isinstance(tags[k], list) else [tags[k]]
+	# 		if k == "artist" and isinstance(val, list):
+	# 			mp4_tags[v] = ["/".join(val)]
+	# 			# mp4_tags["----:com.apple.iTunes:ARTISTS"] = [p.encode("utf-8") for p in val]
+	# 		else:
+	# 			mp4_tags[v] = val
 	for k, v in MP4_TAGS_MAP.items():
 		if k not in exclude_tags and tags.get(k) is not None:
-			val = tags[k] if isinstance(tags[k], list) else [tags[k]]
-			if k == "artist" and isinstance(val, list):
-				mp4_tags[v] = [" & ".join(val)]
-				mp4_tags["----:com.apple.iTunes:ARTISTS"] = [p.encode("utf-8") for p in val]
-			else:
-				mp4_tags[v] = val
+			mp4_tags[v] = [tags[k]]
 			
 	
 	if not {"track", "track_total"} & set(exclude_tags):
@@ -129,6 +134,9 @@ def tagger_m4a(tags: Tags, fixed_location: Path, exclude_tags: list[str], cover_
 		mp4_tags["trkn"][0][1] = tags["track_total"]
 
 	mp4_tags["disk"] = [[1, 1]]
+
+	# for k, v in mp4_tags.items():
+	# 	print(f"{k}: {type(v)}, {[type(p) for p in v]}")
 
 	mp4 = MP4(fixed_location)
 	mp4.clear()

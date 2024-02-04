@@ -8,7 +8,7 @@ from typing import TypedDict
 
 import requests
 
-from .tagging import Tags, get_1x1_cover
+from .tagging import ARITST_SEPARATOR, Tags, get_1x1_cover
 
 # this file parses the extract_info object provided by yt_dlp for informations
 # grabs as much info as it can from all over the place: yt music tags, channel name, video title, description and other fields
@@ -227,7 +227,7 @@ def check_bareartist_match(artist: str, a_dict: MBArtist):
 
 def check_artist_match(artist: str, a_list: list[MBArtistCredit]):
 	if len(a_list) > 1:
-		joinphrase = str(a_list[0].get("joinphrase")).strip() or "&"
+		joinphrase = str(a_list[0].get("joinphrase")).strip() or ARITST_SEPARATOR.strip()
 		yt_artists = [a.strip() for a in artist.split(joinphrase)]
 		
 		all_artists_match = True
@@ -247,10 +247,11 @@ def check_artist_match(artist: str, a_list: list[MBArtistCredit]):
 	
 def get_artist_mbids(a_list: list[MBArtistCredit]):
 	"""get artist mdid or list of mbids"""
-	if len(a_list) == 1:
-		return a_list[0]["artist"]["id"]
-	else:
-		return [ a["artist"]["id"] for a in a_list ]
+	return a_list[0]["artist"]["id"]
+	# if len(a_list) == 1:
+	# 	return a_list[0]["artist"]["id"]
+	# else:
+	# 	return ARITST_SEPARATOR.join([ a["artist"]["id"] for a in a_list ])
 
 def check_album_match(album: str, r_dict: MBRelease):
 	return album == r_dict["title"] or album.replace("(Single)", "").strip() == r_dict["title"] \
@@ -359,23 +360,24 @@ class MBSong:
 			"album_artist_mbid": self.artist_mbid
 		}
 
-def get_mbids_for_song(tags: Tags, skip_encode = False, exclude_tags: list[str] = [], use_mbid_data=True):
+def get_mbids_for_song(tags: Tags, skip_encode = False, exclude_tags: list[str] = []):
 	"""takes in a tags dict, adds mbid tags to it, returns it"""
 	mb = MBSong(title=tags["title"], artist=str(tags["artist"]), album=tags["album"])
 	mb.fetch_song()
 
-	if use_mbid_data:
-		if mb.artist_dict:
-			tags["artist"] = [str(a["artist"]["name"]) for a in mb.artist_dict] if isinstance(mb.artist_dict, list) else mb.artist_dict["name"]
-			tags["album_artist"] = mb.artist_dict[0]["artist"]["name"] if isinstance(mb.artist_dict, list) else mb.artist_dict["name"]
+	# if use_mbid_data:
+	# 	if mb.artist_dict:
+	# 		tags["artist"] = [str(a["artist"]["name"]) for a in mb.artist_dict] if isinstance(mb.artist_dict, list) else mb.artist_dict["name"]
+	# 		tags["album_artist"] = mb.artist_dict[0]["artist"]["name"] if isinstance(mb.artist_dict, list) else mb.artist_dict["name"]
 	
 	for key, tag in mb.get_mbid_tags().items():
 		if tag is not None and key not in exclude_tags:
 			if skip_encode is False:
-				tags[key] =  [ t.encode("utf-8") for t in tag ] if isinstance(tag, list) else tag.encode("utf-8")
+				# tags[key] =  [ t.encode("utf-8") for t in tag ] if isinstance(tag, list) else tag.encode("utf-8")
+				# tags[key] = tag[0].encode("utf-8") if isinstance(tag, list) else tag.encode("utf-8")
+				tags[key] = tag.encode("utf-8")
 			else:
 				tags[key] = tag
-	
 	return tags
 
 	

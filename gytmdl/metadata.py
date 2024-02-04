@@ -204,10 +204,15 @@ def clean_title(title: str):
 				subs = f"[{m.group(1)}]"
 			title = title.replace(m.group(0), subs)
 	
-	for ch in title_banned_chars:
-		title = title.replace(ch, "")
+	# https://stackoverflow.com/a/49986645/13342359
+	yeet_emoji = re.compile(pattern = "["
+		"\U0001F600-\U0001F64F"  # emoticons
+		"\U0001F300-\U0001F5FF"  # symbols & pictographs
+		"\U0001F680-\U0001F6FF"  # transport & map symbols
+		"\U0001F1E0-\U0001F1FF"  # flags (iOS)
+	"]+", flags = re.UNICODE)
+	title = re.sub(yeet_emoji, "", title)
 	
-	# title = title.replace("by {artist}", "")
 	title = re.sub(r"(\S)\[", r"\g<1>" + " [", title, flags=re.MULTILINE) # jap title whitespace fix
 	title = re.sub(r"\s{2,}", " ", title) # multiple spaces fix
 	return title.replace("_", "-").strip()
@@ -353,7 +358,7 @@ class MBSong:
 	def get_mbid_tags(self):
 		"""get mbid tags with proper keys"""
 		# make sure only supported fields are multi-value tags, otherwise auxio might crash (don't do multi-value album artists)
-		first_artist_mbid = self.artist_mbid[0] if isinstance(self.artist_mbid, list) else str(self.artist_mbid)
+		first_artist_mbid = self.artist_mbid[0] if isinstance(self.artist_mbid, list) else self.artist_mbid
 		
 		return {
 			"track_mbid": self.song_mbid,

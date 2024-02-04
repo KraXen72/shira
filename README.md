@@ -15,6 +15,7 @@ This fork adds several new features as well as many song tagging improvements.
 - uses video's `upload_date` for more precise release date when possible
 - tries to resolve MusicBrainz ID's from their api 
   - `track`, `album`, `artist`, `albumartist` ids, falls back to `artist`, `albumartist` (sometimes artist existst in MusicBrainz DB but song doesen't)
+  - embeds multi-value m4a tags
 - cleans up messy titles into more reasonable ones:
   - `IDOL【ENGLISH EDM COVER】「アイドル」 by YOASOBI【Aries Shepard x @djJoMusicChannel 】` =>
   - `IDOL [ENGLISH EDM COVER] [アイドル] by YOASOBI`

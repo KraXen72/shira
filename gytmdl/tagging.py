@@ -183,8 +183,8 @@ def determine_image_crop(image_bytes: bytes):
 		(width - border_offset, border_offset), #topright
 		(border_offset, height - border_offset),   #botleft
 		(width - border_offset, height - border_offset), #botright
-		(border_slice_center, height//2), #left center
-		(width//2 + height//2 + border_slice_center, height//2) #right center
+		# (border_slice_center, height//2), #left center
+		# (width//2 + height//2 + border_slice_center, height//2) #right center
 	]
 	
 	sample_colors = []

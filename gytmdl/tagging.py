@@ -14,7 +14,7 @@ from typing_extensions import NotRequired, TypedDict  # noqa: UP035
 
 AVG_THRESHOLD = 10
 CHANNEL_THRESHOLD = 15
-ARITST_SEPARATOR = "/"#" & "
+ARITST_SEPARATOR = "/"#" & " # TODO make this configurable
 
 class Tags(TypedDict):
 	title: str
@@ -129,13 +129,12 @@ def tagger_m4a(tags: Tags, fixed_location: Path, exclude_tags: list[str], cover_
 
 	mp4_tags["disk"] = [[1, 1]]
 
-	# for k, v in mp4_tags.items():
-	# 	print(f"{k}: {type(v)}, {[type(p) for p in v]}")
-
 	mp4 = MP4(fixed_location)
 	mp4.clear()
 	mp4.update(mp4_tags)
 	mp4.save()
+
+# cover shenanigans
 
 @functools.lru_cache
 def get_cover(url):

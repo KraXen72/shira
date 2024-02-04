@@ -225,7 +225,8 @@ def check_bareartist_match(artist: str, a_dict: MBArtist):
 def check_artist_match(artist: str, a_list: list[MBArtistCredit]):
 	"""fuzzy song artist matching (matches serveral artists as well)"""
 	if len(a_list) > 1:
-		joinphrase = str(a_list[0].get("joinphrase")).strip() or ARITST_SEPARATOR.strip()
+		# not using ARTIST_SEPARATOR here because ytmusic joins artists by &
+		joinphrase = str(a_list[0].get("joinphrase")).strip() or "&" 
 		yt_artists = [a.strip() for a in artist.split(joinphrase)]
 		
 		all_artists_match = True

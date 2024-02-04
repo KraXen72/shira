@@ -16,6 +16,8 @@ from .tagging import Tags, get_1x1_cover
 
 # based on the original https://github.com/KraXen72/tiger
 
+TIGER_SINGLE = "tiger:is_single:true"
+
 MBArtist = TypedDict("MBArtist", { 
 	"id": str,
 	"name": str, 
@@ -202,6 +204,9 @@ def smart_metadata(info, temp_location: Path, cover_format = "JPEG", cover_crop_
 
 	md["album"], others["album"] = smart_tag(md_keys["album"], info, add_values["album"])
 	md["release_year"], md["release_date"] = get_year(info)
+
+	if "(Single)" in md["album"]:
+		md["comment"] = TIGER_SINGLE
 
 	# print(md["release_year"], md["release_date"])
 	# print({**md, "cover_bytes": ""})

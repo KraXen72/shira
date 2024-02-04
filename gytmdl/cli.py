@@ -7,7 +7,7 @@ import click
 
 from . import __version__
 from .dl import Dl
-from .metadata import get_mbids_for_song, smart_metadata
+from .metadata import TIGER_SINGLE, get_mbids_for_song, smart_metadata
 from .tagging import get_cover_local, tagger_m4a, tagger_mp3
 
 logging.basicConfig(
@@ -61,6 +61,7 @@ def no_config_callback(ctx: click.Context, param: click.Parameter, no_config_fil
 @click.option("--print-exceptions", "-p", is_flag=True, help="Print exceptions.")
 @click.option("--url-txt", "-u", is_flag=True, help="Read URLs as location of text files containing URLs.")
 @click.option("--no-config-file", "-n", is_flag=True, callback=no_config_callback, help="Don't use the config file.")
+@click.option("--single-folder", "-w", is_flag=True, help="Wrap singles in their own folder instead of placing them directly into artist's folder.")
 @click.version_option(__version__)
 @click.help_option("-h", "--help")
 def cli(
@@ -86,6 +87,7 @@ def cli(
 	print_exceptions: bool,
 	url_txt: bool,
 	no_config_file: bool,
+	single_folder: bool
 ):
 	logger = logging.getLogger(__name__)
 	logger.setLevel(log_level)
@@ -136,21 +138,24 @@ def cli(
 
 				dl.tags = None
 				tags = None
+				is_single = False
 				if ytmusic_watch_playlist is None:
 					logger.info("Track is a video, using Tigerv2 to extract metadata")
 					tag_track = track
 					if "webpage_url_domain" not in track:
 						tag_track = dl.get_ydl_extract_info(track["url"])
 					tags = smart_metadata(tag_track, temp_path, "JPEG" if dl.cover_format == "jpg" else "PNG", cover_crop)
+					is_single = tags["comment"] == TIGER_SINGLE
 				else:
 					tags = dl.get_tags(ytmusic_watch_playlist, track)
+					is_single = tags["track_total"] == 1
 				tags = get_mbids_for_song(tags, dl.soundcloud, dl.exclude_tags)
 				if cover_img:
 					local_img_bytes = get_cover_local(cover_img, track["url"] if dl.soundcloud else track["id"], dl.soundcloud)
 					if local_img_bytes is not None:
 						tags["cover_bytes"] = local_img_bytes
 				
-				final_location = dl.get_final_location(tags, ".mp3" if dl.soundcloud is True else ".m4a")
+				final_location = dl.get_final_location(tags, ".mp3" if dl.soundcloud is True else ".m4a", is_single, single_folder)
 				logger.debug(f'Final location is "{final_location}"')
 				temp_location = dl.get_temp_location(track["id"])	
 				if not final_location.exists() or overwrite:

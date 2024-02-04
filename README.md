@@ -87,6 +87,7 @@ gytmdl can be configured using the command line arguments or the config file. Th
 | `-p`, `--print-exceptions` / `print_exceptions` | Print exceptions. | `false` |
 | `-u`, `--url-txt` / - | Read URLs as location of text files containing URLs. | `false` |
 | `-n`, `--no-config-file` / - | Don't use the config file. | `false` |
+| `-w`, `--single-folder` / - | Wrap singles in their own folder instead of placing them directly into artist's folder. | `false` |
 
 ### Itags
 The following itags are available:

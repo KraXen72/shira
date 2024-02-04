@@ -184,13 +184,24 @@ class Dl:
 			return self.temp_path / f"{song_id}_fixed.mp3"
 		return self.temp_path / f"{song_id}_fixed.m4a"
 
-	def get_final_location(self, tags, extension = ".m4a"):
+	def get_final_location(self, tags, extension = ".m4a", is_single = False, single_folders = False):
 		final_location_folder = self.template_folder.split("/")
 		final_location_file = self.template_file.split("/")
+
+		if is_single and not single_folders and self.template_folder.endswith("/{album}"):
+			folder = self.template_folder[:-8]
+			if len(folder.strip()) == 0:
+				folder = "./"
+			final_location_folder = folder.split("/")
+			if (self.template_file.startswith("{track:02d} ")):
+				locfile = self.template_file[12:]
+				final_location_file = "{title}".split("/") if locfile.strip() == "" else locfile.split("/")
+			
 		final_location_folder = [self.get_sanizated_string(i.format(**tags), True) for i in final_location_folder]
 		final_location_file = [self.get_sanizated_string(i.format(**tags), True) for i in final_location_file[:-1]] + [
 			self.get_sanizated_string(final_location_file[-1].format(**tags), False) + extension
 		]
+		print()
 		return self.final_path.joinpath(*final_location_folder).joinpath(*final_location_file)
 
 	def get_cover_location(self, final_location):

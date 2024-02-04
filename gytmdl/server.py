@@ -2,6 +2,8 @@ import json
 
 from websocket_server import WebsocketServer
 
+# THIS IS CURRENTLY VERY WIP!!!
+
 WSHOST = "localhost"
 WSPORT = 8765
 

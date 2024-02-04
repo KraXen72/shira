@@ -140,7 +140,7 @@ def cli(
 				tags = None
 				is_single = False
 				if ytmusic_watch_playlist is None:
-					logger.info("Track is a video, using Tigerv2 to extract metadata")
+					logger.info("No results on YTMusic API, using Tigerv2 to extract metadata")
 					tag_track = track
 					if "webpage_url_domain" not in track:
 						tag_track = dl.get_ydl_extract_info(track["url"])

@@ -139,7 +139,6 @@ def smart_metadata(info, temp_location: Path, cover_format = "JPEG", cover_crop_
 	gets the most likely tag and returns a dict
 	"""
 
-
 	md: Tags = {
 		"title": "",
 		"artist": "",
@@ -185,10 +184,7 @@ def smart_metadata(info, temp_location: Path, cover_format = "JPEG", cover_crop_
 	md["release_year"], md["release_date"] = get_year(info)
 
 	if "(Single)" in md["album"]:
-		md["comment"] = TIGER_SINGLE
-
-	# print(md["release_year"], md["release_date"])
-	# print({**md, "cover_bytes": ""})
+		md["comment"] = TIGER_SINGLE # TODO remove this later?
 
 	return md
 
@@ -318,17 +314,14 @@ class MBSong:
 
 	def save_song_dict(self, tracks: list[MBRecording]):
 		"""find the most similar song"""
-		# print("a", self.artist)
+
 		for t in tracks:
-			# skip entries with missing album or artist
 			if ("artist-credit" not in t) or (len(t["artist-credit"]) == 0) or ("releases" not in t) or (len(t["releases"]) == 0):
 				continue
 
 			title_match = check_title_match(self.title, t)
 			artist_match = False
 			album_match = False
-			# print(t["title"], json.dumps(t["artist-credit"]))
-			# print("")
 			
 			if check_artist_match(self.artist, t["artist-credit"]):
 				self.artist_mbid = get_artist_mbids(t["artist-credit"])
@@ -360,7 +353,7 @@ class MBSong:
 
 	def get_mbid_tags(self):
 		"""get mbid tags with proper keys"""
-		# make sure only supported fields are multi-value tags, otherwise auxio might crash (don't do multi-value album artists)
+		# !! make sure only supported fields are multi-value tags, otherwise auxio might crash (don't do multi-value album artists)
 		first_artist_mbid = self.artist_mbid[0] if isinstance(self.artist_mbid, list) else self.artist_mbid
 		
 		return {
@@ -391,8 +384,6 @@ def get_mbids_for_song(tags: Tags, skip_encode = False, exclude_tags: list[str] 
 		if tag is not None and key not in exclude_tags:
 			if skip_encode is False:
 				tags[key] =  [ t.encode("utf-8") for t in tag ] if isinstance(tag, list) else tag.encode("utf-8")
-				# tags[key] = tag[0].encode("utf-8") if isinstance(tag, list) else tag.encode("utf-8")
-				# tags[key] = tag.encode("utf-8")
 			else:
 				tags[key] = tag
 	return tags

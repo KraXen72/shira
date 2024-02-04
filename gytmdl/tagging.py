@@ -9,7 +9,7 @@ from statistics import mean, stdev
 import requests
 from mutagen.id3 import ID3, Frames
 from mutagen.mp4 import MP4, MP4Cover
-from PIL import Image, ImageFilter, ImageOps
+from PIL import Image, ImageChops, ImageFilter, ImageOps
 from typing_extensions import NotRequired, TypedDict  # noqa: UP035
 
 AVG_THRESHOLD = 10
@@ -238,3 +238,6 @@ def get_1x1_cover(url: str, temp_location: Path, uniqueid: str, cover_format = "
 	output_bytes.seek(0)
 
 	return output_bytes.read()
+
+def images_diff(img1, img2):
+	return len(set(ImageChops.difference(img1, img2).getdata())) > 100

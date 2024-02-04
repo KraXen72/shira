@@ -38,6 +38,29 @@ MBRecording = TypedDict("MBRecording", {
 	"releases": list[MBRelease]
 })
 
+def get_youtube_maxres_thumbnail(info):
+	# it looks like yt-dlp does this already internally and always sets the max-resolution thumbnail to info["thumbnail"]
+
+	# try to avoid requests if we can
+	if info["thumbnail"].endswith("/maxresdefault.jpg") or info["thumbnail"].endswith("/maxresdefault.png") or "thumbnails" not in info:
+		return str(info["thumbnail"])
+	
+	thumbs = list(reversed(info["thumbnails"]))
+	for t in thumbs: # try to get maxresdefault
+		if t["url"].endswith("/maxresdefault.jpg") or t["url"].endswith("/maxresdefault.png"):
+			res = requests.get(str(t["url"]))
+			if res.status_code == 404:
+				continue
+			return str(t["url"])
+	for t in thumbs: # otherwise, just take the one with the best preference but out format
+		if t["url"].endswith(".jpg") or t["url"].endswith(".png"):
+			res = requests.get(str(t["url"]))
+			if res.status_code == 404:
+				continue
+			return str(t["url"])
+	return str(info["thumbnail"])
+
+
 def get_year(track: dict[str, str | int], ytmusic_album: dict[str, str | int] | None = None):
 	""":returns release_year, release_date"""
 	date = {
@@ -138,6 +161,7 @@ def smart_metadata(info, temp_location: Path, cover_format = "JPEG", cover_crop_
 	gets the most likely tag and returns a dict
 	"""
 
+
 	md: Tags = {
 		"title": "",
 		"artist": "",
@@ -147,9 +171,9 @@ def smart_metadata(info, temp_location: Path, cover_format = "JPEG", cover_crop_
 		"track_total": 1,
 		"release_year": "",
 		"release_date": "",
-		"cover_url": info["thumbnail"],
+		"cover_url": get_youtube_maxres_thumbnail(info),
 		"cover_bytes": get_1x1_cover(
-			info["thumbnail"], 
+			get_youtube_maxres_thumbnail(info), 
 			temp_location, 
 			info.get("id") or clean_title(info.get("title")) or str(random.randint(0, 9) * "16"), 
 			cover_format, 

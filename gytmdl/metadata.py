@@ -195,6 +195,14 @@ def smart_metadata(info, temp_location: Path, cover_format = "JPEG", cover_crop_
 bracket_tuples =[["[", "]"], ["(", ")"], ["【", "】"], ["「", "」"]]
 title_banned_chars = ["♪"]
 
+# https://stackoverflow.com/a/49986645/13342359
+yeet_emoji = re.compile(pattern = "["
+	"\U0001F600-\U0001F64F"  # emoticons
+	"\U0001F300-\U0001F5FF"  # symbols & pictographs
+	"\U0001F680-\U0001F6FF"  # transport & map symbols
+	"\U0001F1E0-\U0001F1FF"  # flags (iOS)
+"]+", flags = re.UNICODE)
+
 def clean_title(title: str):
 	"""clean up youtube titles with regex and a lot of black magic"""
 
@@ -206,15 +214,8 @@ def clean_title(title: str):
 				subs = f"[{m.group(1)}]"
 			title = title.replace(m.group(0), subs)
 	
-	# https://stackoverflow.com/a/49986645/13342359
-	yeet_emoji = re.compile(pattern = "["
-		"\U0001F600-\U0001F64F"  # emoticons
-		"\U0001F300-\U0001F5FF"  # symbols & pictographs
-		"\U0001F680-\U0001F6FF"  # transport & map symbols
-		"\U0001F1E0-\U0001F1FF"  # flags (iOS)
-	"]+", flags = re.UNICODE)
-	title = re.sub(yeet_emoji, "", title)
-	
+	title = re.sub(yeet_emoji, "", title) # remove emoji
+	title = re.sub(r"\*\b[A-Z ]+\b\*", "", title) # remove stuff like *NOW ON ALL PLATFORMS*
 	title = re.sub(r"(\S)\[", r"\g<1>" + " [", title, flags=re.MULTILINE) # jap title whitespace fix
 	title = re.sub(r"\s{2,}", " ", title) # multiple spaces fix
 	return title.replace("_", "-").strip()

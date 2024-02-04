@@ -221,9 +221,36 @@ def digits_match(in1: str, in2: str):
 	leading0re = r"(?<=\b)0+(?=[1-9])"
 	return re.sub(leading0re, "", in1.lower().strip()) == re.sub(leading0re, "", in2.lower().strip())
 
-def check_artist_match(artist: str, a_dict: MBArtist):
+def check_bareartist_match(artist: str, a_dict: MBArtist):
 	return artist == a_dict["name"] or artist.lower() == a_dict["name"].lower() \
 		or artist == a_dict["sort-name"] or artist.lower() == a_dict["sort-name"].lower()
+
+def check_artist_match(artist: str, a_list: list[MBArtistCredit]):
+	if len(a_list) > 1:
+		joinphrase = str(a_list[0].get("joinphrase")).strip() or "&"
+		yt_artists = [a.strip() for a in artist.split(joinphrase)]
+		
+		all_artists_match = True
+		for yta in yt_artists:
+			found_match = False
+			for ac in a_list:
+				if check_bareartist_match(yta, ac["artist"]):
+					found_match = True
+					break
+			if not found_match:
+				all_artists_match = False
+				break
+		
+		return all_artists_match
+	else:
+		return check_bareartist_match(artist, a_list[0]["artist"])
+	
+def get_artist_mbids(a_list: list[MBArtistCredit]):
+	"""get artist mdid or list of mbids"""
+	if len(a_list) == 1:
+		return a_list[0]["artist"]["id"]
+	else:
+		return [ a["artist"]["id"] for a in a_list ]
 
 def check_album_match(album: str, r_dict: MBRelease):
 	return album == r_dict["title"] or album.replace("(Single)", "").strip() == r_dict["title"] \
@@ -282,6 +309,7 @@ class MBSong:
 
 	def save_song_dict(self, tracks: list[MBRecording]):
 		"""find the most similar song"""
+		# print("a", self.artist)
 		for t in tracks:
 			# skip entries with missing album or artist
 			if ("artist-credit" not in t) or (len(t["artist-credit"]) == 0) or ("releases" not in t) or (len(t["releases"]) == 0):
@@ -290,13 +318,15 @@ class MBSong:
 			title_match = check_title_match(self.title, t)
 			artist_match = False
 			album_match = False
+			# print(t["title"], json.dumps(t["artist-credit"]))
+			# print("")
 			
-			for a in t["artist-credit"]:
-				if check_artist_match(self.artist, a["artist"]):
-					self.artist_mbid = a["artist"]["id"]
-					self.artist_dict = a["artist"]
-					artist_match = True
-					break
+			if check_artist_match(self.artist, t["artist-credit"]):
+				self.artist_mbid = get_artist_mbids(t["artist-credit"])
+				self.artist_dict = t["artist-credit"]
+				artist_match = True
+				break
+				
 			for a in t["releases"]:
 				if check_album_match(self.album, a):
 					self.album_mbid = a["release-group"]["id"]
@@ -316,17 +346,13 @@ class MBSong:
 	def save_artist_dict(self, artists: list[MBArtist]):
 		"""find most similar artist"""
 		for a in artists:
-			if check_artist_match(self.artist, a):
+			if check_bareartist_match(self.artist, a):
 				self.artist_dict = a
 				self.artist_mbid = a["id"]
 				break
 
 	def get_mbid_tags(self):
 		"""get mbid tags with proper keys"""
-
-		# f = open("rec.json", "w", encoding="utf8")
-		# json.dump(self.album_dict, f, indent=4, ensure_ascii=False)
-		# f.close()
 		
 		return {
 			"track_mbid": self.song_mbid,
@@ -335,15 +361,20 @@ class MBSong:
 			"album_artist_mbid": self.artist_mbid
 		}
 
-def get_mbids_for_song(tags: Tags, skip_encode = False, exclude_tags: list[str] = []):
+def get_mbids_for_song(tags: Tags, skip_encode = False, exclude_tags: list[str] = [], use_mbid_data=True):
 	"""takes in a tags dict, adds mbid tags to it, returns it"""
-	mb = MBSong(title=tags["title"], artist=tags["artist"], album=tags["album"])
+	mb = MBSong(title=tags["title"], artist=str(tags["artist"]), album=tags["album"])
 	mb.fetch_song()
+
+	if use_mbid_data:
+		if mb.artist_dict:
+			tags["artist"] = [str(a["artist"]["name"]) for a in mb.artist_dict] if isinstance(mb.artist_dict, list) else mb.artist_dict["name"]
+			tags["album_artist"] = mb.artist_dict[0]["artist"]["name"] if isinstance(mb.artist_dict, list) else mb.artist_dict["name"]
 	
 	for key, tag in mb.get_mbid_tags().items():
 		if tag is not None and key not in exclude_tags:
 			if skip_encode is False:
-				tags[key] = tag.encode("utf-8")
+				tags[key] =  [ t.encode("utf-8") for t in tag ] if isinstance(tag, list) else tag.encode("utf-8")
 			else:
 				tags[key] = tag
 	

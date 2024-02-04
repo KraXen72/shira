@@ -18,8 +18,8 @@ CHANNEL_THRESHOLD = 15
 class Tags(TypedDict):
 	title: str
 	album: str
-	artist: str
-	album_artist: str
+	artist: str | list[str]
+	album_artist: str | list[str]
 	track: int
 	track_total: int
 	release_year: str
@@ -108,7 +108,7 @@ def tagger_m4a(tags: Tags, fixed_location: Path, exclude_tags: list[str], cover_
 	mp4_tags = {}
 	for k, v in MP4_TAGS_MAP.items():
 		if k not in exclude_tags and tags.get(k) is not None:
-			mp4_tags[v] = [tags[k]]
+			mp4_tags[v] = tags[k] if isinstance(tags[k], list) else [tags[k]]
 	
 	if not {"track", "track_total"} & set(exclude_tags):
 		mp4_tags["trkn"] = [[0, 0]]

@@ -196,10 +196,17 @@ class Dl:
 			if (self.template_file.startswith("{track:02d} ")):
 				locfile = self.template_file[12:]
 				final_location_file = "{title}".split("/") if locfile.strip() == "" else locfile.split("/")
-			
-		final_location_folder = [self.get_sanizated_string(i.format(**tags), True) for i in final_location_folder]
-		final_location_file = [self.get_sanizated_string(i.format(**tags), True) for i in final_location_file[:-1]] + [
-			self.get_sanizated_string(final_location_file[-1].format(**tags), False) + extension
+		
+		filename_safe_tags: dict[str, str] = {}
+		for k, v in tags.items(): # join artists with & so filenames aren't like ['Artist1', 'Artist2'] but rather Artist1 & Artist2
+			if isinstance(v, list):
+				filename_safe_tags[k] = " & ".join([ vv if isinstance(vv, str) else vv.decode("utf-8") for vv in v ])
+			else:
+				filename_safe_tags[k] = v
+
+		final_location_folder = [self.get_sanizated_string(i.format(**filename_safe_tags), True) for i in final_location_folder]
+		final_location_file = [self.get_sanizated_string(i.format(**filename_safe_tags), True) for i in final_location_file[:-1]] + [
+			self.get_sanizated_string(final_location_file[-1].format(**filename_safe_tags), False) + extension
 		]
 		return self.final_path.joinpath(*final_location_folder).joinpath(*final_location_file)
 

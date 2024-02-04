@@ -9,7 +9,7 @@ from statistics import mean, stdev
 import requests
 from mutagen.id3 import ID3, Frames
 from mutagen.mp4 import MP4, MP4Cover
-from PIL import Image, ImageChops, ImageFilter, ImageOps
+from PIL import Image, ImageFilter, ImageOps
 from typing_extensions import NotRequired, TypedDict  # noqa: UP035
 
 AVG_THRESHOLD = 10
@@ -102,15 +102,14 @@ def tagger_mp3(tags: Tags, fixed_location: Path, exclude_tags: list[str], cover_
 		))
 
 	mp3.add(Frames["TPOS"](encoding=3, text="1/1"))
-	mp3.save(v2_version=4)
+	mp3.save(v2_version=4) # ID3v2.4 was released in the year 2000 it's fine
 
 
 def tagger_m4a(tags: Tags, fixed_location: Path, exclude_tags: list[str], cover_format: str):
 	mp4_tags = {}
 	for k, v in MP4_TAGS_MAP.items():
 		if k not in exclude_tags and tags.get(k) is not None:
-			if isinstance(tags[k], list):
-				
+			if isinstance(tags[k], list): # ensure they're all byte instances
 				mp4_tags[v] = [ p.encode("utf-8") if isinstance(p, str) else p for p in tags[k] ]
 			else:
 				mp4_tags[v] = [ tags[k] ]
@@ -140,13 +139,6 @@ def tagger_m4a(tags: Tags, fixed_location: Path, exclude_tags: list[str], cover_
 def get_cover(url):
 	return requests.get(url).content
 
-def get_dominant_color(pil_img):
-	img = pil_img.copy()
-	img = img.convert("RGBA")
-	img = img.resize((1, 1), resample=0)
-	dominant_color = img.getpixel((0, 0))
-	return dominant_color
-
 def get_cover_local(file_path: Path, id_or_url: str, is_soundcloud: bool):
 	"""
 	reads a local image as bytes.  
@@ -163,6 +155,13 @@ def get_cover_local(file_path: Path, id_or_url: str, is_soundcloud: bool):
 				return fp.read_bytes()
 	return None
 
+def get_dominant_color(pil_img):
+	img = pil_img.copy()
+	img = img.convert("RGBA")
+	img = img.resize((1, 1), resample=0)
+	dominant_color = img.getpixel((0, 0))
+	return dominant_color
+
 def determine_image_crop(image_bytes: bytes):
 	"""
 	samples 4 pixels near the corners and 2 from centers of side slices of the thumbnail (which is first smoothed and reduced to 64 colors)
@@ -177,7 +176,7 @@ def determine_image_crop(image_bytes: bytes):
 	width, height = rgb_filt_image.size
 
 	border_offset = 10 
-	border_slice_center = (width//2 - height//2)//2
+	# border_slice_center = (width//2 - height//2)//2
 	sample_regions = [
 		(border_offset, border_offset), # topleft
 		(width - border_offset, border_offset), #topright
@@ -238,6 +237,3 @@ def get_1x1_cover(url: str, temp_location: Path, uniqueid: str, cover_format = "
 	output_bytes.seek(0)
 
 	return output_bytes.read()
-
-def images_diff(img1, img2):
-	return len(set(ImageChops.difference(img1, img2).getdata())) > 100

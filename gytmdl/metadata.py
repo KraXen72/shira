@@ -325,13 +325,11 @@ class MBSong:
 				self.artist_mbid = get_artist_mbids(t["artist-credit"])
 				self.artist_dict = t["artist-credit"]
 				artist_match = True
-				break
 				
 			for a in t["releases"]:
 				if check_album_match(self.album, a):
 					self.album_mbid = a["release-group"]["id"]
 					self.album_dict = a
-					# print(json.dumps(self.album_dict))
 					album_match = True
 					break
 				

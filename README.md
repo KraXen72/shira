@@ -31,7 +31,7 @@ Related: [Using a cookies file (for YT Premium & more)](#setting-a-cookies-file)
   - <ins>very reasonable</ins>: When downloading a Youtube video, tags will be inferred from the video info: `title`, `channel_name`, `description`, `upload_date`, etc.
 
 ## Tagging
-- Adds a lot of metadata to music files. [See full list](#tag-variables). Writes [these tags](https://github.com/OxygenCobalt/Auxio/wiki/Supported-Metadata)
+- Adds a [lot of metadata](#tag-variables) to music files, in these [native tags](https://github.com/OxygenCobalt/Auxio/wiki/Supported-Metadata) (m4a, mp3)
 - Embeds proper & multi-value `m4a` (iTunes) and `.mp3` (ID3v2.4) tags
 - Uses [YouTube Music's API](https://github.com/sigma67/ytmusicapi) to get info about songs
 - Uses [MusicBrainz API](https://musicbrainz.org/doc/MusicBrainz_API) to resolve MusicBrainz ID's from their api 

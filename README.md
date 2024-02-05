@@ -1,83 +1,79 @@
-# Glomatico's YouTube Music Downloader (KraXen's Fork)
-Download YouTube Music songs/albums/playlists with tags from YouTube Music in 256kbps AAC/128kbps Opus/128kbps AAC.
-This fork adds several new features as well as many song tagging improvements.
+<h1 align="center">shira</h1>
+<p align="center"><img src="logo.svg" height=200></img></p>
+<h6 align="center">A smart music downloader</h6>
+<p align="center">
+<em>Download music from YouTube, YouTube Music and Soundcloud, </br> with great metadata and little effort.</em>
+</p>
 
-## New Features
-- Downloading from Soundcloud supported
-- Downloading of non-music youtube videos as music supported
-- Added more cli options & flags
-- planned/wip
-  - WebUI based on WebSockers (WIP/alpha)
-  - GUI to crop thumbnail for non-music videos
-  - GUI to confirm tags for non-music videos
+## Installation
+- Have [python](https://www.python.org/downloads/) (3.11+) and [git](https://git-scm.com/downloads) installed
+- Have `ffmpeg` installed ([scoop](#installing-ffmpeg-with-scoop) / [windows downloads](https://www.gyan.dev/ffmpeg/builds/) / [windows mirror](https://github.com/BtbN/FFmpeg-Builds/releases)) and added to PATH, or [specify it with `--ffmpeg-location`](#configuration)/[config](#configuration)
+- `git clone https://github.com/KraXen72/shira`, `cd shira`
+- `pip install -r requirements.txt`
+  
+Related: [Using a cookies file (for YT Premium & more)](#setting-a-cookies-file), [Troubleshooting](#troubleshooting)
 
-## Tagging improvements
-- uses video's `upload_date` for more precise release date when possible
-- tries to resolve MusicBrainz ID's from their api 
-  - `track`, `album`, `artist`, `albumartist` ids, falls back to `artist`, `albumartist` (sometimes artist existst in MusicBrainz DB but song doesen't)
-  - embeds multi-value m4a tags
-- cleans up messy titles into more reasonable ones:
+
+## Usage Examples
+- `python -m shiradl https://music.youtube.com/watch?v=WJapWKmYMHE` **YouTube Music**
+- `python -m shiradl "https://music.youtube.com/watch?v=WJapWKmYMHE&list=RDAMPLOLAK5uy_m0j4kNTIii-Ynm-lOSZezFRZVSlAPqgHw"`
+- `python -m shiradl https://www.youtube.com/watch?v=eF0Wh78eHyA` **YouTube (video)**
+- `python -m shiradl https://soundcloud.com/h1ghplayz-fn/nujabes-aruarian-dance-slowed-reverb-muffled-w-echo` **SoundCloud**
+- `python -m shiradl https://music.youtube.com/playlist?list=OLAK5uy_mCSHnOZ5d566LXt_DZFeFINWz2XC-FvEA` **Album/Playlist**
+- `python -m shiradl -u ./links.txt` **List of links to download**
+  - [See all cli options/flags](#Configuration)
+
+## Goals
+- Provide an easy way to download songs form YouTube Music, YouTube or SoundCloud
+- Provide objectively correct or at least very reasonable music metadata & properly tag music files.
+  - <ins>objectively correct</ins>: Shira queries the MusicBrainz Database and [YouTube Music's API](https://github.com/sigma67/ytmusicapi) to get song metadata
+  - <ins>very reasonable</ins>: When downloading a Youtube video, tags will be inferred from the video info: `title`, `channel_name`, `description`, `upload_date`, etc.
+
+## Tagging
+- Adds a lot of metadata to music files. [See full list](#tag-variables). Writes [these tags](https://github.com/OxygenCobalt/Auxio/wiki/Supported-Metadata)
+- Embeds proper & multi-value `m4a` (iTunes) and `.mp3` (ID3v2.4) tags
+- Uses [YouTube Music's API](https://github.com/sigma67/ytmusicapi) to get info about songs
+- Uses [MusicBrainz API](https://musicbrainz.org/doc/MusicBrainz_API) to resolve MusicBrainz ID's from their api 
+  - `track`, `album`, `artist`, `albumartist` ids
+    - falls back to `artist`, `albumartist` (sometimes artist exists in MusicBrainz DB but particular song doesen't)
+- uses my custom smart-metadata system from [tiger](https://github.com/KraXen72/tiger) for non-music videos
+  - collects as much information as possible for each tag, and selects the value with most occurences (with fallbacks)
+- Cleans up messy titles into more reasonable ones:
   - `IDOL【ENGLISH EDM COVER】「アイドル」 by YOASOBI【Aries Shepard x @djJoMusicChannel 】` =>
   - `IDOL [ENGLISH EDM COVER] [アイドル] by YOASOBI`
-- uses my custom smart-metadata system from [tiger](https://github.com/KraXen72/tiger) for non-music videos
-- uses a smart algorithm to determine if video's thumbnail should be cropped or padded to 1:1 aspect ratio
+- Is smart about turning a video's thumbnail into a square album cover
   
 <details id="smartcrop">
-<summary>More info about cropping algorithm</summary>
-<ul>
-<li>samples 4 pixels near the corners and 2 from centers of side slices of the thumbnail (which is first smoothed and reduced to 64 colors).</li>
+<summary>More info about YouTube thumbnail to Album Art algorithm</summary>
+<ol>
+<li>samples 4 pixels near the corners of the thumbnail (which is first smoothed and reduced to 64 colors)</li>
 <li>decides to crop if average of standard deviations of r, g and b color channels from each sample point is lower than a than a treshold</li>
 <li>otherwise pads the image to 1:1 with it's dominant color</li>
-</ul>
+</ol>
 </details>
 
-
-## Why not just use yt-dlp directly?
-While this project uses yt-dlp under the hood, it has the advantage of utilizing [YouTube Music's API](https://github.com/sigma67/ytmusicapi) to get songs metadata. This includes information such as track number, square cover, lyrics, year, etc.
-
-## Setup (development)
-1. clone git repo
-2. have `python` and `ffmpeg` installed, as mentioned below
-3. `pip install -r requirements.txt`
-4. `python -m gytmdl <link>` to run
-
-## Setup
-> currently, this fork is not published on pip
-1. Install Python 3.8 or higher (3.11+ recommended)
-2. Install gytmdl with pip
-    ```
-    pip install gytmdl
-    ```
-3. Add FFmpeg to PATH or specify the location using the command line arguments or the [config file](#configuration)
-   - to easily install ffmpeg on windows, you can install [scoop](https://scoop.sh) and run `scoop install main/ffmpeg`
-4. (optional) Set a cookies file
-   * By setting a cookies file, you can download age restricted tracks, private playlists and songs in 256kbps AAC if you are a premium user. You can export your cookies to a file by using the following Google Chrome extension on YouTube Music website: https://chrome.google.com/webstore/detail/gdocmgbfkjnnpapoeobnolbbkoibbcif.
-
-## Usage examples
-Download a song:
-```
-gytmdl "https://music.youtube.com/watch?v=3BFTio5296w"
-```
-Download an album:
-```
-gytmdl "https://music.youtube.com/playlist?list=OLAK5uy_lvpL_Gr_aVEq-LaivwJaSK5EbFd4HeamM"
-```
+## About & Credits
+- Name: **Shira** is a female saber-toothed [tiger](https://github.com/KraXen72/tiger) from [Ice Age](https://iceage.fandom.com/wiki/Shira). The name means ['poetry', 'singing' or 'music'](https://www.wikiwand.com/en/Shira_(given_name)) in Hebrew.
+- Based on my previous [YouTube downloader tiger](https://github.com/KraXen72/tiger) and [Glomatico's YouTube Music Downloader](https://github.com/glomatico/gytmdl)
+- Project logo is this [DeviantArt fanart](https://www.deviantart.com/f-a-e-l-e-s/art/Ice-age-5-Shira-and-Diego-757174602), which has been modified, vectorised and cleaned up
 
 ## Configuration
-gytmdl can be configured using the command line arguments or the config file. The config file is created automatically when you run gytmdl for the first time at `~/.gytmdl/config.json` on Linux and `%USERPROFILE%\.gytmdl\config.json` on Windows. Config file values can be overridden using command line arguments.
+Shira can be configured using the command line arguments or the config file.  
+The config file is created automatically when you run shira for the first time at `~/.shiradl/config.json` on Linux and `%USERPROFILE%\.shiradl\config.json` on Windows. Config file values can be overridden using command line arguments.
+
 | Command line argument / Config file key | Description | Default value |
 | --- | --- | --- |
 | `-f`, `--final-path` / `final_path` | Path where the downloaded files will be saved. | `./YouTube Music` |
 | `-t`, `--temp-path` / `temp_path` | Path where the temporary files will be saved. | `./temp` |
 | `-c`, `--cookies-location` / `cookies_location` | Location of the cookies file. | `null` |
 | `--ffmpeg-location` / `ffmpeg_location` | Location of the FFmpeg binary. | `ffmpeg` |
-| `--config-location` / - | Location of the config file. | `<home folder>/.gytmdl/config.json` |
-| `-i`, `--itag` / `itag` | Itag (audio quality). | `140` |
-| `--cover-size` / `cover_size` | Size of the cover.  [0<=x<=16383] | `1200` |
-| `--cover-format` / `cover_format` | Format of the cover. [jpg\|png] | `jpg` |
+| `--config-location` / - | Location of the config file. | `<home folder>/.shiradl/config.json` |
+| `-i`, `--itag` / `itag` | Itag (audio quality/format). [More info](#itags) | `140` |
+| `--cover-size` / `cover_size` | Size of the cover.  `size >= 0` and `<= 16383` | `1200` |
+| `--cover-format` / `cover_format` | Format of the cover. `jpg` or `png` | `jpg` |
 | `--cover-quality` / `cover_quality` | JPEG quality of the cover.  [1<=x<=100] | `94` |
 | `--cover-img` / `cover_img` | Path to image or folder of images named video/song id  | `null` |
-| `--cover-crop` / `cover_crop` |  'crop' takes a 1:1 square from the center, pad always pads top & bottom [auto\|crop\|pad] | `auto` - [more](#smartcrop) |
+| `--cover-crop` / `cover_crop` |  'crop' takes a 1:1 square from the center, pad always pads top & bottom. `auto`, `crop` or `pad` | `auto` - [more](#smartcrop) |
 | `--template-folder` / `template_folder` | Template of the album folders as a format string. | `{album_artist}/{album}` |
 | `--template-file` / `template_file` | Template of the song files as a format string. | `{track:02d} {title}` |
 | `-e`, `--exclude-tags` / `exclude_tags` | List of tags to exclude from file tagging separated by commas without spaces. | `null` |
@@ -93,13 +89,16 @@ gytmdl can be configured using the command line arguments or the config file. Th
 ### Itags
 The following itags are available:
 - `140` (128kbps AAC) - default, because it's the result of `bestaudio/best` on a free account
-- `141` (256kbps AAC) - use if you have premium alongside `--cookies location`
+- `141` (256kbps AAC) - use if you have premium alongside `--cookies-location`
 - `251` (128kbps Opus) - most stuff will error with `Failed to check URL 1/1`. Better to use `140`
   
 SoundCloud will always download in 128kbps MP3
-> SoundCloud also offers OPUS, however, [some people were complaining](https://www.factmag.com/2018/01/04/soundcloud-mp3-opus-format-sound-quality-change-64-128-kbps/) that the quality is worse  
-> [These are questionable claims](https://old.reddit.com/r/Techno/comments/bzodax/soundcloud_compression_128kbps_mp3_vs_64_kbps/) at best, but better safe than sorry.  
-> SoundCloud OPUS support might come later.  
+- SoundCloud also offers OPUS, which is currently not supported. [Some people were complaining](https://www.factmag.com/2018/01/04/soundcloud-mp3-opus-format-sound-quality-change-64-128-kbps/) that the quality is worse  
+- [These are questionable claims](https://old.reddit.com/r/Techno/comments/bzodax/soundcloud_compression_128kbps_mp3_vs_64_kbps/) at best, but better safe than sorry.   
+
+### Tag variables
+The following variables can be used in the template folder/file and/or in the `exclude_tags` list:  
+`title`, `album`, `artist`, `album_artist`, `track`, `track_total`, `release_year`, `release_date`, `cover`, `comment`, `lyrics`, `media_type`, `rating`, `track`, `track_total`, `track_mbid`, `album_mbid`, `artist_mbid`, `album_artist_mbid`
 
 ### Cover formats
 Can be either `jpg` or `png`.
@@ -111,25 +110,16 @@ Can be either `jpg` or `png`.
   - SoundCloud will also consider images based on the URL slug
     - for example: `https://soundcloud.com/yatashi-gang-63564467/lovely-bastards-yatashigang` => `lovely-bastards-yatashigang.jpg` or `.png`
 
-### Tag variables
-The following variables can be used in the template folder/file and/or in the `exclude_tags` list:
+## Troubleshooting
+- `python: No module named shiradl` 
+  - Make sure you are not already in the `shiradl` directory, e.g. `/shira/shiradl`. if yes, move up one directory with `cd ..` and retry.
 
-- `title`
-- `album`
-- `artist`
-- `album_artist`
-- `track`
-- `track_total`
-- `release_year`
-- `release_date`
-- `cover`
-- `comment`
-- `lyrics`
-- `media_type`
-- `rating`
-- `track`
-- `track_total`
-- `track_mbid`
-- `album_mbid`
-- `artist_mbid`
-- `album_artist_mbid`
+### Installing ffmpeg with scoop
+- Scoop is a package manager for windows. It allows easy installing of programs and their updating from the commandline.
+- Install [scoop](https://scoop.sh) by running a powershell command (on their website)
+- Run `scoop install main/ffmpeg`
+- Scoop automatically adds it to path. you can update ffmpeg by doing `scoop update` and `scoop update ffmpeg`/`*`
+
+### Setting a cookies file
+- By setting a cookies file, you can download age restricted tracks, private playlists and songs in 256kbps AAC if you are a premium user.
+- You can export your cookies to a file by using this [Google Chrome extension](https://chrome.google.com/webstore/detail/gdocmgbfkjnnpapoeobnolbbkoibbcif) or [Firefox extension](https://addons.mozilla.org/en-US/firefox/addon/cookies-txt/) on `https://music.youtube.com`

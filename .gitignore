@@ -1,6 +1,6 @@
 /*
 __pycache__
-!gytmdl
+!shirad
 !.gitignore
 !pyproject.toml
 !README.md
@@ -8,3 +8,4 @@ __pycache__
 !solidui
 solidui/node_modules
 solidui/dist
+!logo.svg

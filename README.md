@@ -105,15 +105,21 @@ The following variables can be used in the template folder/file and/or in the `e
 Can be either `jpg` or `png`.
 
 ### Cover img
-- If you pass in a path to an image file, it will get used for all of the songs you're currently downloading.
-- If you pass in a path to a folder, the script will look in the folder and use the first image matching the song/video id and of jpeg/png format as a cover
+- Pass in a path to an image file, and it will get used for all of the songs you're currently downloading.
+- Pass in a path to a folder, and the script will use the first image matching the song/video id and of jpeg/png format as a cover
   - You don't have to create covers for all songs in the playlist/album/etc. you're downloading.
-  - SoundCloud will also consider images based on the URL slug
-    - for example: `https://soundcloud.com/yatashi-gang-63564467/lovely-bastards-yatashigang` => `lovely-bastards-yatashigang.jpg` or `.png`
+  - SoundCloud will also consider images based on the URL slug instead of id
+  - for example: `https://soundcloud.com/yatashi-gang-63564467/lovely-bastards-yatashigang` => `lovely-bastards-yatashigang.jpg` or `.png`
 
 ## Troubleshooting
 - `python: No module named shiradl` 
   - Make sure you are not already in the `shiradl` directory, e.g. `/shira/shiradl`. if yes, move up one directory with `cd ..` and retry.
+- I really need to run this on `python` 3.8+ and updating to 3.11+ is not an option
+  - run `pip install typing-extensions` and modify `tagging.py` accordingly:
+  ```diff
+  - from typing import NotRequired, TypedDict
+  + from typing_extensions import NotRequired, TypedDict
+  ```
 
 ### Installing ffmpeg with scoop
 - Scoop is a package manager for windows. It allows easy installing of programs and their updating from the commandline.

@@ -5,12 +5,12 @@ import os
 from io import BytesIO
 from pathlib import Path
 from statistics import mean, stdev
+from typing import NotRequired, TypedDict
 
 import requests
 from mutagen.id3 import ID3, Frames
 from mutagen.mp4 import MP4, MP4Cover
 from PIL import Image, ImageFilter, ImageOps
-from typing_extensions import NotRequired, TypedDict  # noqa: UP035
 
 AVG_THRESHOLD = 10
 CHANNEL_THRESHOLD = 15

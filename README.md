@@ -7,7 +7,7 @@
 
 ## Installation
 - Have [python](https://www.python.org/downloads/) (3.11+) and [git](https://git-scm.com/downloads) installed
-- Have `ffmpeg` installed ([scoop](#installing-ffmpeg-with-scoop) / [windows downloads](https://www.gyan.dev/ffmpeg/builds/) / [windows mirror](https://github.com/BtbN/FFmpeg-Builds/releases)) and added to PATH, or [specify it with `--ffmpeg-location`](#configuration)/[config](#configuration)
+- Have `ffmpeg` installed ([scoop](#installing-ffmpeg-with-scoop)/[windows dl](https://www.gyan.dev/ffmpeg/builds/)/[mirror](https://github.com/BtbN/FFmpeg-Builds/releases)) and added to PATH, or [specify it with `--ffmpeg-location`](#configuration)/[config](#configuration)
 - `git clone https://github.com/KraXen72/shira`, `cd shira`
 - `pip install -r requirements.txt`
   

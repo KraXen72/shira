@@ -1,6 +1,6 @@
 <h1 align="center">shira</h1>
 <p align="center"><img src="logo.svg" height=200></img></p>
-<h5 align="center">A smart music downloader</h5>
+<h4 align="center">A smart music downloader</h4>
 <p align="center">
 <em>Download music from YouTube, YouTube Music and Soundcloud, </br> with great metadata and little effort.</em>
 </p>

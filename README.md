@@ -130,3 +130,7 @@ Can be either `jpg` or `png`.
 ### Setting a cookies file
 - By setting a cookies file, you can download age restricted tracks, private playlists and songs in 256kbps AAC if you are a premium user.
 - You can export your cookies to a file by using this [Google Chrome extension](https://chrome.google.com/webstore/detail/gdocmgbfkjnnpapoeobnolbbkoibbcif) or [Firefox extension](https://addons.mozilla.org/en-US/firefox/addon/cookies-txt/) on `https://music.youtube.com`
+
+## Contributing
+- Please report any bugs in Issues. Pull requests are welcome!
+- Fork this repo, [Follow installation steps](#Installation), Make changes, Open a pull request

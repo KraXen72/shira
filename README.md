@@ -15,12 +15,12 @@ Related: [Using a cookies file (for YT Premium & more)](#setting-a-cookies-file)
 
 
 ## Usage Examples
-- `python -m shiradl https://music.youtube.com/watch?v=WJapWKmYMHE` **YouTube Music**
-- `python -m shiradl "https://music.youtube.com/watch?v=WJapWKmYMHE&list=RDAMPLOLAK5uy_m0j4kNTIii-Ynm-lOSZezFRZVSlAPqgHw"`
-- `python -m shiradl https://www.youtube.com/watch?v=eF0Wh78eHyA` **YouTube (video)**
-- `python -m shiradl https://soundcloud.com/h1ghplayz-fn/nujabes-aruarian-dance-slowed-reverb-muffled-w-echo` **SoundCloud**
-- `python -m shiradl https://music.youtube.com/playlist?list=OLAK5uy_mCSHnOZ5d566LXt_DZFeFINWz2XC-FvEA` **Album/Playlist**
-- `python -m shiradl -u ./links.txt` **List of links to download**
+`python -m shiradl https://music.youtube.com/watch?v=WJapWKmYMHE` **YouTube Music**  
+`python -m shiradl "https://music.youtube.com/watch?v=WJapWKmYMHE&list=RDAMPLOLAK5uy_m0j4kNTIii-Ynm-lOSZezFRZVSlAPqgHw"`  
+`python -m shiradl https://www.youtube.com/watch?v=eF0Wh78eHyA` **YouTube (video)**  
+`python -m shiradl https://soundcloud.com/h1ghplayz-fn/nujabes-aruarian-dance-slowed-reverb-muffled-w-echo` **SoundCloud**  
+`python -m shiradl https://music.youtube.com/playlist?list=OLAK5uy_mCSHnOZ5d566LXt_DZFeFINWz2XC-FvEA` **Album/Playlist**  
+`python -m shiradl -u ./links.txt` **List of links to download**  
   - [See all cli options/flags](#Configuration)
 
 ## Goals

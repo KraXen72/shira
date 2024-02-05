@@ -54,7 +54,7 @@ Related: [Using a cookies file (for YT Premium & more)](#setting-a-cookies-file)
 </details>
 
 ## About & Credits
-- Name: **Shira** is a female saber-toothed [tiger](https://github.com/KraXen72/tiger) from [Ice Age](https://iceage.fandom.com/wiki/Shira). The name means ['poetry', 'singing' or 'music'](https://www.wikiwand.com/en/Shira_(given_name)) in Hebrew.
+- Name: **Shira** is a saber-toothed [tiger](https://github.com/KraXen72/tiger) from [Ice Age](https://iceage.fandom.com/wiki/Shira). The name means ['poetry', 'singing' or 'music'](https://www.wikiwand.com/en/Shira_(given_name)) in Hebrew.
 - Based on my previous [YouTube downloader tiger](https://github.com/KraXen72/tiger) and [Glomatico's YouTube Music Downloader](https://github.com/glomatico/gytmdl)
 - Project logo is this [DeviantArt fanart](https://www.deviantart.com/f-a-e-l-e-s/art/Ice-age-5-Shira-and-Diego-757174602), which has been modified, vectorised and cleaned up
 

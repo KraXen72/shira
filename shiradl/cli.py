@@ -1,6 +1,7 @@
 import json
 import logging
 import shutil
+from http.cookiejar import LoadError as CookieLoadError
 from pathlib import Path
 
 import click
@@ -125,9 +126,11 @@ def cli(
 		try:
 			logger.debug(f'Checking "{url}" (URL {i + 1}/{len(urls)})')
 			download_queue.append(dl.get_download_queue(url))
+		except (CookieLoadError) as he: # handled exceptions
+			logger.error(he, exc_info=False)
 		except Exception:
 			logger.error(f"Failed to check URL {i + 1}/{len(urls)}", exc_info=print_exceptions)
-			# logging.exception("")
+			logging.exception("")
 	error_count = 0
 	for i, url in enumerate(download_queue):
 		for j, track in enumerate(url):

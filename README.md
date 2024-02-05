@@ -25,6 +25,7 @@ Related: [Using a cookies file (for YT Premium & more)](#setting-a-cookies-file)
 
 ## Goals
 - Provide an easy way to download songs form YouTube Music, YouTube or SoundCloud
+  - Instead of a GUI/manual input for some steps like in [tiger](https://github.com/KraXen72/tiger), shira requires no additional user input once ran.
 - Provide objectively correct or at least very reasonable music metadata & properly tag music files.
   - <ins>objectively correct</ins>: Shira queries the MusicBrainz Database and [YouTube Music's API](https://github.com/sigma67/ytmusicapi) to get song metadata
   - <ins>very reasonable</ins>: When downloading a Youtube video, tags will be inferred from the video info: `title`, `channel_name`, `description`, `upload_date`, etc.

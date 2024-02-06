@@ -28,7 +28,7 @@ On some systems, you might have to use the `python3` or `python3.x` command inst
 - Provide an easy way to download audio from YouTube Music, YouTube or SoundCloud
   - Instead of a GUI/manual input for some steps like in [tiger](https://github.com/KraXen72/tiger), shira requires no additional user input once ran.
 - Provide objectively correct or at least very reasonable music metadata & properly tag music files.
-  - <ins>objectively correct</ins>: Shira queries the MusicBrainz Database and [YouTube Music's API](https://github.com/sigma67/ytmusicapi) to get metadata
+  - <ins>objectively correct</ins>: Shira queries the [MusicBrainz Database](https://musicbrainz.org) and [YouTube Music's API](https://github.com/sigma67/ytmusicapi) to get metadata
   - <ins>very reasonable</ins>: When downloading a Youtube video, tags will be inferred from the video info: `title`, `channel_name`, `description`, `upload_date`, etc.
 
 ## Tagging

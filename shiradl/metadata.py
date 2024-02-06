@@ -8,7 +8,7 @@ from typing import TypedDict
 
 import requests
 
-from .tagging import ARITST_SEPARATOR, Tags, get_1x1_cover
+from .tagging import ARTIST_SEPARATOR, Tags, get_1x1_cover
 
 TIGER_SINGLE = "tiger:is_single:true"
 
@@ -371,7 +371,10 @@ def get_mbids_for_song(tags: Tags, skip_encode = False, exclude_tags: list[str] 
 	if use_mbid_data:
 		if mb.artist_dict:
 			if isinstance(mb.artist_dict, list):
-				tags["artist"] = ARITST_SEPARATOR.join([a["artist"]["name"] for a in mb.artist_dict ])
+				val = [a["artist"]["name"] for a in mb.artist_dict ]
+				# tags["artist"] = val
+				tags["itunes_multiartist"] = val # type: ignore
+				tags["artist"] = ARTIST_SEPARATOR.join([a["artist"]["name"] for a in mb.artist_dict ])
 			else:
 				tags["artist"] = mb.artist_dict["name"]
 			tags["album_artist"] = mb.artist_dict[0]["artist"]["name"] if isinstance(mb.artist_dict, list) else mb.artist_dict["name"]
@@ -379,7 +382,7 @@ def get_mbids_for_song(tags: Tags, skip_encode = False, exclude_tags: list[str] 
 			tags["album"] = mb.album_dict["title"]
 		if mb.song_dict:
 			tags["title"] = mb.song_dict["title"]
-	
+
 	for key, tag in mb.get_mbid_tags().items():
 		if tag is not None and key not in exclude_tags:
 			if skip_encode is False:

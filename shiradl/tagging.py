@@ -9,12 +9,15 @@ from typing import NotRequired, TypedDict
 
 import requests
 from mutagen.id3 import ID3, Frames
-from mutagen.mp4 import MP4, MP4Cover
+from mutagen.mp4 import MP4Cover
 from PIL import Image, ImageFilter, ImageOps
+
+from .patch_mp4tags import MP4
 
 AVG_THRESHOLD = 10
 CHANNEL_THRESHOLD = 15
-ARITST_SEPARATOR = "/"#" & " # TODO make this configurable
+MV_SEPARATOR = "/"#" & " # TODO make this configurable
+ARTIST_SEPARATOR = " & "
 
 class Tags(TypedDict):
 	title: str
@@ -49,6 +52,8 @@ MP4_TAGS_MAP = {
 	"artist_mbid": "----:com.apple.iTunes:MusicBrainz Artist Id",
 	"album_artist_mbid": "----:com.apple.iTunes:MusicBrainz Album Artist Id",
 
+	"itunes_multiartist": "----:com.apple.iTunes:ARTISTS"
+
 	# doesen't include track (trkn) or disc (disk)
 }
 
@@ -67,7 +72,7 @@ MP3_TAGS_MAP = {
 	"track_mbid": "TXXX:MusicBrainz Release Track Id",
 	"album_mbid": "TXXX:MusicBrainz Release Group Id",
 	"artist_mbid": "TXXX:MusicBrainz Artist Id",
-	"album_artist_mbid": "TXXX:MusicBrainz Album Artist Id"
+	"album_artist_mbid": "TXXX:MusicBrainz Album Artist Id",
 
 	# doesen't include track (TRCK) and disc (TPOS, TSST)
 }
@@ -107,12 +112,16 @@ def tagger_mp3(tags: Tags, fixed_location: Path, exclude_tags: list[str], cover_
 
 def tagger_m4a(tags: Tags, fixed_location: Path, exclude_tags: list[str], cover_format: str):
 	mp4_tags = {}
+
 	for k, v in MP4_TAGS_MAP.items():
 		if k not in exclude_tags and tags.get(k) is not None:
+			# print(v, type(v), ":", tags[k], [type(t) for t in tags[k]] if isinstance(tags[k], list) else type(tags[k]))
+
 			if isinstance(tags[k], list): # ensure they're all byte instances
 				mp4_tags[v] = [ p.encode("utf-8") if isinstance(p, str) else p for p in tags[k] ]
 			else:
 				mp4_tags[v] = [ tags[k] ]
+
 			
 	if not {"track", "track_total"} & set(exclude_tags):
 		mp4_tags["trkn"] = [[0, 0]]

@@ -1,6 +1,7 @@
 click
 yt-dlp
 ytmusicapi
+mutagen==1.47.0
 requests
 websocket_server
 pillow

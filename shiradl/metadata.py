@@ -370,12 +370,12 @@ def get_mbids_for_song(tags: Tags, skip_encode = False, exclude_tags: list[str] 
 
 	if use_mbid_data:
 		if mb.artist_dict:
-			if isinstance(mb.artist_dict, list):
+			if isinstance(mb.artist_dict, list): # TODO fix multi-value tags
 				# val = [a["artist"]["name"] for a in mb.artist_dict ]
 				# tags["artist"] = val
 				# tags["itunes_multiartist"] = val # type: ignore
 				tags["artist"] = MV_SEPARATOR.join([a["artist"]["name"] for a in mb.artist_dict ])
-			else:
+			else: # TODO consider using mb.album_dict to get album artist?
 				tags["artist"] = mb.artist_dict["name"]
 			tags["album_artist"] = mb.artist_dict[0]["artist"]["name"] if isinstance(mb.artist_dict, list) else mb.artist_dict["name"]
 		if mb.album_dict:

@@ -11,7 +11,7 @@
 - `git clone https://github.com/KraXen72/shira`, `cd shira`
 - `pip install -r requirements.txt`
   
-On some systems, you might have to use `python3` or `python3.x` instead of `python`  
+On some systems, you might have to use the `python3` or `python3.x` command instead of `python`  
 **Guides**: [Using a cookies file](#setting-a-cookies-file), [Troubleshooting](#troubleshooting)
 
 

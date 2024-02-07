@@ -62,6 +62,10 @@ On some systems, you might have to use the `python3` or `python3.x` command inst
 - The project is based on my previous [YouTube downloader tiger](https://github.com/KraXen72/tiger) and [Glomatico's YouTube Music Downloader](https://github.com/glomatico/gytmdl)
 - Project logo is based on this [DeviantArt fanart](https://www.deviantart.com/f-a-e-l-e-s/art/Ice-age-5-Shira-and-Diego-757174602), which has been modified, vectorised and cleaned up.
 
+### Support development
+[![Recurring donation via Liberapay](https://liberapay.com/assets/widgets/donate.svg)](https://liberapay.com/KraXen72) [![One-time donation via ko-fi.com](https://ko-fi.com/img/githubbutton_sm.svg)](https://ko-fi.com/kraxen72)  
+Any donations are highly appreciated! <3
+
 ## Configuration
 Shira can be configured using the command line arguments or the config file.  
 The config file is created automatically when you run shira for the first time at `~/.shiradl/config.json` on Linux and `%USERPROFILE%\.shiradl\config.json` on Windows. Config file values can be overridden using command line arguments.

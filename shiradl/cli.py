@@ -8,8 +8,8 @@ import click
 
 from . import __version__
 from .dl import Dl
-from .metadata import TIGER_SINGLE, get_mbids_for_song, smart_metadata
-from .tagging import get_cover_local, tagger_m4a, tagger_mp3
+from .metadata import TIGER_SINGLE, musicbrainz_enrich_tags, smart_metadata
+from .tagging import get_cover_local, metadata_applier
 
 logging.basicConfig(
 	format="[%(levelname)-8s %(asctime)s] %(message)s",
@@ -52,7 +52,7 @@ def no_config_callback(ctx: click.Context, param: click.Parameter, no_config_fil
 @click.option("--cover-quality", type=click.IntRange(1, 100), default=94, help="JPEG quality of the cover.")
 @click.option("--cover-img", type=Path, default=None, help="Path to image or folder of images named video/song id")
 @click.option("--cover-crop", type=click.Choice(["auto", "crop", "pad"]), default="auto", help="'crop' takes a 1:1 square from the center, pad always pads top & bottom")
-@click.option("--template-folder", type=str, default="{album_artist}/{album}", help="Template of the album folders as a format string.")
+@click.option("--template-folder", type=str, default="{albumartist}/{album}", help="Template of the album folders as a format string.")
 @click.option("--template-file", type=str, default="{track:02d} {title}", help="Template of the song files as a format string.")
 @click.option("--exclude-tags", "-e", type=str, default=None, help="List of tags to exclude from file tagging separated by commas without spaces.")
 @click.option("--truncate", type=int, default=60, help="Maximum length of the file/folder names.")
@@ -147,16 +147,22 @@ def cli(
 					tag_track = track
 					if "webpage_url_domain" not in track:
 						tag_track = dl.get_ydl_extract_info(track["url"])
+					logger.debug("Starting Tigerv2")
 					tags = smart_metadata(tag_track, temp_path, "JPEG" if dl.cover_format == "jpg" else "PNG", cover_crop)
-					is_single = tags["comment"] == TIGER_SINGLE
+					is_single = tags["comments"] == TIGER_SINGLE
+					if is_single:
+						tags["comments"] = track.get("webpage_url") or track.get("original_url") or track.get("url") or url
 				else:
 					tags = dl.get_tags(ytmusic_watch_playlist, track)
-					is_single = tags["track_total"] == 1
-				tags = get_mbids_for_song(tags, dl.soundcloud, dl.exclude_tags)
+					is_single = tags["tracktotal"] == 1
+				logger.debug("Tags applied, fetching MusicBrainz Database")
+				tags = musicbrainz_enrich_tags(tags, dl.soundcloud, dl.exclude_tags)
+				logger.debug("Applied MusicBrainz Tags")
 				if cover_img:
 					local_img_bytes = get_cover_local(cover_img, track["url"] if dl.soundcloud else track["id"], dl.soundcloud)
 					if local_img_bytes is not None:
 						tags["cover_bytes"] = local_img_bytes
+				logger.debug("Applied cover Image")
 				final_location = dl.get_final_location(tags, ".mp3" if dl.soundcloud is True else ".m4a", is_single, single_folder)
 				logger.debug(f'Final location is "{final_location}"')
 				temp_location = dl.get_temp_location(track["id"])	
@@ -171,10 +177,11 @@ def cli(
 					logger.debug(f'Remuxing to "{fixed_location}"')
 					dl.fixup(temp_location, fixed_location)
 					logger.debug("Applying tags")
-					if dl.soundcloud is False:
-						tagger_m4a(tags, fixed_location, dl.exclude_tags, dl.cover_format)
-					else:
-						tagger_mp3(tags, fixed_location, dl.exclude_tags, dl.cover_format)
+					metadata_applier(tags, fixed_location, dl.exclude_tags)
+					# if dl.soundcloud is False:
+					# 	tagger_m4a(tags, fixed_location, dl.exclude_tags, dl.cover_format)
+					# else:
+					# 	tagger_mp3(tags, fixed_location, dl.exclude_tags, dl.cover_format)
 					logger.debug("Moving to final location")
 					dl.move_to_final_location(fixed_location, final_location)
 				else:

@@ -5,3 +5,4 @@ mutagen==1.47.0
 requests
 websocket_server
 pillow
+mediafile

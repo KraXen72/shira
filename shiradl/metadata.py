@@ -8,7 +8,7 @@ from typing import TypedDict
 
 import requests
 
-from .tagging import MV_SEPARATOR, Tags, get_1x1_cover
+from .tagging import Tags, get_1x1_cover
 
 TIGER_SINGLE = "tiger:is_single:true"
 
@@ -28,7 +28,8 @@ MBRelease = TypedDict("MBRelease", {
 	"id": str,
 	"title": str,
 	"artist-credit": list[MBArtistCredit],
-	"release-group": dict[str, str]
+	"release-group": dict[str, str],
+	"date": str
 })
 
 MBRecording = TypedDict("MBRecording", {
@@ -38,6 +39,15 @@ MBRecording = TypedDict("MBRecording", {
 	"releases": list[MBRelease]
 })
 
+def parse_datestring(datestr: str):
+	"""parse YYYYMMDD or YYYY-MM-DD into { year: str, month: str, day: str }"""
+	if re.match(r"^\d{8}$", datestr):
+		return { "year": datestr[0:4], "month": datestr[4:6], "day": datestr[6:8] }
+	elif "-" in datestr and re.match(r"^\d{4}-\d{2}-\d{2}$", datestr):
+		parts = datestr.split("-")
+		return { "year": parts[0], "month": parts[1], "day": parts[2] }
+	else:
+		raise Exception(f"parse_datesting: unknown format of '{datestr}' - use YYYY-MM-DD or YYYYMMDD")
 
 def get_year(track: dict[str, str | int], ytmusic_album: dict[str, str | int] | None = None):
 	""":returns release_year, release_date"""
@@ -53,7 +63,7 @@ def get_year(track: dict[str, str | int], ytmusic_album: dict[str, str | int] | 
 	upload_date = str(upload_date) if upload_date is not None else None
 
 	if upload_date: # YYYYMMDD
-		date = { "year": upload_date[0:4], "month": upload_date[4:6], "day": upload_date[6:8] }
+		date = parse_datestring(upload_date)
 	elif ytmusic_album is not None:
 		date["year"] = str(ytmusic_album.get("year") or track.get("release_year"))
 
@@ -113,8 +123,8 @@ def smart_tag(list_of_keys: list[str], data_obj: dict, additional_values: list[s
 
 # site extractors
 def youtube_extractor(info):
-	md_keys = { "title": ["title", "track", "alt_title"], "artist": ["artist", "channel", "creator"], "album_artist": [], "album": ["album"] }
-	add_values = { "title": [], "artist": [], "album_artist": [], "album": [], "year": [], }
+	md_keys = { "title": ["title", "track", "alt_title"], "artist": ["artist", "channel", "creator"], "albumartist": [], "album": ["album"] }
+	add_values = { "title": [], "artist": [], "albumartist": [], "album": [], "year": [], }
 
 	# video title is: Artist - Title format
 	if info["title"].count(" - ") == 1:
@@ -127,10 +137,38 @@ def youtube_extractor(info):
 	return md_keys, add_values
 
 def soundcloud_extractor(info):
-	md_keys = { "title": ["title", "fulltitle"], "artist": ["uploader"], "album_artist": ["uploader"], "album": [] }
-	add_values = { "title": [], "artist": [], "album_artist": [], "album": [], "year": [], }
+	md_keys = { "title": ["title", "fulltitle"], "artist": ["uploader"], "albumartist": ["uploader"], "album": [] }
+	add_values = { "title": [], "artist": [], "albumartist": [], "album": [], "year": [], }
 
 	return md_keys, add_values
+
+def get_youtube_maxres_thumbnail(info):
+	# sometimes info["thumbnail"] results in the fallback youtube 404 gray thumbnail
+	pinged_urls = []
+	thumbs = list(reversed(info["thumbnails"]))
+
+	def ping_yt(url: str):
+		res = requests.get(str(t["url"]))
+		pinged_urls.append(t["url"])
+		return res
+
+	for t in thumbs: # try to get maxresdefault
+		if t["url"] in pinged_urls:
+			continue
+		if t["url"].endswith("/maxresdefault.jpg") or t["url"].endswith("/maxresdefault.png"):
+			res = ping_yt(t["url"])
+			if res.status_code == 404:
+				continue
+			return str(t["url"])
+	for t in thumbs: # otherwise, just take the one with the best preference but out format
+		if t["url"] in pinged_urls:
+			continue
+		if t["url"].endswith(".jpg") or t["url"].endswith(".png"):
+			res = ping_yt(t["url"])
+			if res.status_code == 404:
+				continue
+			return str(t["url"])
+	return str(info["thumbnail"])
 
 # based on the original https://github.com/KraXen72/tiger
 def smart_metadata(info, temp_location: Path, cover_format = "JPEG", cover_crop_method = "auto"):
@@ -138,28 +176,30 @@ def smart_metadata(info, temp_location: Path, cover_format = "JPEG", cover_crop_
 	grabs as much info as it can from all over the place
 	gets the most likely tag and returns a dict
 	"""
-
+	
+	thumbnail = get_youtube_maxres_thumbnail(info)
+	# thumbnail = info["thumbnail"]
 	md: Tags = {
 		"title": "",
 		"artist": "",
 		"album": "",
-		"album_artist": "",
+		"albumartist": "",
 		"track": 1,
-		"track_total": 1,
-		"release_year": "",
-		"release_date": "",
-		"cover_url": info["thumbnail"],
+		"tracktotal": 1,
+		"year": "",
+		"date": "",
+		"cover_url": thumbnail,
 		"cover_bytes": get_1x1_cover(
-			info["thumbnail"], 
+			thumbnail, 
 			temp_location, 
 			info.get("id") or clean_title(info.get("title")) or str(random.randint(0, 9) * "16"), 
 			cover_format, 
 			cover_crop_method
 		)
 	}
-	md_keys = { "title": [], "artist": [], "album_artist": [], "album": [], "year": [], } # keys to check from the 'info object'. site specific.
-	add_values = { "title": [], "artist": [], "album_artist": [], "album": [], "year": [], }
-	others = { "title": [], "artist": [], "album_artist": [], "album": [], "year": [], }
+	md_keys = { "title": [], "artist": [], "albumartist": [], "album": [], "year": [], } # keys to check from the 'info object'. site specific.
+	add_values = { "title": [], "artist": [], "albumartist": [], "album": [], "year": [], }
+	others = { "title": [], "artist": [], "albumartist": [], "album": [], "year": [], }
 
 	domain = info["webpage_url_domain"]
 	match domain:
@@ -172,7 +212,7 @@ def smart_metadata(info, temp_location: Path, cover_format = "JPEG", cover_crop_
 	
 	md["title"], others["title"] = smart_tag(md_keys["title"], info, add_values["title"])
 	md["artist"], others["artist"] = smart_tag(md_keys["artist"], info, add_values["artist"])
-	md["album_artist"], others["album_artist"] = smart_tag(md_keys["album_artist"], info, [md["artist"]] + add_values["album_artist"])
+	md["albumartist"], others["albumartist"] = smart_tag(md_keys["albumartist"], info, [md["artist"]] + add_values["albumartist"])
 
 	md["title"] = clean_title(str(md["title"]))
 
@@ -181,14 +221,14 @@ def smart_metadata(info, temp_location: Path, cover_format = "JPEG", cover_crop_
 		add_values["album"].append(f"{md['title']} (Single)")
 
 	md["album"], others["album"] = smart_tag(md_keys["album"], info, add_values["album"])
-	md["release_year"], md["release_date"] = get_year(info)
+	md["year"], md["date"] = get_year(info)
 
 	if "(Single)" in md["album"]:
-		md["comment"] = TIGER_SINGLE # TODO remove this later?
+		md["comments"] = TIGER_SINGLE # TODO remove this later?
 
 	return md
 
-bracket_tuples =[["[", "]"], ["(", ")"], ["【", "】"], ["「", "」"]]
+bracket_tuples =[["[", "]"], ["(", ")"], ["【", "】"], ["「", "」"], ["（", "）"]]
 title_banned_chars = ["♪"]
 
 # https://stackoverflow.com/a/49986645/13342359
@@ -202,6 +242,8 @@ yeet_emoji = re.compile(pattern = "["
 def clean_title(title: str):
 	"""clean up youtube titles with regex and a lot of black magic"""
 
+	for char in title_banned_chars:
+		title = title.replace(char, "")
 	for lb, rb in bracket_tuples: 
 		lbe, rbe = re.escape(lb), re.escape(rb) # check for all matching variations of brackets
 		for m in re.finditer(rf"{lbe}([^{lbe}{rbe}]+){rbe}", title):
@@ -258,7 +300,7 @@ def check_title_match(title: str, r_dict: MBRecording):
 	"""fuzzy song title matching"""
 	return title == r_dict["title"] or title.lower() == r_dict["title"].lower() or digits_match(title, r_dict["title"])
 
-def get_artist_mbids(a_list: list[MBArtistCredit], return_single = False):
+def get_mb_artistids(a_list: list[MBArtistCredit], return_single = False):
 	"""get artist mdid or list of mbids"""
 	if len(a_list) == 1 or return_single:
 		return a_list[0]["artist"]["id"]
@@ -282,13 +324,13 @@ class MBSong:
 		self.base = "https://musicbrainz.org/ws/2"
 		self.default_params = { "fmt": "json" }
 
-		self.song_dict = None
-		self.artist_dict = None
-		self.album_dict = None
+		self.song_dict = None # MBRecording
+		self.artist_dict = None # MBArtistCredit
+		self.album_dict = None # MBRelease
 
-		self.song_mbid = None
-		self.artist_mbid = None
-		self.album_mbid = None
+		self.mb_releasetrackid = None # song mbid
+		self.mb_releasegroupid = None # album mbid
+		self.mb_artistid = None # artist mbid
 
 	def fetch_song(self):
 		"""ping mb api to get song"""
@@ -324,19 +366,19 @@ class MBSong:
 			album_match = False
 			
 			if check_artist_match(self.artist, t["artist-credit"]):
-				self.artist_mbid = get_artist_mbids(t["artist-credit"])
+				self.mb_artistid = get_mb_artistids(t["artist-credit"])
 				self.artist_dict = t["artist-credit"]
 				artist_match = True
 				
 			for a in t["releases"]:
 				if check_album_match(self.album, a):
-					self.album_mbid = a["release-group"]["id"]
+					self.mb_releasegroupid = a["release-group"]["id"]
 					self.album_dict = a
 					album_match = True
 					break
 				
 			if title_match and artist_match and album_match:
-				self.song_mbid = t["id"]
+				self.mb_releasetrackid = t["id"]
 				self.song_dict = t
 				break
 
@@ -348,40 +390,54 @@ class MBSong:
 		for a in artists:
 			if check_bareartist_match(self.artist, a):
 				self.artist_dict = a
-				self.artist_mbid = a["id"]
+				self.mb_artistid = a["id"]
 				break
+
+	def get_date_str(self):
+		if self.song_dict is None:
+			return None
+		frd = self.song_dict.get("first-release-date")
+		if frd is not None:
+			return frd
+		for r in self.song_dict["releases"]:
+			if "date" not in r:
+				continue
+			return r["date"]
+		return None
 
 	def get_mbid_tags(self):
 		"""get mbid tags with proper keys"""
 		# !! make sure only supported fields are multi-value tags, otherwise auxio might crash (don't do multi-value album artists)
-		first_artist_mbid = self.artist_mbid[0] if isinstance(self.artist_mbid, list) else self.artist_mbid
+		first_mb_artistid = self.mb_artistid[0] if isinstance(self.mb_artistid, list) else self.mb_artistid
 		
 		return {
-			"track_mbid": self.song_mbid,
-			"album_mbid": self.album_mbid,
-			"artist_mbid": self.artist_mbid,
-			"album_artist_mbid": first_artist_mbid
+			"mb_releasetrackid": self.mb_releasetrackid,
+			"mb_releasegroupid": self.mb_releasegroupid,
+			"mb_artistid": self.mb_artistid,
+			"mb_albumartistid": first_mb_artistid
 		}
 
-def get_mbids_for_song(tags: Tags, skip_encode = False, exclude_tags: list[str] = [], use_mbid_data = True):
-	"""takes in a tags dict, adds mbid tags to it, returns it"""
+def musicbrainz_enrich_tags(tags: Tags, skip_encode = False, exclude_tags: list[str] = [], use_mbid_data = True):
+	"""takes in a tags dict, adds mbid tags and (by default) also other mb info, returns it"""
 	mb = MBSong(title=tags["title"], artist=str(tags["artist"]), album=tags["album"])
 	mb.fetch_song()
 
 	if use_mbid_data:
 		if mb.artist_dict:
 			if isinstance(mb.artist_dict, list): # TODO fix multi-value tags
-				# val = [a["artist"]["name"] for a in mb.artist_dict ]
-				# tags["artist"] = val
-				# tags["itunes_multiartist"] = val # type: ignore
-				tags["artist"] = MV_SEPARATOR.join([a["artist"]["name"] for a in mb.artist_dict ])
+				tags["artist"] = [a["artist"]["name"] for a in mb.artist_dict ]
 			else: # TODO consider using mb.album_dict to get album artist?
 				tags["artist"] = mb.artist_dict["name"]
-			tags["album_artist"] = mb.artist_dict[0]["artist"]["name"] if isinstance(mb.artist_dict, list) else mb.artist_dict["name"]
+			tags["albumartist"] = mb.artist_dict[0]["artist"]["name"] if isinstance(mb.artist_dict, list) else mb.artist_dict["name"]
 		if mb.album_dict:
 			tags["album"] = mb.album_dict["title"]
 		if mb.song_dict:
 			tags["title"] = mb.song_dict["title"]
+			_release_date = mb.get_date_str()
+			# print("mb", _release_date)
+			if _release_date:
+				tags["date"] = _release_date
+				tags["year"] = parse_datestring(_release_date)["year"]
 
 	for key, tag in mb.get_mbid_tags().items():
 		if tag is not None and key not in exclude_tags:

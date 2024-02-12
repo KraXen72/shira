@@ -33,7 +33,7 @@ On some systems, you might have to use the `python3` or `python3.x` command inst
 
 ## Tagging
 - Adds a [lot of metadata](#tag-variables) to music files, in these [native tags](https://github.com/OxygenCobalt/Auxio/wiki/Supported-Metadata) (m4a, mp3)
-- Embeds proper & multi-value `m4a` (iTunes) and `.mp3` (ID3v2.4) tags
+- Embeds proper `m4a` (iTunes) and `.mp3` (ID3v2.4) tags with [mediafile](https://github.com/beetbox/mediafile)
 - Uses [YouTube Music's API](https://github.com/sigma67/ytmusicapi) to get info.
 - Uses [MusicBrainz API](https://musicbrainz.org/doc/MusicBrainz_API) to resolve MusicBrainz ID's from their api 
   - `track`, `album`, `artist`, `albumartist` ids

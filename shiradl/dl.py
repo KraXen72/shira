@@ -9,7 +9,7 @@ from yt_dlp import YoutubeDL
 from ytmusicapi import YTMusic
 
 from .metadata import clean_title, get_year
-from .tagging import ARTIST_SEPARATOR, Tags, get_cover
+from .tagging import MV_SEPARATOR_VISUAL, Tags, get_cover
 
 ITAG_AAC_128 = "140"
 ITAG_AAC_256 = "141"
@@ -127,33 +127,24 @@ class Dl:
 		
 		video_id = ytmusic_watch_playlist["tracks"][0]["videoId"]
 		ytmusic_album: dict = self.ytmusic.get_album(ytmusic_watch_playlist["tracks"][0]["album"]["id"])
-
-		_release_year, _release_date = get_year(track, ytmusic_album)
+		_year, _date = get_year(track, ytmusic_album)
 		tags: Tags = {
 			"title": clean_title(ytmusic_watch_playlist["tracks"][0]["title"]),
 			"album": ytmusic_album["title"],
-			"album_artist": self.get_artist(ytmusic_album["artists"]),
+			"albumartist": self.get_artist(ytmusic_album["artists"]),
 			"artist": self.get_artist(ytmusic_watch_playlist["tracks"][0]["artists"]),
-			"comment": f"https://music.youtube.com/watch?v={video_id}",
+			"comments": f"https://music.youtube.com/watch?v={video_id}",
 			"track": 1,
-			"track_total": ytmusic_album["trackCount"],
-			"release_date": _release_date,
-			"release_year": _release_year,
+			"tracktotal": ytmusic_album["trackCount"],
+			"date": _date,
+			"year": _year,
 			"cover_url": f'{ytmusic_watch_playlist["tracks"][0]["thumbnail"][0]["url"].split("=")[0]}'
 			+ f'=w{self.cover_size}-l{self.cover_quality}-{"rj" if self.cover_format == "jpg" else "rp"}'
 		}
 
 		for i, video in enumerate(self.get_ydl_extract_info(f'https://www.youtube.com/playlist?list={str(ytmusic_album["audioPlaylistId"])}')["entries"]):
 			if video["id"] == video_id:
-				try:
-					if ytmusic_album["tracks"][i]["isExplicit"]:
-						tags["rating"] = 1
-					else:
-						tags["rating"] = 0
-				except IndexError:
-					tags["rating"] = 0
-				finally:
-					tags["track"] = i + 1
+				tags["track"] = i + 1
 				break
 		if ytmusic_watch_playlist["lyrics"]:
 			lyrics = self.ytmusic.get_lyrics(ytmusic_watch_playlist["lyrics"])["lyrics"]
@@ -200,7 +191,7 @@ class Dl:
 		filename_safe_tags: dict[str, str] = {}
 		for k, v in tags.items(): # join artists with & so filenames aren't like ['Artist1', 'Artist2'] but rather Artist1 & Artist2
 			if isinstance(v, list):
-				filename_safe_tags[k] = ARTIST_SEPARATOR.join([ vv if isinstance(vv, str) else vv.decode("utf-8") for vv in v ])
+				filename_safe_tags[k] = MV_SEPARATOR_VISUAL.join([ vv if isinstance(vv, str) else vv.decode("utf-8") for vv in v ])
 			else:
 				filename_safe_tags[k] = v
 

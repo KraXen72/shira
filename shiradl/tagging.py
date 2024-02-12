@@ -2,145 +2,64 @@ from __future__ import annotations
 
 import functools
 import os
+from datetime import datetime
 from io import BytesIO
 from pathlib import Path
 from statistics import mean, stdev
 from typing import NotRequired, TypedDict
 
 import requests
-from mutagen.id3 import ID3, Frames
-from mutagen.mp4 import MP4Cover
+from mediafile import Image as MFImage
+from mediafile import ImageType, MediaFile
 from PIL import Image, ImageFilter, ImageOps
-
-from .patch_mp4tags import MP4
 
 AVG_THRESHOLD = 10
 CHANNEL_THRESHOLD = 15
 MV_SEPARATOR = "/"#" & " # TODO make this configurable
-ARTIST_SEPARATOR = " & "
+MV_SEPARATOR_VISUAL = " & "
 
 class Tags(TypedDict):
 	title: str
 	album: str
 	artist: str | list[str]
-	album_artist: str | list[str]
+	albumartist: str | list[str]
 	track: int
-	track_total: int
-	release_year: str
-	release_date: str
+	tracktotal: int
+	year: str
+	date: str
 	cover_url: str
 	cover_bytes: NotRequired[bytes]
 	rating: NotRequired[int]
-	comment: NotRequired[str]
+	comments: NotRequired[str]
 	lyrics: NotRequired[str]
-		
-MP4_TAGS_MAP = {
-	"album": "\xa9alb",
-	"album_artist": "aART",
-	"artist": "\xa9ART",
-	"comment": "\xa9cmt",
-	"lyrics": "\xa9lyr",
-	"media_type": "stik",
-	"rating": "rtng",
-	"release_date": "\xa9day",
-	"title": "\xa9nam",
 
-	# see https://github.com/OxygenCobalt/Auxio/wiki/Supported-Metadata
-	# see https://github.com/metabrainz/picard/blob/master/picard/formats/mp4.py#L115
-	"track_mbid": "----:com.apple.iTunes:MusicBrainz Release Track Id",
-	"album_mbid": "----:com.apple.iTunes:MusicBrainz Release Group Id",
-	"artist_mbid": "----:com.apple.iTunes:MusicBrainz Artist Id",
-	"album_artist_mbid": "----:com.apple.iTunes:MusicBrainz Album Artist Id",
+fallback_mv_keys = ["artist", "albumartist"]
 
-	"itunes_multiartist": "----:com.apple.iTunes:ARTISTS"
-
-	# doesen't include track (trkn) or disc (disk)
-}
-
-# this is for ID3v2.3
-MP3_TAGS_MAP = {
-	"album": "TALB",
-	"album_artist": "TPE2",
-	"artist": "TPE1",
-	"comment": "COMM",
-	"lyics": "USLT",
-	"media_type": "TMED",
-	# "rating": "" # no support for rating in mp3 for now
-	"release_date": "TDRL",
-	"title": "TIT2",
-
-	"track_mbid": "TXXX:MusicBrainz Release Track Id",
-	"album_mbid": "TXXX:MusicBrainz Release Group Id",
-	"artist_mbid": "TXXX:MusicBrainz Artist Id",
-	"album_artist_mbid": "TXXX:MusicBrainz Album Artist Id",
-
-	# doesen't include track (TRCK) and disc (TPOS, TSST)
-}
-
-def tagger_mp3(tags: Tags, fixed_location: Path, exclude_tags: list[str], cover_format: str):
-	# this mp3 tagger is not perfect, it raises 'Invalid ID3v2.4 frame-header-ID' and 'id3v2.4 header has empty tag type='
-	# warnings in https://audio-tag-analyzer.netlify.app. both mutagen and eyed3 do this though.
-	mp3 = ID3(fixed_location)
-	mp3.clear()
-
-	for k, v in MP3_TAGS_MAP.items():
-		if k not in exclude_tags and tags.get(k) is not None:
-			if v.startswith("TXXX"):
-				mp3.add(Frames["TXXX"](encoding=3, text=tags[k], desc=v[5:]))
-			else:
-				mp3.add(Frames[v](encoding=3, text=tags[k]))
+def metadata_applier(tags: Tags, fixed_location: Path, exclude_tags: list[str], fallback_mv = True):
+	"""set fallback_mv = True until auxio supports proper multi-value m4a tags from mutagen"""
+	handle = MediaFile(fixed_location)
+	handle.delete()
+	# print({**tags, "cover_bytes": ""})
+	for k, v in tags.items():
+		if k in exclude_tags or k in ["cover_url", "cover_bytes"]: 
+			continue
+		if k == "date":
+			v = datetime.fromisoformat(str(v)).date()
+		if isinstance(v, list):
+			if not fallback_mv or (k not in fallback_mv_keys):
+				setattr(handle, f"{k}s", v) # will not work for all single => multi migrations
+			if k in fallback_mv_keys:
+				setattr(handle, k,  MV_SEPARATOR.join(v) if fallback_mv else MV_SEPARATOR_VISUAL.join(v))
+		else:
+			setattr(handle, k, v)
 	
-	if not {"track", "track_total"} & set(exclude_tags):
-		mp3.add(Frames["TRCK"](encoding=3, text="0/0"))
-
-	if ("track" not in exclude_tags) or ("track_total" not in exclude_tags):
-		mp3.add(Frames["TRCK"](encoding=3, text=f"{tags["track"]}/{tags["track_total"]}"))
-
 	if "cover" not in exclude_tags:
 		cover_bytes = tags.get("cover_bytes") or get_cover(tags["cover_url"])
-		mp3.add(Frames["APIC"](
-			encoding=3, 
-			mime="image/jpeg" if cover_format == "jpg" else "image/png",
-			type=3,
-			desc="Cover",
-			data=cover_bytes
-		))
+		handle.images = [ MFImage(data=cover_bytes, desc="Cover", type=ImageType.front) ]
 
-	mp3.add(Frames["TPOS"](encoding=3, text="1/1"))
-	mp3.save(v2_version=4) # ID3v2.4 was released in the year 2000 it's fine
-
-
-def tagger_m4a(tags: Tags, fixed_location: Path, exclude_tags: list[str], cover_format: str):
-	mp4_tags = {}
-
-	for k, v in MP4_TAGS_MAP.items():
-		if k not in exclude_tags and tags.get(k) is not None:
-			# print(v, type(v), ":", tags[k], [type(t) for t in tags[k]] if isinstance(tags[k], list) else type(tags[k]))
-
-			if isinstance(tags[k], list): # ensure they're all byte instances
-				mp4_tags[v] = [ p.encode("utf-8") if isinstance(p, str) else p for p in tags[k] ]
-			else:
-				mp4_tags[v] = [ tags[k] ]
-
-			
-	if not {"track", "track_total"} & set(exclude_tags):
-		mp4_tags["trkn"] = [[0, 0]]
-	if "cover" not in exclude_tags:
-		cover_bytes = tags.get("cover_bytes") or get_cover(tags["cover_url"])
-		mp4_tags["covr"] = [
-			MP4Cover(cover_bytes, imageformat=MP4Cover.FORMAT_JPEG if cover_format == "jpg" else MP4Cover.FORMAT_PNG)
-		]
-	if "track" not in exclude_tags:
-		mp4_tags["trkn"][0][0] = tags["track"]
-	if "track_total" not in exclude_tags:
-		mp4_tags["trkn"][0][1] = tags["track_total"]
-
-	mp4_tags["disk"] = [[1, 1]]
-
-	mp4 = MP4(fixed_location)
-	mp4.clear()
-	mp4.update(mp4_tags)
-	mp4.save()
+	handle.disc = 1
+	handle.disctotal = 1
+	handle.save()
 
 # cover shenanigans
 
@@ -171,6 +90,21 @@ def get_dominant_color(pil_img):
 	dominant_color = img.getpixel((0, 0))
 	return dominant_color
 
+def sample_image_corners(rgb_image, width, height, border_offset = 50):
+	sample_colors = []
+	regions = [
+		(border_offset, border_offset), # topleft
+		(width - border_offset, border_offset), #topright
+		(border_offset, height - border_offset),   #botleft
+		(width - border_offset, height - border_offset), #botright
+		# (border_slice_center, height//2), #left center
+		# (width//2 + height//2 + border_slice_center, height//2) #right center
+	]
+	for sx, sy in regions:
+		r, g, b = rgb_image.getpixel((sx, sy))
+		sample_colors.append((r, g, b))
+	return sample_colors
+
 def determine_image_crop(image_bytes: bytes):
 	"""
 	samples 4 pixels near the corners and 2 from centers of side slices of the thumbnail (which is first smoothed and reduced to 64 colors)
@@ -183,25 +117,11 @@ def determine_image_crop(image_bytes: bytes):
 	rgb_filt_image = filt_image.convert("RGB")
 	
 	width, height = rgb_filt_image.size
-
-	border_offset = 10 
-	# border_slice_center = (width//2 - height//2)//2
-	sample_regions = [
-		(border_offset, border_offset), # topleft
-		(width - border_offset, border_offset), #topright
-		(border_offset, height - border_offset),   #botleft
-		(width - border_offset, height - border_offset), #botright
-		# (border_slice_center, height//2), #left center
-		# (width//2 + height//2 + border_slice_center, height//2) #right center
-	]
-	
-	sample_colors = []
-	for sx, sy in sample_regions:
-		r, g, b = rgb_filt_image.getpixel((sx, sy))
-		sample_colors.append((r, g, b))
+	sample_colors50 = sample_image_corners(rgb_filt_image, width, height, 50)
+	sample_colors0 = sample_image_corners(rgb_filt_image, width, height, 1)
 
 	reds, greens, blues = [], [], []
-	for r,g,b in sample_colors:
+	for r,g,b in sample_colors50:
 		reds.append(r)
 		greens.append(g)
 		blues.append(b)
@@ -211,12 +131,15 @@ def determine_image_crop(image_bytes: bytes):
 	dev_blue = stdev(blues)
 	avg_dev = mean([dev_red, dev_green, dev_blue])
 
+	# if 4 true corners are 100% equal, fill with that.
+	# TODO later, crop the borders off of a black-bordered thumbnail for real cropping
+	fill_recc = sample_colors0[0] if len(set(sample_colors0)) == 1 else None
 	# print("average:", avg_dev, "colors:", dev_red, dev_green, dev_blue)
 
 	if avg_dev < AVG_THRESHOLD and dev_red < CHANNEL_THRESHOLD and dev_green < CHANNEL_THRESHOLD and dev_blue < CHANNEL_THRESHOLD:
-		return "crop"
+		return "crop", fill_recc
 	else:
-		return "pad"
+		return "pad", fill_recc
 
 def get_1x1_cover(url: str, temp_location: Path, uniqueid: str, cover_format = "JPEG", cover_crop_method = "auto"):
 	image_bytes = requests.get(url).content
@@ -229,16 +152,17 @@ def get_1x1_cover(url: str, temp_location: Path, uniqueid: str, cover_format = "
 		return image_bytes
 
 	width, height = pil_img.size
+	recc_fill_color = None
 
 	if cover_crop_method == "auto":
-		cover_crop_method = determine_image_crop(image_bytes)
+		cover_crop_method, recc_fill_color = determine_image_crop(image_bytes)
 	
 	if cover_crop_method == "crop":
 		img_half = round(width / 2)
 		rect_half = round(height / 2)
 		pil_img = pil_img.crop((img_half - rect_half, 0, img_half + rect_half, height))
 	else:
-		dominant_color = get_dominant_color(pil_img)
+		dominant_color = get_dominant_color(pil_img) if recc_fill_color is None else recc_fill_color
 		pil_img = ImageOps.pad(pil_img, (width, width), color=dominant_color, centering=(0.5, 0.5))
 
 	output_bytes = BytesIO()

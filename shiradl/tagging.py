@@ -2,145 +2,72 @@ from __future__ import annotations
 
 import functools
 import os
+from datetime import datetime
 from io import BytesIO
 from pathlib import Path
 from statistics import mean, stdev
 from typing import NotRequired, TypedDict
 
 import requests
-from mutagen.id3 import ID3, Frames
-from mutagen.mp4 import MP4Cover
+from mediafile import Image as MFImage
+from mediafile import ImageType, MediaFile
 from PIL import Image, ImageFilter, ImageOps
-
-from .patch_mp4tags import MP4
 
 AVG_THRESHOLD = 10
 CHANNEL_THRESHOLD = 15
 MV_SEPARATOR = "/"#" & " # TODO make this configurable
-ARTIST_SEPARATOR = " & "
+MV_SEPARATOR_VISUAL = " & "
 
 class Tags(TypedDict):
 	title: str
 	album: str
 	artist: str | list[str]
-	album_artist: str | list[str]
+	albumartist: str | list[str]
 	track: int
-	track_total: int
-	release_year: str
-	release_date: str
+	tracktotal: int
+	year: str
+	date: str
 	cover_url: str
 	cover_bytes: NotRequired[bytes]
 	rating: NotRequired[int]
-	comment: NotRequired[str]
+	comments: NotRequired[str]
 	lyrics: NotRequired[str]
-		
-MP4_TAGS_MAP = {
-	"album": "\xa9alb",
-	"album_artist": "aART",
-	"artist": "\xa9ART",
-	"comment": "\xa9cmt",
-	"lyrics": "\xa9lyr",
-	"media_type": "stik",
-	"rating": "rtng",
-	"release_date": "\xa9day",
-	"title": "\xa9nam",
 
-	# see https://github.com/OxygenCobalt/Auxio/wiki/Supported-Metadata
-	# see https://github.com/metabrainz/picard/blob/master/picard/formats/mp4.py#L115
-	"track_mbid": "----:com.apple.iTunes:MusicBrainz Release Track Id",
-	"album_mbid": "----:com.apple.iTunes:MusicBrainz Release Group Id",
-	"artist_mbid": "----:com.apple.iTunes:MusicBrainz Artist Id",
-	"album_artist_mbid": "----:com.apple.iTunes:MusicBrainz Album Artist Id",
-
-	"itunes_multiartist": "----:com.apple.iTunes:ARTISTS"
-
-	# doesen't include track (trkn) or disc (disk)
+meta_migrations = {
+	"track_mbid": "mb_releasetrackid",
+	"album_mbid": "mb_releasegroupid",
+	"artist_mbid": "mb_artistid",
+	"albumartist_mbid": "mb_albumartistid"
 }
+fallback_mv_keys = ["artist", "albumartist"]
 
-# this is for ID3v2.3
-MP3_TAGS_MAP = {
-	"album": "TALB",
-	"album_artist": "TPE2",
-	"artist": "TPE1",
-	"comment": "COMM",
-	"lyics": "USLT",
-	"media_type": "TMED",
-	# "rating": "" # no support for rating in mp3 for now
-	"release_date": "TDRL",
-	"title": "TIT2",
+def metadata_applier(tags: Tags, fixed_location: Path, exclude_tags: list[str], cover_format: str, fallback_mv = False):
+	handle = MediaFile(fixed_location)
+	handle.delete()
+	for k, v in tags.items():
+		if k in exclude_tags or k in ["cover_url", "cover_bytes"]: 
+			continue
 
-	"track_mbid": "TXXX:MusicBrainz Release Track Id",
-	"album_mbid": "TXXX:MusicBrainz Release Group Id",
-	"artist_mbid": "TXXX:MusicBrainz Artist Id",
-	"album_artist_mbid": "TXXX:MusicBrainz Album Artist Id",
-
-	# doesen't include track (TRCK) and disc (TPOS, TSST)
-}
-
-def tagger_mp3(tags: Tags, fixed_location: Path, exclude_tags: list[str], cover_format: str):
-	# this mp3 tagger is not perfect, it raises 'Invalid ID3v2.4 frame-header-ID' and 'id3v2.4 header has empty tag type='
-	# warnings in https://audio-tag-analyzer.netlify.app. both mutagen and eyed3 do this though.
-	mp3 = ID3(fixed_location)
-	mp3.clear()
-
-	for k, v in MP3_TAGS_MAP.items():
-		if k not in exclude_tags and tags.get(k) is not None:
-			if v.startswith("TXXX"):
-				mp3.add(Frames["TXXX"](encoding=3, text=tags[k], desc=v[5:]))
-			else:
-				mp3.add(Frames[v](encoding=3, text=tags[k]))
-	
-	if not {"track", "track_total"} & set(exclude_tags):
-		mp3.add(Frames["TRCK"](encoding=3, text="0/0"))
-
-	if ("track" not in exclude_tags) or ("track_total" not in exclude_tags):
-		mp3.add(Frames["TRCK"](encoding=3, text=f"{tags["track"]}/{tags["track_total"]}"))
-
+		key, val = k, v
+		if k not in MediaFile.__dict__:
+			key = meta_migrations[k] # migrate shira tag keys to mediafile tag keys
+		if key == "date":
+			val = datetime.fromisoformat(str(v)).date()
+		if isinstance(val, list):
+			if not fallback_mv or (key not in fallback_mv_keys):
+				setattr(handle, f"{key}s", val) # will not work for all
+			if key in fallback_mv_keys:
+				setattr(handle, key,  MV_SEPARATOR.join(val) if fallback_mv else MV_SEPARATOR_VISUAL.join(val))
+		else:
+			setattr(handle, key, val)
+	# TODO remove cover format
 	if "cover" not in exclude_tags:
 		cover_bytes = tags.get("cover_bytes") or get_cover(tags["cover_url"])
-		mp3.add(Frames["APIC"](
-			encoding=3, 
-			mime="image/jpeg" if cover_format == "jpg" else "image/png",
-			type=3,
-			desc="Cover",
-			data=cover_bytes
-		))
+		handle.images = [ MFImage(data=cover_bytes, desc="Cover", type=ImageType.front) ]
 
-	mp3.add(Frames["TPOS"](encoding=3, text="1/1"))
-	mp3.save(v2_version=4) # ID3v2.4 was released in the year 2000 it's fine
-
-
-def tagger_m4a(tags: Tags, fixed_location: Path, exclude_tags: list[str], cover_format: str):
-	mp4_tags = {}
-
-	for k, v in MP4_TAGS_MAP.items():
-		if k not in exclude_tags and tags.get(k) is not None:
-			# print(v, type(v), ":", tags[k], [type(t) for t in tags[k]] if isinstance(tags[k], list) else type(tags[k]))
-
-			if isinstance(tags[k], list): # ensure they're all byte instances
-				mp4_tags[v] = [ p.encode("utf-8") if isinstance(p, str) else p for p in tags[k] ]
-			else:
-				mp4_tags[v] = [ tags[k] ]
-
-			
-	if not {"track", "track_total"} & set(exclude_tags):
-		mp4_tags["trkn"] = [[0, 0]]
-	if "cover" not in exclude_tags:
-		cover_bytes = tags.get("cover_bytes") or get_cover(tags["cover_url"])
-		mp4_tags["covr"] = [
-			MP4Cover(cover_bytes, imageformat=MP4Cover.FORMAT_JPEG if cover_format == "jpg" else MP4Cover.FORMAT_PNG)
-		]
-	if "track" not in exclude_tags:
-		mp4_tags["trkn"][0][0] = tags["track"]
-	if "track_total" not in exclude_tags:
-		mp4_tags["trkn"][0][1] = tags["track_total"]
-
-	mp4_tags["disk"] = [[1, 1]]
-
-	mp4 = MP4(fixed_location)
-	mp4.clear()
-	mp4.update(mp4_tags)
-	mp4.save()
+	handle.disc = 1
+	handle.disctotal = 1
+	handle.save()
 
 # cover shenanigans
 

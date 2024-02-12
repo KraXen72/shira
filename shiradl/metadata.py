@@ -28,7 +28,8 @@ MBRelease = TypedDict("MBRelease", {
 	"id": str,
 	"title": str,
 	"artist-credit": list[MBArtistCredit],
-	"release-group": dict[str, str]
+	"release-group": dict[str, str],
+	"date": str
 })
 
 MBRecording = TypedDict("MBRecording", {
@@ -38,6 +39,8 @@ MBRecording = TypedDict("MBRecording", {
 	"releases": list[MBRelease]
 })
 
+def parse_yyyy_mm_dd(datestr: str):
+	return { "year": datestr[0:4], "month": datestr[4:6], "day": datestr[6:8] }
 
 def get_year(track: dict[str, str | int], ytmusic_album: dict[str, str | int] | None = None):
 	""":returns release_year, release_date"""
@@ -53,7 +56,7 @@ def get_year(track: dict[str, str | int], ytmusic_album: dict[str, str | int] | 
 	upload_date = str(upload_date) if upload_date is not None else None
 
 	if upload_date: # YYYYMMDD
-		date = { "year": upload_date[0:4], "month": upload_date[4:6], "day": upload_date[6:8] }
+		date = parse_yyyy_mm_dd(upload_date)
 	elif ytmusic_album is not None:
 		date["year"] = str(ytmusic_album.get("year") or track.get("release_year"))
 
@@ -113,8 +116,8 @@ def smart_tag(list_of_keys: list[str], data_obj: dict, additional_values: list[s
 
 # site extractors
 def youtube_extractor(info):
-	md_keys = { "title": ["title", "track", "alt_title"], "artist": ["artist", "channel", "creator"], "album_artist": [], "album": ["album"] }
-	add_values = { "title": [], "artist": [], "album_artist": [], "album": [], "year": [], }
+	md_keys = { "title": ["title", "track", "alt_title"], "artist": ["artist", "channel", "creator"], "albumartist": [], "album": ["album"] }
+	add_values = { "title": [], "artist": [], "albumartist": [], "album": [], "year": [], }
 
 	# video title is: Artist - Title format
 	if info["title"].count(" - ") == 1:
@@ -127,8 +130,8 @@ def youtube_extractor(info):
 	return md_keys, add_values
 
 def soundcloud_extractor(info):
-	md_keys = { "title": ["title", "fulltitle"], "artist": ["uploader"], "album_artist": ["uploader"], "album": [] }
-	add_values = { "title": [], "artist": [], "album_artist": [], "album": [], "year": [], }
+	md_keys = { "title": ["title", "fulltitle"], "artist": ["uploader"], "albumartist": ["uploader"], "album": [] }
+	add_values = { "title": [], "artist": [], "albumartist": [], "album": [], "year": [], }
 
 	return md_keys, add_values
 
@@ -143,11 +146,11 @@ def smart_metadata(info, temp_location: Path, cover_format = "JPEG", cover_crop_
 		"title": "",
 		"artist": "",
 		"album": "",
-		"album_artist": "",
+		"albumartist": "",
 		"track": 1,
-		"track_total": 1,
-		"release_year": "",
-		"release_date": "",
+		"tracktotal": 1,
+		"year": "",
+		"date": "",
 		"cover_url": info["thumbnail"],
 		"cover_bytes": get_1x1_cover(
 			info["thumbnail"], 
@@ -157,9 +160,9 @@ def smart_metadata(info, temp_location: Path, cover_format = "JPEG", cover_crop_
 			cover_crop_method
 		)
 	}
-	md_keys = { "title": [], "artist": [], "album_artist": [], "album": [], "year": [], } # keys to check from the 'info object'. site specific.
-	add_values = { "title": [], "artist": [], "album_artist": [], "album": [], "year": [], }
-	others = { "title": [], "artist": [], "album_artist": [], "album": [], "year": [], }
+	md_keys = { "title": [], "artist": [], "albumartist": [], "album": [], "year": [], } # keys to check from the 'info object'. site specific.
+	add_values = { "title": [], "artist": [], "albumartist": [], "album": [], "year": [], }
+	others = { "title": [], "artist": [], "albumartist": [], "album": [], "year": [], }
 
 	domain = info["webpage_url_domain"]
 	match domain:
@@ -172,7 +175,7 @@ def smart_metadata(info, temp_location: Path, cover_format = "JPEG", cover_crop_
 	
 	md["title"], others["title"] = smart_tag(md_keys["title"], info, add_values["title"])
 	md["artist"], others["artist"] = smart_tag(md_keys["artist"], info, add_values["artist"])
-	md["album_artist"], others["album_artist"] = smart_tag(md_keys["album_artist"], info, [md["artist"]] + add_values["album_artist"])
+	md["albumartist"], others["albumartist"] = smart_tag(md_keys["albumartist"], info, [md["artist"]] + add_values["albumartist"])
 
 	md["title"] = clean_title(str(md["title"]))
 
@@ -181,10 +184,10 @@ def smart_metadata(info, temp_location: Path, cover_format = "JPEG", cover_crop_
 		add_values["album"].append(f"{md['title']} (Single)")
 
 	md["album"], others["album"] = smart_tag(md_keys["album"], info, add_values["album"])
-	md["release_year"], md["release_date"] = get_year(info)
+	md["year"], md["date"] = get_year(info)
 
 	if "(Single)" in md["album"]:
-		md["comment"] = TIGER_SINGLE # TODO remove this later?
+		md["comments"] = TIGER_SINGLE # TODO remove this later?
 
 	return md
 
@@ -351,6 +354,18 @@ class MBSong:
 				self.artist_mbid = a["id"]
 				break
 
+	def get_date_str(self):
+		if self.song_dict is None:
+			return None
+		frd = self.song_dict.get("first-release-date")
+		if frd is not None:
+			return frd
+		for r in self.song_dict["releases"]:
+			if "date" not in r:
+				continue
+			return r["date"]
+		return None
+
 	def get_mbid_tags(self):
 		"""get mbid tags with proper keys"""
 		# !! make sure only supported fields are multi-value tags, otherwise auxio might crash (don't do multi-value album artists)
@@ -360,7 +375,7 @@ class MBSong:
 			"track_mbid": self.song_mbid,
 			"album_mbid": self.album_mbid,
 			"artist_mbid": self.artist_mbid,
-			"album_artist_mbid": first_artist_mbid
+			"albumartist_mbid": first_artist_mbid
 		}
 
 def get_mbids_for_song(tags: Tags, skip_encode = False, exclude_tags: list[str] = [], use_mbid_data = True):
@@ -377,11 +392,15 @@ def get_mbids_for_song(tags: Tags, skip_encode = False, exclude_tags: list[str] 
 				tags["artist"] = MV_SEPARATOR.join([a["artist"]["name"] for a in mb.artist_dict ])
 			else: # TODO consider using mb.album_dict to get album artist?
 				tags["artist"] = mb.artist_dict["name"]
-			tags["album_artist"] = mb.artist_dict[0]["artist"]["name"] if isinstance(mb.artist_dict, list) else mb.artist_dict["name"]
+			tags["albumartist"] = mb.artist_dict[0]["artist"]["name"] if isinstance(mb.artist_dict, list) else mb.artist_dict["name"]
 		if mb.album_dict:
 			tags["album"] = mb.album_dict["title"]
 		if mb.song_dict:
 			tags["title"] = mb.song_dict["title"]
+			_release_date = mb.get_date_str()
+			if _release_date:
+				tags["date"] = _release_date
+				tags["year"] = parse_yyyy_mm_dd(_release_date)["year"]
 
 	for key, tag in mb.get_mbid_tags().items():
 		if tag is not None and key not in exclude_tags:

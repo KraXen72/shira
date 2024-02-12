@@ -79,7 +79,7 @@ The config file is created automatically when you run shira for the first time a
 | `--cover-quality` / `cover_quality` | JPEG quality of the cover.  [1<=x<=100] | `94` |
 | `--cover-img` / `cover_img` | Path to image or folder of images. [More info](#cover-img)  | `null` |
 | `--cover-crop` / `cover_crop` |  'crop' takes a 1:1 square from the center, pad always pads top & bottom. `auto`, `crop` or `pad` | `auto` - [More info](#smartcrop) |
-| `--template-folder` / `template_folder` | Template of the album folders as a format string. | `{album_artist}/{album}` |
+| `--template-folder` / `template_folder` | Template of the album folders as a format string. | `{albumartist}/{album}` |
 | `--template-file` / `template_file` | Template of the track files as a format string. | `{track:02d} {title}` |
 | `-e`, `--exclude-tags` / `exclude_tags` | List of tags to exclude from file tagging separated by commas without spaces. | `null` |
 | `--truncate` / `truncate` | Maximum length of the file/folder names. | `40` |
@@ -103,7 +103,7 @@ SoundCloud will always download in 128kbps MP3
 
 ### Tag variables
 The following variables can be used in the template folder/file and/or in the `exclude_tags` list:  
-`title`, `album`, `artist`, `album_artist`, `track`, `track_total`, `release_year`, `release_date`, `cover`, `comment`, `lyrics`, `media_type`, `rating`, `track`, `track_total`, `track_mbid`, `album_mbid`, `artist_mbid`, `album_artist_mbid`
+`title`, `album`, `artist`, `albumartist`, `track`, `tracktotal`, `year`, `date`, `cover`, `comments`, `lyrics`, `media_type`, `rating`, `track`, `tracktotal`, `track_mbid`, `album_mbid`, `artist_mbid`, `albumartist_mbid`
 
 ### Cover formats
 Can be either `jpg` or `png`.

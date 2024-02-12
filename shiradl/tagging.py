@@ -33,34 +33,26 @@ class Tags(TypedDict):
 	comments: NotRequired[str]
 	lyrics: NotRequired[str]
 
-meta_migrations = {
-	"track_mbid": "mb_releasetrackid",
-	"album_mbid": "mb_releasegroupid",
-	"artist_mbid": "mb_artistid",
-	"albumartist_mbid": "mb_albumartistid"
-}
 fallback_mv_keys = ["artist", "albumartist"]
 
-def metadata_applier(tags: Tags, fixed_location: Path, exclude_tags: list[str], cover_format: str, fallback_mv = False):
+def metadata_applier(tags: Tags, fixed_location: Path, exclude_tags: list[str], fallback_mv = True):
+	"""set fallback_mv = True until auxio supports proper multi-value m4a tags from mutagen"""
 	handle = MediaFile(fixed_location)
 	handle.delete()
+	# print({**tags, "cover_bytes": ""})
 	for k, v in tags.items():
 		if k in exclude_tags or k in ["cover_url", "cover_bytes"]: 
 			continue
-
-		key, val = k, v
-		if k not in MediaFile.__dict__:
-			key = meta_migrations[k] # migrate shira tag keys to mediafile tag keys
-		if key == "date":
-			val = datetime.fromisoformat(str(v)).date()
-		if isinstance(val, list):
-			if not fallback_mv or (key not in fallback_mv_keys):
-				setattr(handle, f"{key}s", val) # will not work for all
-			if key in fallback_mv_keys:
-				setattr(handle, key,  MV_SEPARATOR.join(val) if fallback_mv else MV_SEPARATOR_VISUAL.join(val))
+		if k == "date":
+			v = datetime.fromisoformat(str(v)).date()
+		if isinstance(v, list):
+			if not fallback_mv or (k not in fallback_mv_keys):
+				setattr(handle, f"{k}s", v) # will not work for all single => multi migrations
+			if k in fallback_mv_keys:
+				setattr(handle, k,  MV_SEPARATOR.join(v) if fallback_mv else MV_SEPARATOR_VISUAL.join(v))
 		else:
-			setattr(handle, key, val)
-	# TODO remove cover format
+			setattr(handle, k, v)
+	
 	if "cover" not in exclude_tags:
 		cover_bytes = tags.get("cover_bytes") or get_cover(tags["cover_url"])
 		handle.images = [ MFImage(data=cover_bytes, desc="Cover", type=ImageType.front) ]

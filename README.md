@@ -103,7 +103,7 @@ SoundCloud will always download in 128kbps MP3
 
 ### Tag variables
 The following variables can be used in the template folder/file and/or in the `exclude_tags` list:  
-`title`, `album`, `artist`, `albumartist`, `track`, `tracktotal`, `year`, `date`, `cover`, `comments`, `lyrics`, `media_type`, `rating`, `track`, `tracktotal`, `track_mbid`, `album_mbid`, `artist_mbid`, `albumartist_mbid`
+`title`, `album`, `artist`, `albumartist`, `track`, `tracktotal`, `year`, `date`, `cover`, `comments`, `lyrics`, `media_type`, `rating`, `track`, `tracktotal`, `mb_releasetrackid`, `mb_releasegroupid`, `mb_artistid`, `mb_albumartistid`
 
 ### Cover formats
 Can be either `jpg` or `png`.

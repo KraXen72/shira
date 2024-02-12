@@ -242,6 +242,8 @@ yeet_emoji = re.compile(pattern = "["
 def clean_title(title: str):
 	"""clean up youtube titles with regex and a lot of black magic"""
 
+	for char in title_banned_chars:
+		title = title.replace(char, "")
 	for lb, rb in bracket_tuples: 
 		lbe, rbe = re.escape(lb), re.escape(rb) # check for all matching variations of brackets
 		for m in re.finditer(rf"{lbe}([^{lbe}{rbe}]+){rbe}", title):
@@ -250,7 +252,6 @@ def clean_title(title: str):
 				subs = f"[{m.group(1)}]"
 			title = title.replace(m.group(0), subs)
 	
-	# title = title.replace("（", " (").replace("）", ") ") # jap brackets fix
 	title = re.sub(yeet_emoji, "", title) # remove emoji
 	title = re.sub(r"\*\b[A-Z ]+\b\*", "", title) # remove stuff like *NOW ON ALL PLATFORMS*
 	title = re.sub(r"(\S)\[", r"\g<1>" + " [", title, flags=re.MULTILINE) # jap title whitespace fix

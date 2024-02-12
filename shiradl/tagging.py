@@ -90,6 +90,21 @@ def get_dominant_color(pil_img):
 	dominant_color = img.getpixel((0, 0))
 	return dominant_color
 
+def sample_image_corners(rgb_image, width, height, border_offset = 50):
+	sample_colors = []
+	regions = [
+		(border_offset, border_offset), # topleft
+		(width - border_offset, border_offset), #topright
+		(border_offset, height - border_offset),   #botleft
+		(width - border_offset, height - border_offset), #botright
+		# (border_slice_center, height//2), #left center
+		# (width//2 + height//2 + border_slice_center, height//2) #right center
+	]
+	for sx, sy in regions:
+		r, g, b = rgb_image.getpixel((sx, sy))
+		sample_colors.append((r, g, b))
+	return sample_colors
+
 def determine_image_crop(image_bytes: bytes):
 	"""
 	samples 4 pixels near the corners and 2 from centers of side slices of the thumbnail (which is first smoothed and reduced to 64 colors)
@@ -102,25 +117,11 @@ def determine_image_crop(image_bytes: bytes):
 	rgb_filt_image = filt_image.convert("RGB")
 	
 	width, height = rgb_filt_image.size
-
-	border_offset = 10 
-	# border_slice_center = (width//2 - height//2)//2
-	sample_regions = [
-		(border_offset, border_offset), # topleft
-		(width - border_offset, border_offset), #topright
-		(border_offset, height - border_offset),   #botleft
-		(width - border_offset, height - border_offset), #botright
-		# (border_slice_center, height//2), #left center
-		# (width//2 + height//2 + border_slice_center, height//2) #right center
-	]
-	
-	sample_colors = []
-	for sx, sy in sample_regions:
-		r, g, b = rgb_filt_image.getpixel((sx, sy))
-		sample_colors.append((r, g, b))
+	sample_colors50 = sample_image_corners(rgb_filt_image, width, height, 50)
+	sample_colors0 = sample_image_corners(rgb_filt_image, width, height, 1)
 
 	reds, greens, blues = [], [], []
-	for r,g,b in sample_colors:
+	for r,g,b in sample_colors50:
 		reds.append(r)
 		greens.append(g)
 		blues.append(b)
@@ -130,12 +131,15 @@ def determine_image_crop(image_bytes: bytes):
 	dev_blue = stdev(blues)
 	avg_dev = mean([dev_red, dev_green, dev_blue])
 
+	# if 4 true corners are 100% equal, fill with that.
+	# TODO later, crop the borders off of a black-bordered thumbnail for real cropping
+	fill_recc = sample_colors0[0] if len(set(sample_colors0)) == 1 else None
 	# print("average:", avg_dev, "colors:", dev_red, dev_green, dev_blue)
 
 	if avg_dev < AVG_THRESHOLD and dev_red < CHANNEL_THRESHOLD and dev_green < CHANNEL_THRESHOLD and dev_blue < CHANNEL_THRESHOLD:
-		return "crop"
+		return "crop", fill_recc
 	else:
-		return "pad"
+		return "pad", fill_recc
 
 def get_1x1_cover(url: str, temp_location: Path, uniqueid: str, cover_format = "JPEG", cover_crop_method = "auto"):
 	image_bytes = requests.get(url).content
@@ -148,16 +152,17 @@ def get_1x1_cover(url: str, temp_location: Path, uniqueid: str, cover_format = "
 		return image_bytes
 
 	width, height = pil_img.size
+	recc_fill_color = None
 
 	if cover_crop_method == "auto":
-		cover_crop_method = determine_image_crop(image_bytes)
+		cover_crop_method, recc_fill_color = determine_image_crop(image_bytes)
 	
 	if cover_crop_method == "crop":
 		img_half = round(width / 2)
 		rect_half = round(height / 2)
 		pil_img = pil_img.crop((img_half - rect_half, 0, img_half + rect_half, height))
 	else:
-		dominant_color = get_dominant_color(pil_img)
+		dominant_color = get_dominant_color(pil_img) if recc_fill_color is None else recc_fill_color
 		pil_img = ImageOps.pad(pil_img, (width, width), color=dominant_color, centering=(0.5, 0.5))
 
 	output_bytes = BytesIO()

@@ -3,7 +3,13 @@ name = "shiradl"
 description = "Download music from YouTube, YouTube Music and Soundcloud, with great metadata and little effort."
 requires-python = ">=3.8"
 authors =  [{ name = "KraXen72" }, { name = "glomatico" }]
-dependencies = ["click", "yt-dlp", "ytmusicapi"]
+dependencies = [
+	"click",
+	"yt-dlp",
+	"ytmusicapi",
+	"mediafile",
+	"pillow"
+]
 readme = "README.md"
 dynamic = ["version"]
 

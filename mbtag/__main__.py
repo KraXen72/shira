@@ -22,7 +22,6 @@ def is_supported_song_file(filename):
 		return False
 
 
-# Function to walk through directories recursively and process files
 def process_directory(directory: click.Path, fetch_complete: bool, fetch_partial: bool):
 	for root, _, files in os.walk(str(directory)):
 		for f in files:

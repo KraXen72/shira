@@ -89,7 +89,7 @@ def check_album_match(album: str, r_dict: MBRelease, title_match: bool, artist_m
 	if title_match and artist_match:
 		# exception: if title & artist match, allow mbid album to be a superset (contain) album needle
 		# e.g. album="Meet the Woo" would match "Meet the Woo, V.2", but not the other way around
-		# this is pretty damn loose at this point but we trust MusicBrainz API result ordering
+		# this is pretty damn loose at this point but we trust in MusicBrainz API result ordering
 		return check_barealbum_match2(album, r_dict)
 	else:
 		return check_barealbum_match(album, r_dict)

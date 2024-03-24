@@ -38,10 +38,12 @@ MBRecording = TypedDict("MBRecording", {
 	"releases": list[MBRelease]
 })
 
-def digits_match(in1: str, in2: str):
+def digits_match(in1: str, in2: str, strict = True):
 	"""makes it so that 2:09 matches 02:09"""
-	leading0re = r"(?<=\b)0+(?=[1-9])"
-	return re.sub(leading0re, "", in1.lower().strip()) == re.sub(leading0re, "", in2.lower().strip())
+	leading0re = r"(?<=\b)0+(?=[1-9])" # strips all leading zeros
+	expr1 = re.sub(leading0re, "", in1.lower().strip())
+	expr2 = re.sub(leading0re, "", in2.lower().strip())
+	return expr1 == expr2 if strict else expr1 in expr2
 
 def check_bareartist_match(artist: str, a_dict: MBArtist):
 	"""fuzzy song artist (single/bare) matching"""
@@ -70,11 +72,27 @@ def check_artist_match(artist: str, a_list: list[MBArtistCredit]):
 	else:
 		return check_bareartist_match(artist, a_list[0]["artist"])
 
-def check_album_match(album: str, r_dict: MBRelease):
-	"""fuzzy song album matching"""
+def check_barealbum_match(album: str, r_dict: MBRelease):
+	"""semi-strict album match checker"""
 	return album == r_dict["title"] or album.replace("(Single)", "").strip() == r_dict["title"] \
 		or album.lower() == r_dict["title"].lower() or album.replace("(Single)", "").strip().lower() == r_dict["title"].lower() \
 		or digits_match(album, r_dict["title"])
+
+def check_barealbum_match2(album: str, r_dict: MBRelease):
+	"""looser check_barealbum_match if title_match and artist_match are both true """
+	return album in r_dict["title"] or album.replace("(Single)", "").strip() in r_dict["title"] \
+		or album.lower() in r_dict["title"].lower() or album.replace("(Single)", "").strip().lower() in r_dict["title"].lower() \
+		or digits_match(album, r_dict["title"], strict=False)
+
+def check_album_match(album: str, r_dict: MBRelease, title_match: bool, artist_match: bool):
+	"""fuzzy song album matching"""
+	if title_match and artist_match:
+		# exception: if title & artist match, allow mbid album to be a superset (contain) album needle
+		# e.g. album="Meet the Woo" would match "Meet the Woo, V.2", but not the other way around
+		# this is pretty damn loose at this point but we trust MusicBrainz API result ordering
+		return check_barealbum_match2(album, r_dict)
+	else:
+		return check_barealbum_match(album, r_dict)
 
 def check_title_match(title: str, r_dict: MBRecording):
 	"""fuzzy song title matching"""
@@ -94,7 +112,8 @@ class MBSong:
 		self,
 		title: str = "",
 		artist: str = "",
-		album: str = ""
+		album: str = "",
+		debug = False
 	):
 		if title == "":
 			raise Exception("title is required")
@@ -111,9 +130,13 @@ class MBSong:
 		self.mb_releasetrackid = None # song mbid
 		self.mb_releasegroupid = None # album mbid
 		self.mb_artistid = None # artist mbid
+		self.debug = debug
 
 	def fetch_song(self):
-		"""ping mb api to get song"""
+		"""
+		ping mb api to get song
+		subsequently calls fetch_arist if nothing is found
+		"""
 		params = {
 			"query": f'{self.title} artist:"{self.artist}" release:"{self.album}"',
 			**self.default_params
@@ -134,9 +157,20 @@ class MBSong:
 			resjson = json.loads(res.text)
 			self.save_artist_dict(resjson["artists"])
 
+	def _debug_print_track(self, track: MBRecording, titm: bool, artm: bool, albm: bool):
+		if not self.debug:
+			return
+		print(f"matches: title:{titm}, artist:{artm}, album:{albm}")
+		print(track["title"], [r["title"] for r in track["releases"]])
+
 	def save_song_dict(self, tracks: list[MBRecording]):
 		"""find the most similar song"""
 
+		if self.debug:
+			f = open("info.json", "w", encoding="utf8")
+			json.dump(tracks, f, indent=4, ensure_ascii=False)
+			f.close()
+		
 		for t in tracks:
 			if ("artist-credit" not in t) or (len(t["artist-credit"]) == 0) or ("releases" not in t) or (len(t["releases"]) == 0):
 				continue
@@ -151,17 +185,20 @@ class MBSong:
 				artist_match = True
 				
 			for a in t["releases"]:
-				if check_album_match(self.album, a):
+				if check_album_match(self.album, a, title_match, artist_match):
 					self.mb_releasegroupid = a["release-group"]["id"]
 					self.album_dict = a
 					album_match = True
+					self._debug_print_track(t, title_match, artist_match, album_match)
 					break
 				
 			if title_match and artist_match and album_match:
 				self.mb_releasetrackid = t["id"]
 				self.song_dict = t
+				self._debug_print_track(t, title_match, artist_match, album_match)
 				break
-
+			self._debug_print_track(t, title_match, artist_match, album_match)	
+		
 		if self.song_dict is None:
 			self.fetch_artist()
 

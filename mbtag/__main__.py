@@ -50,8 +50,8 @@ def process_song(filepath: str, fetch_complete: bool, fetch_partial: bool, dry_r
 	has_some = no_of_mbid_tags(handle)
 	print(f"[song] {filepath}, has_all: {has_all}, has_some: {has_some}")
 	# pprint(handle.as_dict(), True)
+
 	if not (fetch_complete and has_all) and not (fetch_partial and has_some > 0):
-	# if (has_all and (not fetch_complete)) or ((has_some > 0 or has_all) and (not fetch_partial)):
 		print("[skipping]: check args for fetching all or partial songs")
 		return
 	if handle.title is None or handle.artist is None:
@@ -60,7 +60,7 @@ def process_song(filepath: str, fetch_complete: bool, fetch_partial: bool, dry_r
 	# The fallback likely won't work but i cba to fix it properly for now
 	formb_album = str(handle.album) if handle.album is not None else f"{handle.title} (Single)"
 
-	mb = MBSong(title=str(handle.title), artist=str(handle.artist), album=formb_album, debug=False)
+	mb = MBSong(title=str(handle.title), artist=str(handle.artist), album=formb_album, debug=True)
 	mb.fetch_song()
 
 	pprint(mb.get_mbid_tags())

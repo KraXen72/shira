@@ -11,6 +11,10 @@ from shiradl.tagging import Tags
 # works on it's own (name == __main__), but everything apart from the musibrainz logic doesen't live in it
 # it's in a separate python module is to have a separate command & to separate the code
 
+# at some point, i might have to just switch this to depend on picard itself or it's submodule - i can only get so far with lookup
+# acoutsid fingerprinting might be a good idea
+# however, even then, it's not 100% accurate...
+
 MBArtist = TypedDict("MBArtist", { 
 	"id": str,
 	"name": str, 
@@ -141,6 +145,8 @@ class MBSong:
 			"query": f'{self.title} artist:"{self.artist}" release:"{self.album}"',
 			**self.default_params
 		}
+		if self.debug:
+			print("fetch_song query:", params["query"])
 		res = requests.get(f"{self.base}/recording", params=params)
 		if res.status_code >= 200 and res.status_code < 300:
 			resjson = json.loads(res.text)
@@ -152,6 +158,8 @@ class MBSong:
 			"query": self.artist,
 			**self.default_params
 		}
+		if self.debug:
+			print("fetch_artist query:", params["query"])
 		res = requests.get(f"{self.base}/artist", params=params)
 		if res.status_code >= 200 and res.status_code < 300:
 			resjson = json.loads(res.text)
@@ -170,6 +178,10 @@ class MBSong:
 			f = open("info.json", "w", encoding="utf8")
 			json.dump(tracks, f, indent=4, ensure_ascii=False)
 			f.close()
+			print("looking for:")
+			print("title:", self.title)
+			print("artist:", self.artist)
+			print("album:", self.album)
 		
 		for t in tracks:
 			if ("artist-credit" not in t) or (len(t["artist-credit"]) == 0) or ("releases" not in t) or (len(t["releases"]) == 0):

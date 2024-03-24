@@ -10,6 +10,7 @@ from ytmusicapi import YTMusic
 
 from .metadata import clean_title, get_year
 from .tagging import MV_SEPARATOR_VISUAL, Tags, get_cover
+from .util import pprint
 
 ITAG_AAC_128 = "140"
 ITAG_AAC_256 = "141"
@@ -194,6 +195,8 @@ class Dl:
 				filename_safe_tags[k] = MV_SEPARATOR_VISUAL.join([ vv if isinstance(vv, str) else vv.decode("utf-8") for vv in v ])
 			else:
 				filename_safe_tags[k] = v
+
+		pprint(filename_safe_tags)
 
 		final_location_folder = [self.get_sanizated_string(i.format(**filename_safe_tags), True) for i in final_location_folder]
 		final_location_file = [self.get_sanizated_string(i.format(**filename_safe_tags), True) for i in final_location_file[:-1]] + [

@@ -6,9 +6,11 @@ from pathlib import Path
 
 import click
 
+from mbtag.musicbrainz import musicbrainz_enrich_tags
+
 from . import __version__
 from .dl import Dl
-from .metadata import TIGER_SINGLE, musicbrainz_enrich_tags, smart_metadata
+from .metadata import TIGER_SINGLE, smart_metadata
 from .tagging import get_cover_local, metadata_applier
 
 logging.basicConfig(

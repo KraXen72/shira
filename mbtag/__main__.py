@@ -23,14 +23,14 @@ def is_supported_song_file(filename):
 
 
 # Function to walk through directories recursively and process files
-def process_directory(directory):
-	for root, _, files in os.walk(directory):
+def process_directory(directory: click.Path, fetch_complete: bool, fetch_partial: bool):
+	for root, _, files in os.walk(str(directory)):
 		for f in files:
 			filepath = os.path.join(root, f)
 			if not is_supported_song_file(filepath):
 				continue
 			try:
-				process_song(filepath)
+				process_song(filepath, fetch_complete, fetch_partial)
 			except Exception as e:
 				print(f"Error processing song '{filepath}':")
 				print(e)
@@ -44,19 +44,25 @@ def no_of_mbid_tags(handle: MediaFile):
 	handle_dict = handle.as_dict()
 	return len([handle_dict.get(key) is not None for key in MBID_TAG_KEYS])
 	
-def process_song(filepath: str):
+def process_song(filepath: str, fetch_complete: bool, fetch_partial: bool):
 	handle = MediaFile(filepath)
 	has_all = has_all_mbid_tags(handle)
 	has_some = no_of_mbid_tags(handle)
 	print(f"{filepath}, has_all: {has_all}, has_some: {has_some}")
 	pprint(handle.as_dict(), True)
+	if (has_all and (not fetch_complete)) or (has_some and (not fetch_partial)):
+		print("skipping... (check args for fetching all or partial songs)")
+		return
 	# print(f"Title: {handle.title}, Artist: {handle.artist}, Album: {handle.album}. has_all: {has_all}")
 
-# CLI command
+# TODO add suport for file_okay
+
 @click.command()
 @click.argument("directory", type=click.Path(exists=True, file_okay=False, resolve_path=True))
-def main(directory):
-	process_directory(directory)
+@click.option("--fetch-complete", "-c", is_flag=True, help=f"Fetch from MB even if has {", ".join(MBID_TAG_KEYS)} present.")
+@click.option("--fetch-partial", "-p", is_flag=True, help="Fetch from MB even if has some mb_* tags present.")
+def main(directory: click.Path, fetch_complete = False, fetch_partial = False):
+	process_directory(directory, fetch_complete, fetch_partial)
 
 
 if __name__ == "__main__":

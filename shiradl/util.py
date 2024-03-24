@@ -1,12 +1,31 @@
+import datetime
 import json
 
 
-def pprint(val):
+def pprint(val, no_null = False):
 	if isinstance(val, dict):
-		d = dict(val)
-		for [k, v] in d.items():
+		d = {}
+		for [k, v] in val.items():
 			if isinstance(v, bytes):
-				d[k] = v.decode("utf-8")
+				decoded = ""
+				try: 
+					decoded = v.decode("utf-8")
+				except:
+					decoded = "<non-utf8 bytes>"
+				d[k] = decoded
+			elif isinstance(v, datetime.date):
+				d[k] = f"date({v.isoformat()})"
+			elif v is None:
+				if no_null:
+					continue
+				else:
+					d[k] = "null" 
+			else:
+				try:
+					json.dumps(v)
+					d[k] = v
+				except:
+					d[k] = f"{str(type(v))} is/contains non-serializable"
 		print(json.dumps(d, indent=2))
 	else:
 		print(val)

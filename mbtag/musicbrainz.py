@@ -2,8 +2,9 @@ import json
 import re
 from typing import TypedDict
 
-import requests
+from requests_cache import CachedSession
 
+from shiradl.__init__ import __version__ as shiraver
 from shiradl.metadata import clean_title, parse_datestring
 from shiradl.tagging import Tags
 
@@ -126,6 +127,8 @@ class MBSong:
 		self.album = album
 		self.base = "https://musicbrainz.org/ws/2"
 		self.default_params = { "fmt": "json" }
+		self.req = CachedSession("mbtag0", expire_after=600)
+		self.head = { "User-Agent": f"shiradl/{shiraver} ( https://github.com/KraXen72/shira )" }
 
 		self.song_dict = None # MBRecording
 		self.artist_dict = None # MBArtistCredit
@@ -147,7 +150,7 @@ class MBSong:
 		}
 		if self.debug:
 			print("fetch_song query:", params["query"])
-		res = requests.get(f"{self.base}/recording", params=params)
+		res = self.req.get(f"{self.base}/recording", params=params, headers=self.head)
 		if res.status_code >= 200 and res.status_code < 300:
 			resjson = json.loads(res.text)
 			self.save_song_dict(resjson["recordings"])
@@ -160,7 +163,7 @@ class MBSong:
 		}
 		if self.debug:
 			print("fetch_artist query:", params["query"])
-		res = requests.get(f"{self.base}/artist", params=params)
+		res = self.req.get(f"{self.base}/artist", params=params, headers=self.head)
 		if res.status_code >= 200 and res.status_code < 300:
 			resjson = json.loads(res.text)
 			self.save_artist_dict(resjson["artists"])

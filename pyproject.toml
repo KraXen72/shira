@@ -8,7 +8,8 @@ dependencies = [
 	"yt-dlp",
 	"ytmusicapi",
 	"mediafile",
-	"pillow"
+	"pillow",
+	"requests_cache"
 ]
 readme = "README.md"
 dynamic = ["version"]

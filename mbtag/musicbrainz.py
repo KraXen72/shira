@@ -43,11 +43,19 @@ MBRecording = TypedDict("MBRecording", {
 	"releases": list[MBRelease]
 })
 
-def digits_match(in1: str, in2: str, strict = True):
-	"""makes it so that 2:09 matches 02:09"""
+def normalized_compare_regex(in1: str, in2: str, strict = True):
+	"""
+	compares 2 strings after normalization
+	- e.g. 2:09 matches 02:09  
+	- e.g. Sci-Fi matches Sci—Fi  
+	"""
 	leading0re = r"(?<=\b)0+(?=[1-9])" # strips all leading zeros
+	nonstandard_hyphens = r"‐|‑|‒|–|—|―|⁃|－"
 	expr1 = re.sub(leading0re, "", in1.lower().strip())
 	expr2 = re.sub(leading0re, "", in2.lower().strip())
+
+	expr1 = re.sub(nonstandard_hyphens, "-", expr1)
+	expr2 = re.sub(nonstandard_hyphens, "-", expr2)
 	return expr1 == expr2 if strict else expr1 in expr2
 
 def check_bareartist_match(artist: str, a_dict: MBArtist):
@@ -81,13 +89,13 @@ def check_barealbum_match(album: str, r_dict: MBRelease):
 	"""semi-strict album match checker"""
 	return album == r_dict["title"] or album.replace("(Single)", "").strip() == r_dict["title"] \
 		or album.lower() == r_dict["title"].lower() or album.replace("(Single)", "").strip().lower() == r_dict["title"].lower() \
-		or digits_match(album, r_dict["title"])
+		or normalized_compare_regex(album, r_dict["title"])
 
 def check_barealbum_match2(album: str, r_dict: MBRelease):
 	"""looser check_barealbum_match if title_match and artist_match are both true """
 	return album in r_dict["title"] or album.replace("(Single)", "").strip() in r_dict["title"] \
 		or album.lower() in r_dict["title"].lower() or album.replace("(Single)", "").strip().lower() in r_dict["title"].lower() \
-		or digits_match(album, r_dict["title"], strict=False)
+		or normalized_compare_regex(album, r_dict["title"], strict=False)
 
 def check_album_match(album: str, r_dict: MBRelease, title_match: bool, artist_match: bool):
 	"""fuzzy song album matching"""
@@ -101,7 +109,7 @@ def check_album_match(album: str, r_dict: MBRelease, title_match: bool, artist_m
 
 def check_title_match(title: str, r_dict: MBRecording):
 	"""fuzzy song title matching"""
-	return title == r_dict["title"] or title.lower() == r_dict["title"].lower() or digits_match(title, r_dict["title"])
+	return title == r_dict["title"] or title.lower() == r_dict["title"].lower() or normalized_compare_regex(title, r_dict["title"])
 
 def get_mb_artistids(a_list: list[MBArtistCredit], return_single = False):
 	"""get artist mdid or list of mbids"""
@@ -127,8 +135,8 @@ class MBSong:
 		self.album = album
 		self.base = "https://musicbrainz.org/ws/2"
 		self.default_params = { "fmt": "json" }
-		self.req = CachedSession("mbtag0", expire_after=600)
-		self.head = { "User-Agent": f"shiradl/{shiraver} ( https://github.com/KraXen72/shira )" }
+		self.req = CachedSession("mbtag", expire_after=0)
+		self.head = { "User-Agent": f"shiradl+mbtag/{shiraver} ( https://github.com/KraXen72/shira )" }
 
 		self.song_dict = None # MBRecording
 		self.artist_dict = None # MBArtistCredit
@@ -141,29 +149,31 @@ class MBSong:
 
 	def fetch_song(self):
 		"""
-		ping mb api to get song
+		ping mb api to get song (/recording)
 		subsequently calls fetch_arist if nothing is found
 		"""
 		params = {
-			"query": f'{self.title} artist:"{self.artist}" release:"{self.album}"',
+			"query": f'{self.title} AND artist:"{self.artist}" AND release:"{self.album}"',
 			**self.default_params
 		}
-		if self.debug:
-			print("fetch_song query:", params["query"])
 		res = self.req.get(f"{self.base}/recording", params=params, headers=self.head)
+		if self.debug:
+			print(res.url)
+			print("fetch_song query:", params["query"])
 		if res.status_code >= 200 and res.status_code < 300:
 			resjson = json.loads(res.text)
 			self.save_song_dict(resjson["recordings"])
 
 	def fetch_artist(self):
-		"""ping mb api to get artist"""
+		"""ping mb api to get artist (/artist)"""
 		params = {
 			"query": self.artist,
 			**self.default_params
 		}
-		if self.debug:
-			print("fetch_artist query:", params["query"])
 		res = self.req.get(f"{self.base}/artist", params=params, headers=self.head)
+		if self.debug:
+			print(res.url)
+			print("fetch_artist query:", params["query"])
 		if res.status_code >= 200 and res.status_code < 300:
 			resjson = json.loads(res.text)
 			self.save_artist_dict(resjson["artists"])
@@ -247,6 +257,22 @@ class MBSong:
 			"mb_releasegroupid": self.mb_releasegroupid,
 			"mb_artistid": self.mb_artistid,
 			"mb_albumartistid": first_mb_artistid
+		}
+
+
+	def get_mb_tags(self):
+		"""
+		quickly get {title, artist, album} if it was fetched from MB,  
+		otherwise all 3 will be None.  
+		Does no fetching itself.
+		"""
+		artist = None
+		if self.artist_dict is not None:
+			artist = self.artist_dict[0]["artist"]["name"] if isinstance(self.artist_dict, list) else self.artist_dict["name"]
+		return {
+			"title": self.song_dict.get("title") if self.song_dict is not None else None,
+			"artist": artist,
+			"album": self.album_dict.get("title") if self.album_dict is not None else None,
 		}
 
 def musicbrainz_enrich_tags(tags: Tags, skip_encode = False, exclude_tags: list[str] = [], use_mbid_data = True):  # noqa: B006

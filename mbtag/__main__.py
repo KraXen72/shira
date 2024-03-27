@@ -110,6 +110,5 @@ def process_song(filepath: str, ind: int, total: int, fetch_complete: bool, fetc
 def mbtag_cli(input_path: click.Path, fetch_complete=False, fetch_partial=False, dry_run=False, debug=False):
 	process_directory(input_path, fetch_complete, fetch_partial, dry_run, debug)
 
-
 if __name__ == "__main__":
 	mbtag_cli()

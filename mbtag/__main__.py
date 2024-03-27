@@ -23,15 +23,22 @@ def is_supported_song_file(filename):
 		return False
 
 
-def process_directory(directory: click.Path, fetch_complete: bool, fetch_partial: bool, dry_run: bool, debug: bool):
-	for root, _, files in os.walk(str(directory)):
+def process_directory(directory_or_file: click.Path, fetch_complete: bool, fetch_partial: bool, dry_run: bool, debug: bool):
+	if not os.path.exists(str(directory_or_file)):
+		print(f"[error]: Path '{directory_or_file}' does not exist.")
+		return
+	if os.path.isfile(str(directory_or_file)):
+		process_song(str(directory_or_file), 0, 1, fetch_complete, fetch_partial, dry_run, debug)
+		print()
+		return
+	for root, _, files in os.walk(str(directory_or_file)):
 		for i in range(len(files)):
 			f = files[i]
 			filepath = os.path.join(root, f)
 			if not is_supported_song_file(filepath):
 				continue
 			try:
-				process_song(filepath, i+1, len(files), fetch_complete, fetch_partial, dry_run, debug)
+				process_song(filepath, i, len(files), fetch_complete, fetch_partial, dry_run, debug)
 				# print()
 			except Exception as e:
 				print(f"Error processing song '{filepath}':")
@@ -94,11 +101,8 @@ def process_song(filepath: str, ind: int, total: int, fetch_complete: bool, fetc
 		print(msg)
 		# progprint(ind, total, message=msg)
 
-
-# TODO add suport for file_okay
-
 @click.command()
-@click.argument("directory", type=click.Path(exists=True, file_okay=False, resolve_path=True))
+@click.argument("directory", type=click.Path(exists=True, file_okay=True, resolve_path=True))
 @click.option("--fetch-complete", "-c", is_flag=True, help=f"Fetch from MusicBrainz even if has {", ".join(MBID_TAG_KEYS)} present.")
 @click.option("--fetch-partial", "-p", is_flag=True, help="Fetch from MusicBrainz even if has some mb_* tags present.")
 @click.option("--dry-run", "-d", is_flag=True, help="Don't write to any files, just print out the mb_* tags")

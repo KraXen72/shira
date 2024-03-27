@@ -54,15 +54,19 @@ def process_song(filepath: str, ind: int, total: int, fetch_complete: bool, fetc
 	handle = MediaFile(filepath)
 	has_all = has_all_mbid_tags(handle)
 	has_some = no_of_mbid_tags(handle)
-	# status = f"[song] {filepath}, has_all: {has_all}, has_some: {has_some}"
-	# progprint(ind, total, message=status)
+	status = f"[song] {filepath}, has_all: {has_all}, has_some: {has_some}"
+	progprint(ind, total, message=status)
 	# pprint(handle.as_dict(), True)
 
 	if has_some != 0 and (not (fetch_complete and has_all) and not (fetch_partial and has_some > 0)):
-		progprint(ind, total, message="[skipping]: check args for fetching all or partial songs")
+		msg = "[skipped] check args for fetching all or partial songs"
+		# progprint(ind, total, message=msg)
+		print(msg)
 		return 
 	if handle.title is None or handle.artist is None:
-		progprint(ind, total, message="[skipping]: 'title' and 'artist' tags are required to search MusicBrainz")
+		msg = "[skipped] 'title' and 'artist' tags are required to search MusicBrainz"
+		# progprint(ind, total, message=msg)
+		print(msg)
 		return 
 	# The fallback likely won't work but i cba to fix it properly for now
 	formb_album = str(handle.album) if handle.album is not None else f"{handle.title} (Single)"
@@ -73,17 +77,22 @@ def process_song(filepath: str, ind: int, total: int, fetch_complete: bool, fetc
 	if debug:
 		pprint(mb.get_mbid_tags())
 	if dry_run:
-		progprint(ind, total, message="[dry-run] skipping writing...")
+		msg = "[skipped] didn't write due to --dry-run"
+		# progprint(ind, total, message=msg)
+		print(msg)
 		return 
 	else:
 		for [k, v] in mb.get_mbid_tags().items():
 			setattr(handle, k, v)
 		handle.save()
 		ptags = mb.get_mb_tags()
+		msg = ""
 		if ptags is not None:
-			progprint(ind, total, message=f"[ok] written IDs for result: {ptags['artist']} - {ptags['title']} (on {ptags['album']})")
+			msg = f"[ok] written IDs for result: {ptags['artist']} - {ptags['title']} (on {ptags['album']})"
 		else:
-			progprint(ind, total, message="[ok] written!")
+			msg = "[ok] written!"
+		print(msg)
+		# progprint(ind, total, message=msg)
 
 
 # TODO add suport for file_okay

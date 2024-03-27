@@ -102,13 +102,13 @@ def process_song(filepath: str, ind: int, total: int, fetch_complete: bool, fetc
 		# progprint(ind, total, message=msg)
 
 @click.command()
-@click.argument("directory", type=click.Path(exists=True, file_okay=True, resolve_path=True))
+@click.argument("input_path", type=click.Path(exists=True, file_okay=True, resolve_path=True))
 @click.option("--fetch-complete", "-c", is_flag=True, help=f"Fetch from MusicBrainz even if has {", ".join(MBID_TAG_KEYS)} present.")
 @click.option("--fetch-partial", "-p", is_flag=True, help="Fetch from MusicBrainz even if has some mb_* tags present.")
 @click.option("--dry-run", "-d", is_flag=True, help="Don't write to any files, just print out the mb_* tags")
 @click.option("--debug", "-g", is_flag=True, help="Prints out extra information for debugging. Does not imply --dry-run.")
-def mbtag_cli(directory: click.Path, fetch_complete=False, fetch_partial=False, dry_run=False, debug=False):
-	process_directory(directory, fetch_complete, fetch_partial, dry_run, debug)
+def mbtag_cli(input_path: click.Path, fetch_complete=False, fetch_partial=False, dry_run=False, debug=False):
+	process_directory(input_path, fetch_complete, fetch_partial, dry_run, debug)
 
 
 if __name__ == "__main__":

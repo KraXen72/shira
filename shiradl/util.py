@@ -35,7 +35,7 @@ def pprint(val, no_null = False):
 	print(json.dumps(d, indent=2))
 		
 
-def progprint(curr: int, total: int, width = 30,  message = ""):
+def progprint(curr: int, total: int, width = 30,  message = "", end = "\r"):
 	global longest_line2
 	perc_factor = (curr / total)
 	scaled_perc = math.floor(width * perc_factor)
@@ -50,4 +50,4 @@ def progprint(curr: int, total: int, width = 30,  message = ""):
 	if len_diff > 0: # flush previous line2
 		line2 += " " * len_diff
 		
-	print(f"[{'=' * scaled_perc}{' ' * remainder}] {(perc_factor): 5.0%}{line2}", end="\r")
+	print(f"[{'=' * scaled_perc}{' ' * remainder}] {(perc_factor): 5.0%}{line2}", end=end)

@@ -66,12 +66,12 @@ def process_song(filepath: str, ind: int, total: int, fetch_complete: bool, fetc
 	# pprint(handle.as_dict(), True)
 
 	if has_some != 0 and (not (fetch_complete and has_all) and not (fetch_partial and has_some > 0)):
-		msg = "[skipped] check args for fetching all or partial songs"
+		msg = "[skipped] check args for fetching all or partial songs  "
 		# progprint(ind, total, message=msg)
 		print(msg)
 		return 
 	if handle.title is None or handle.artist is None:
-		msg = "[skipped] 'title' and 'artist' tags are required to search MusicBrainz"
+		msg = "[skipped] 'title' and 'artist' tags are required to search MusicBrainz  "
 		# progprint(ind, total, message=msg)
 		print(msg)
 		return 
@@ -84,7 +84,7 @@ def process_song(filepath: str, ind: int, total: int, fetch_complete: bool, fetc
 	if debug:
 		pprint(mb.get_mbid_tags())
 	if dry_run:
-		msg = "[skipped] didn't write due to --dry-run"
+		msg = "[skipped] didn't write due to --dry-run  "
 		# progprint(ind, total, message=msg)
 		print(msg)
 		return 
@@ -95,9 +95,9 @@ def process_song(filepath: str, ind: int, total: int, fetch_complete: bool, fetc
 		ptags = mb.get_mb_tags()
 		msg = ""
 		if ptags is not None:
-			msg = f"[ok] written IDs for result: {ptags['artist']} - {ptags['title']} (on {ptags['album']})"
+			msg = f"[ok] written IDs for result: {ptags['artist']} - {ptags['title']} (on {ptags['album']})  "
 		else:
-			msg = "[ok] written!"
+			msg = "[ok] written!  "
 		print(msg)
 		# progprint(ind, total, message=msg)
 

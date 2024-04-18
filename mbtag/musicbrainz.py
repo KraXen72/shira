@@ -42,21 +42,26 @@ MBRecording = TypedDict("MBRecording", {
 	"artist-credit": list[MBArtistCredit],
 	"releases": list[MBRelease]
 })
+ 
+leading_zero_re = r"(?<=\b)0+(?=[1-9])" # strips all leading zeros
+hyphens_re = r"‐|‑|‒|–|—|―|⁃|－" # non-standard hyphens
+title_feat_re = r"\s?(?:(ft. \b\w+\b)|(\(feat\.?.+\)))" # MusicBrainz usually has songs with feat. in the title without it
 
 def normalized_compare_regex(in1: str, in2: str, strict = True):
 	"""
 	compares 2 strings after normalization
 	- e.g. 2:09 matches 02:09  
 	- e.g. Sci-Fi matches Sci—Fi  
+	:param strict: if off, it will check if in1 is a substring of in2 rather than direct comparison
 	"""
-	leading0re = r"(?<=\b)0+(?=[1-9])" # strips all leading zeros
-	nonstandard_hyphens = r"‐|‑|‒|–|—|―|⁃|－"
-	expr1 = re.sub(leading0re, "", in1.lower().strip())
-	expr2 = re.sub(leading0re, "", in2.lower().strip())
+	expr = [in1.lower().strip(), in2.lower().strip()]
+	for i in range(len(expr)):
+		expr[i] = re.sub(leading_zero_re, "", expr[i]) 
+		expr[i] = re.sub(hyphens_re, "-", expr[i])
+		expr[i] = re.sub(title_feat_re, "", expr[i])
+		expr[i] = expr[i].strip()
 
-	expr1 = re.sub(nonstandard_hyphens, "-", expr1)
-	expr2 = re.sub(nonstandard_hyphens, "-", expr2)
-	return expr1 == expr2 if strict else expr1 in expr2
+	return expr[0] == expr[1] if strict else expr[0] in expr[1]
 
 def check_bareartist_match(artist: str, a_dict: MBArtist):
 	"""fuzzy song artist (single/bare) matching"""
@@ -126,7 +131,8 @@ class MBSong:
 		title: str = "",
 		artist: str = "",
 		album: str = "",
-		debug = False
+		debug = False,
+		cache_lifetime_seconds = 60
 	):
 		if title == "":
 			raise Exception("title is required")
@@ -135,7 +141,7 @@ class MBSong:
 		self.album = album
 		self.base = "https://musicbrainz.org/ws/2"
 		self.default_params = { "fmt": "json" }
-		self.req = CachedSession("mbtag", expire_after=0)
+		self.req = CachedSession("mbtag", expire_after=cache_lifetime_seconds)
 		self.head = { "User-Agent": f"shiradl+mbtag/{shiraver} ( https://github.com/KraXen72/shira )" }
 
 		self.song_dict = None # MBRecording

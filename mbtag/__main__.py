@@ -65,8 +65,13 @@ def process_song(filepath: str, ind: int, total: int, fetch_complete: bool, fetc
 	progprint(ind, total, message=status)
 	# pprint(handle.as_dict(), True)
 
-	if has_some != 0 and (not (fetch_complete and has_all) and not (fetch_partial and has_some > 0)):
-		msg = "[skipped] check args for fetching all or partial songs  "
+	# by default, partials and completes are not fetched
+	continue_partials = has_some == 0 or (has_some > 0 and (fetch_partial or fetch_complete))
+	continue_complete = not has_all or (has_all and fetch_complete)
+	# print(f"continue_partials: {continue_partials}, continue_complete: {continue_complete}  ")
+
+	if not (continue_partials and continue_complete):
+		msg = f"[skipped] check args for fetching complete or partial songs. c:{int(not continue_complete)}, p:{int(not continue_partials)}  "
 		# progprint(ind, total, message=msg)
 		print(msg)
 		return 

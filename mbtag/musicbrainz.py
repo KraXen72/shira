@@ -45,9 +45,14 @@ MBRecording = TypedDict("MBRecording", {
  
 leading_zero_re = r"(?<=\b)0+(?=[1-9])" # strips all leading zeros
 hyphens_re = r"‐|‑|‒|–|—|―|⁃|－" # non-standard hyphens
-title_feat_re = r"\s?(?:(ft. \b\w+\b)|(\(feat\.?.+\)))" # MusicBrainz usually has songs with feat. in the title without it
 
-def normalized_compare_regex(in1: str, in2: str, strict = True):
+# MusicBrainz usually has songs with feat. in the title without it
+# allows multiple words for bare ft. (till the end of title)
+# look i'm not stoked about this regex but it works
+title_feat_re = r"\s?(?:(ft\. \b.+\b)|(\(feat\.?.+\)))" 
+# title_feat_re = r"\s?(?:(ft\. \b\w+\b)|(\(feat\.?.+\)))" # stricter version
+
+def normalized_compare_regex(in1: str, in2: str, strict = True, debug = False):
 	"""
 	compares 2 strings after normalization
 	- e.g. 2:09 matches 02:09  
@@ -60,6 +65,10 @@ def normalized_compare_regex(in1: str, in2: str, strict = True):
 		expr[i] = re.sub(hyphens_re, "-", expr[i])
 		expr[i] = re.sub(title_feat_re, "", expr[i])
 		expr[i] = expr[i].strip()
+	
+	if debug:
+		print(f"e1: {in1} e2: {in2}, strict:{strict}")
+		print(f"out: e1: {expr[0]} e2: {expr[1]}")
 
 	return expr[0] == expr[1] if strict else expr[0] in expr[1]
 
@@ -112,9 +121,10 @@ def check_album_match(album: str, r_dict: MBRelease, title_match: bool, artist_m
 	else:
 		return check_barealbum_match(album, r_dict)
 
-def check_title_match(title: str, r_dict: MBRecording):
+def check_title_match(title: str, r_dict: MBRecording, debug = False):
 	"""fuzzy song title matching"""
-	return title == r_dict["title"] or title.lower() == r_dict["title"].lower() or normalized_compare_regex(title, r_dict["title"])
+	return title == r_dict["title"] or title.lower() == r_dict["title"].lower() \
+		or normalized_compare_regex(title, r_dict["title"], debug=debug)
 
 def get_mb_artistids(a_list: list[MBArtistCredit], return_single = False):
 	"""get artist mdid or list of mbids"""
@@ -206,7 +216,7 @@ class MBSong:
 			if ("artist-credit" not in t) or (len(t["artist-credit"]) == 0) or ("releases" not in t) or (len(t["releases"]) == 0):
 				continue
 
-			title_match = check_title_match(self.title, t)
+			title_match = check_title_match(self.title, t, self.debug)
 			artist_match = False
 			album_match = False
 			

@@ -1,3 +1,4 @@
+import json
 import os
 
 import click
@@ -92,6 +93,8 @@ def process_song(filepath: str, ind: int, total: int, fetch_complete: bool, fetc
 		msg = "[skipped] didn't write due to --dry-run  "
 		# progprint(ind, total, message=msg)
 		print(msg)
+		print(mb.get_mb_tags())
+		print(json.dumps(mb.get_mbid_tags(), indent=2))
 		return 
 	else:
 		for [k, v] in mb.get_mbid_tags().items():

@@ -77,18 +77,18 @@ def check_bareartist_match(artist: str, a_dict: MBArtist):
 	return artist == a_dict["name"] or artist.lower() == a_dict["name"].lower() \
 		or artist == a_dict["sort-name"] or artist.lower() == a_dict["sort-name"].lower()
 
-def check_artist_match(artist: str, a_list: list[MBArtistCredit]):
+def check_artist_match(artist: str, acred_list: list[MBArtistCredit]):
 	"""fuzzy song artist matching (matches serveral artists as well)"""
-	if len(a_list) > 1:
+	if len(acred_list) > 1:
 		# not using ARTIST_SEPARATOR here because ytmusic joins artists by &
-		joinphrase = str(a_list[0].get("joinphrase")).strip() or "&" 
+		joinphrase = str(acred_list[0].get("joinphrase")).strip() or "&" 
 		yt_artists = [a.strip() for a in artist.split(joinphrase)]
 		
 		all_artists_match = True
 		for yta in yt_artists:
 			found_match = False
-			for ac in a_list:
-				if check_bareartist_match(yta, ac["artist"]):
+			for acred in acred_list:
+				if check_bareartist_match(yta, acred["artist"]):
 					found_match = True
 					break
 			if not found_match:
@@ -97,7 +97,7 @@ def check_artist_match(artist: str, a_list: list[MBArtistCredit]):
 		
 		return all_artists_match
 	else:
-		return check_bareartist_match(artist, a_list[0]["artist"])
+		return check_bareartist_match(artist, acred_list[0]["artist"])
 
 def check_barealbum_match(album: str, r_dict: MBRelease):
 	"""semi-strict album match checker"""

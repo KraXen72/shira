@@ -4,6 +4,9 @@ work in progress
 tagging utility which is part of shira
 primary use is to add MusicBrainz ID tags to existing songs which were not downlaoded by shira
 
+docs TBD
+just use the main cli for now, or explore the code
+
 ```
 Usage: python -m mbtag [OPTIONS] INPUT_PATH
 

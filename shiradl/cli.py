@@ -12,7 +12,6 @@ from . import __version__
 from .dl import Dl
 from .metadata import TIGER_SINGLE, smart_metadata
 from .tagging import get_cover_local, metadata_applier
-from .util import pprint
 
 logging.basicConfig(
 	format="[%(levelname)-8s %(asctime)s] %(message)s",
@@ -152,7 +151,7 @@ def cli(
 						tag_track = dl.get_ydl_extract_info(track["url"])
 					logger.debug("Starting Tigerv2")
 					tags = smart_metadata(tag_track, temp_path, "JPEG" if dl.cover_format == "jpg" else "PNG", cover_crop)
-					is_single = tags["comments"] == TIGER_SINGLE
+					is_single = tags.get("comments") == TIGER_SINGLE
 					if is_single:
 						tags["comments"] = track.get("webpage_url") or track.get("original_url") or track.get("url") or url
 				else:
@@ -160,7 +159,7 @@ def cli(
 					is_single = tags["tracktotal"] == 1
 				logger.debug("Tags applied, fetching MusicBrainz Database")
 				tags = musicbrainz_enrich_tags(tags, dl.soundcloud, dl.exclude_tags)
-				pprint(tags)
+				# pprint(tags)
 				logger.debug("Applied MusicBrainz Tags")
 				if cover_img:
 					local_img_bytes = get_cover_local(cover_img, track["url"] if dl.soundcloud else track["id"], dl.soundcloud)

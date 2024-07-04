@@ -15,14 +15,14 @@ def send(server: WebsocketServer, data):
 def message_received(client, server, message):
     if len(message) > 200:
         message = message[:200]+"..."
-    print(f"Client({client["id"]}) said: {message}")
+    print(f"Client({client['id']}) said: {message}")
 	
 def nclient(client, server: WebsocketServer):
-	print("new client joined:", client["id"])
-	send(server, json.dumps(f"hello from server! you are client {client["id"]}"))
+	print("new client joined:", client['id'])
+	send(server, json.dumps(f"hello from server! you are client {client['id']}"))
 
 def lclient(client, server: WebsocketServer):
-	print(f"client {client["id"]} disconnected")
+	print(f"client {client['id']} disconnected")
 		
 
 def server():

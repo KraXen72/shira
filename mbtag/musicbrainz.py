@@ -252,16 +252,29 @@ class MBSong:
 				break
 
 	def get_date_str(self):
+		return_val = None
 		if self.song_dict is None:
 			return None
-		frd = self.song_dict.get("first-release-date")
-		if frd is not None:
-			return frd
-		for r in self.song_dict["releases"]:
-			if "date" not in r:
-				continue
-			return r["date"]
-		return None
+		elif self.song_dict.get("first-release-date") is not None:
+			return_val = self.song_dict.get("first-release-date")
+		else:
+			for r in self.song_dict["releases"]:
+				if "date" not in r:
+					continue
+				return_val = r["date"]
+				break
+
+		if return_val is not None:
+			if re.match(r"^\d{8}$", return_val) or re.match(r"^\d{4}-\d{2}-\d{2}$", return_val):
+				return return_val
+			elif re.match(r"^\d{4}-\d{2}$", return_val):
+				return return_val + "-01"
+			elif re.match(r"^\d{6}$", return_val):
+				return return_val + "01"
+			elif re.match(r"^\d{4}$", return_val):
+				return return_val + "-01-01"
+			else:
+				print(f"unknown date format {return_val}, skipping date metadata")
 
 	def get_mbid_tags(self):
 		"""get mbid tags with proper keys"""

@@ -1,9 +1,7 @@
-/*
 __pycache__
-!shiradl
-!mbtag
-!.gitignore
-!pyproject.toml
-!README.md
-!requirements.txt
-!logo.svg
+*.json
+*.opus
+*.mp3
+*.wav
+*.flac
+*.sqlite

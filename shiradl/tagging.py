@@ -8,15 +8,16 @@ from pathlib import Path
 from statistics import mean, stdev
 from typing import NotRequired, TypedDict
 
-import requests
 from mediafile import Image as MFImage
 from mediafile import ImageType, MediaFile
 from PIL import Image, ImageFilter, ImageOps
+from requests_cache import CachedSession
 
 AVG_THRESHOLD = 10
 CHANNEL_THRESHOLD = 15
 MV_SEPARATOR = "/"#" & " # TODO make this configurable
 MV_SEPARATOR_VISUAL = " & "
+req = CachedSession("shira", expire_after=360s0)
 
 class Tags(TypedDict):
 	title: str
@@ -65,7 +66,7 @@ def metadata_applier(tags: Tags, fixed_location: Path, exclude_tags: list[str], 
 
 @functools.lru_cache
 def get_cover(url):
-	return requests.get(url).content
+	return req.get(url).content
 
 def get_cover_local(file_path: Path, id_or_url: str, is_soundcloud: bool):
 	"""
@@ -142,7 +143,7 @@ def determine_image_crop(image_bytes: bytes):
 		return "pad", fill_recc
 
 def get_1x1_cover(url: str, temp_location: Path, uniqueid: str, cover_format = "JPEG", cover_crop_method = "auto"):
-	image_bytes = requests.get(url).content
+	image_bytes = req.get(url).content
 	pil_img = Image.open(BytesIO(image_bytes))
 
 	width, height = pil_img.size

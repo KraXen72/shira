@@ -4,11 +4,12 @@ import re
 from collections import Counter
 from pathlib import Path
 
-import requests
+from requests_cache import CachedSession
 
 from .tagging import Tags, get_1x1_cover
 
 TIGER_SINGLE = "tiger:is_single:true"
+req = CachedSession("shira", expire_after=60)
 
 def parse_datestring(datestr: str):
 	"""parse YYYYMMDD or YYYY-MM-DD into { year: str, month: str, day: str }"""
@@ -121,7 +122,7 @@ def get_youtube_maxres_thumbnail(info):
 	thumbs = list(reversed(info["thumbnails"]))
 
 	def ping_yt(url: str):
-		res = requests.get(str(t["url"]))
+		res = req.get(str(t["url"]))
 		pinged_urls.append(t["url"])
 		return res
 

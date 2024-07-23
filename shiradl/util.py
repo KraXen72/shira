@@ -1,8 +1,23 @@
 import datetime
 import json
 import math
+from os import path
 
 longest_line2 = -1
+
+class TermColors:
+    HEADER = "\033[95m"
+    OKBLUE = "\033[94m"
+    OKCYAN = "\033[96m"
+    OKGREEN = "\033[92m"
+    WARNING = "\033[93m"
+    FAIL = "\033[91m"
+    ENDC = "\033[0m"
+    BOLD = "\033[1m"
+    UNDERLINE = "\033[4m"
+
+def print_color(color: TermColors, text: str):
+    print(f"{color}{text}{TermColors.ENDC}")
 
 
 def pprint(val, no_null = False):
@@ -33,9 +48,12 @@ def pprint(val, no_null = False):
 			except:
 				d[k] = f"{str(type(v))} is/contains non-serializable"
 	print(json.dumps(d, indent=2))
-		
 
-def progprint(curr: int, total: int, width = 30,  message = "", end = "\r"):
+def end_path(fp: str, segments = 3):
+	parts = fp.split(path.sep)
+	return path.sep.join(parts[-segments:])
+
+def progprint(curr: int, total: int, width = 10,  message = "", end = "\r"):
 	global longest_line2
 	perc_factor = (curr / total)
 	scaled_perc = math.floor(width * perc_factor)

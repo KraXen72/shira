@@ -5,12 +5,11 @@ import click
 from mediafile import MediaFile
 
 from mbtag.musicbrainz import MBSong
-from shiradl.util import pprint, progprint
+from shiradl.util import TermColors, end_path, pprint, progprint
 
 # Define supported extensions list using the keys from the TYPES dictionary
 SONG_EXTS = ["mp3", "aac", "alac", "ogg", "opus", "flac", "ape", "wv", "mpc", "asf", "aiff", "dsf", "wav"]
 MBID_TAG_KEYS = ["mb_releasetrackid", "mb_releasegroupid", "mb_artistid", "mb_albumartistid"]
-
 
 # Function to check if a file is a supported song file
 def is_supported_song_file(filename):
@@ -44,6 +43,7 @@ def process_directory(directory_or_file: click.Path, fetch_complete: bool, fetch
 			except Exception as e:
 				print(f"Error processing song '{filepath}':")
 				print(e)
+		progprint(100, 100, message=f"Processed all files in {end_path(root, 2)}")
 	print()
 
 
@@ -57,12 +57,18 @@ def no_of_mbid_tags(handle: MediaFile):
 	handle_dict = handle.as_dict()
 	return sum([handle_dict.get(key) is not None for key in MBID_TAG_KEYS])
 
+def red_if_none(val: str | None):
+	if val is None:
+		return TermColors.FAIL + "None" + TermColors.ENDC
+	else:
+		return val
+
 
 def process_song(filepath: str, ind: int, total: int, fetch_complete: bool, fetch_partial: bool, dry_run=False, debug=False,):
 	handle = MediaFile(filepath)
 	has_all = has_all_mbid_tags(handle)
 	has_some = no_of_mbid_tags(handle)
-	status = f"[song] {filepath}, has_all: {has_all}, has_some: {has_some}"
+	status = f"[song] {end_path(filepath, 2)}, has_all: {has_all}, has_some: {has_some}"
 	progprint(ind, total, message=status)
 	# pprint(handle.as_dict(), True)
 
@@ -73,18 +79,24 @@ def process_song(filepath: str, ind: int, total: int, fetch_complete: bool, fetc
 
 	if not (continue_partials and continue_complete):
 		msg = f"[skipped] check args for fetching complete or partial songs. c:{int(not continue_complete)}, p:{int(not continue_partials)}  "
-		# progprint(ind, total, message=msg)
-		print(msg)
-		return 
+		progprint(ind, total, message=msg)
+		# print(msg)
+		return
 	if handle.title is None or handle.artist is None:
 		msg = "[skipped] 'title' and 'artist' tags are required to search MusicBrainz  "
-		# progprint(ind, total, message=msg)
-		print(msg)
-		return 
+		progprint(ind, total, message=msg)
+		# print(msg)
+		return
 	# The fallback likely won't work but i cba to fix it properly for now
 	formb_album = str(handle.album) if handle.album is not None else f"{handle.title} (Single)"
 
-	mb = MBSong(title=str(handle.title), artist=str(handle.artist), album=formb_album, debug=debug)
+	mb = MBSong(
+		title=str(handle.title),
+		artist=str(handle.artist),
+		album=formb_album,
+		skip_clean_title=True, # this is only useful for youtube songs with messed up titles
+		debug=debug
+	)
 	mb.fetch_song()
 
 	if debug:
@@ -95,7 +107,7 @@ def process_song(filepath: str, ind: int, total: int, fetch_complete: bool, fetc
 		print(msg)
 		print(mb.get_mb_tags())
 		print(json.dumps(mb.get_mbid_tags(), indent=2))
-		return 
+		return
 	else:
 		for [k, v] in mb.get_mbid_tags().items():
 			setattr(handle, k, v)
@@ -103,11 +115,13 @@ def process_song(filepath: str, ind: int, total: int, fetch_complete: bool, fetc
 		ptags = mb.get_mb_tags()
 		msg = ""
 		if ptags is not None:
-			msg = f"[ok] written IDs for result: {ptags['artist']} - {ptags['title']} (on {ptags['album']})  "
+			if ptags["artist"] is None or ptags["title"] is None or ptags["album"] is None:
+				pprint(ptags)
+			msg = f"[ok] written IDs for result: {red_if_none(ptags['artist'])} - {red_if_none(ptags['title'])} (on {red_if_none(ptags['album'])})  "
 		else:
 			msg = "[ok] written!  "
-		print(msg)
-		# progprint(ind, total, message=msg)
+		# print(msg)
+		progprint(ind, total, message=msg)
 
 @click.command()
 @click.argument("input_path", type=click.Path(exists=True, file_okay=True, resolve_path=True))

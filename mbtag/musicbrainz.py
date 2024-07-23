@@ -44,13 +44,18 @@ MBRecording = TypedDict("MBRecording", {
 })
  
 leading_zero_re = r"(?<=\b)0+(?=[1-9])" # strips all leading zeros
-hyphens_re = r"‐|‑|‒|–|—|―|⁃|－" # non-standard hyphens
 
 # MusicBrainz usually has songs with feat. in the title without it
-# allows multiple words for bare ft. (till the end of title)
 # look i'm not stoked about this regex but it works
 title_feat_re = r"\s?(?:(ft\. \b.+\b)|(\(feat\.?.+\)))" 
-# title_feat_re = r"\s?(?:(ft\. \b\w+\b)|(\(feat\.?.+\)))" # stricter version
+
+yeet_regexes = [
+	leading_zero_re,
+	title_feat_re,
+	r","
+]
+
+hyphens_re = r"‐|‑|‒|–|—|―|⁃|－" # non-standard hyphens
 
 def normalized_compare_regex(in1: str, in2: str, strict = True, debug = False):
 	"""
@@ -61,9 +66,10 @@ def normalized_compare_regex(in1: str, in2: str, strict = True, debug = False):
 	"""
 	expr = [in1.lower().strip(), in2.lower().strip()]
 	for i in range(len(expr)):
-		expr[i] = re.sub(leading_zero_re, "", expr[i]) 
+		for yeet_re in yeet_regexes:
+			expr[i] = re.sub(yeet_re, "", expr[i])
+		expr[i] = expr[i].replace("／", "/")
 		expr[i] = re.sub(hyphens_re, "-", expr[i])
-		expr[i] = re.sub(title_feat_re, "", expr[i])
 		expr[i] = expr[i].strip()
 	
 	if debug:
@@ -142,16 +148,17 @@ class MBSong:
 		artist: str = "",
 		album: str = "",
 		debug = False,
-		cache_lifetime_seconds = 60
+		skip_clean_title = False,
+		cache_lifetime_seconds = 3600
 	):
 		if title == "":
 			raise Exception("title is required")
-		self.title = clean_title(title)
+		self.title = title if skip_clean_title else clean_title(title)
 		self.artist = artist
 		self.album = album
 		self.base = "https://musicbrainz.org/ws/2"
 		self.default_params = { "fmt": "json" }
-		self.req = CachedSession("mbtag", expire_after=cache_lifetime_seconds)
+		self.req = CachedSession("shira", expire_after=cache_lifetime_seconds)
 		self.head = { "User-Agent": f"shiradl+mbtag/{shiraver} ( https://github.com/KraXen72/shira )" }
 
 		self.song_dict = None # MBRecording
@@ -174,11 +181,13 @@ class MBSong:
 		}
 		res = self.req.get(f"{self.base}/recording", params=params, headers=self.head)
 		if self.debug:
-			print(res.url)
+			print(res.url, res.status_code)
 			print("fetch_song query:", params["query"])
 		if res.status_code >= 200 and res.status_code < 300:
 			resjson = json.loads(res.text)
 			self.save_song_dict(resjson["recordings"])
+		else:
+			raise Exception(f"fetch_song: status code {res.status_code}")
 
 	def fetch_artist(self):
 		"""ping mb api to get artist (/artist)"""
@@ -198,7 +207,13 @@ class MBSong:
 		if not self.debug:
 			return
 		print(f"matches: title:{titm}, artist:{artm}, album:{albm}")
-		print(track["title"], [r["title"] for r in track["releases"]])
+		print(
+			track["artist-credit"][0]["artist"]["name"],
+			"-",
+			track["title"], 
+			[r["title"] for r in track["releases"]]
+		)
+		print()
 
 	def save_song_dict(self, tracks: list[MBRecording]):
 		"""find the most similar song"""

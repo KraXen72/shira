@@ -195,6 +195,8 @@ class Dl:
 			else:
 				filename_safe_tags[k] = v
 
+		# pprint(filename_safe_tags)
+
 		final_location_folder = [self.get_sanizated_string(i.format(**filename_safe_tags), True) for i in final_location_folder]
 		final_location_file = [self.get_sanizated_string(i.format(**filename_safe_tags), True) for i in final_location_file[:-1]] + [
 			self.get_sanizated_string(final_location_file[-1].format(**filename_safe_tags), False) + extension

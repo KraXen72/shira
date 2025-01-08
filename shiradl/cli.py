@@ -153,7 +153,7 @@ def cli(
 					tags = smart_metadata(tag_track, temp_path, "JPEG" if dl.cover_format == "jpg" else "PNG", cover_crop)
 					is_single = tags.get("comments") == TIGER_SINGLE
 					if is_single:
-						tags["comments"] = track.get("webpage_url") or track.get("original_url") or track.get("url") or url
+						tags["comments"] = str(track.get("webpage_url") or track.get("original_url") or track.get("url") or url)
 				else:
 					tags = dl.get_tags(ytmusic_watch_playlist, track)
 					is_single = tags["tracktotal"] == 1

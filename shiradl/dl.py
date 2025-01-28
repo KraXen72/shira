@@ -148,7 +148,7 @@ class Dl:
 				break
 			if ytmusic_watch_playlist["lyrics"]:   
 				lyrics_data = self.ytmusic.get_lyrics(ytmusic_watch_playlist["lyrics"])
-				if lyrics_data is not None and lyrics in lyrics_data:
+				if lyrics_data is not None and "lyrics" in lyrics_data:
 					tags["lyrics"] = lyrics_data["lyrics"]
 			
 		self.tags = tags

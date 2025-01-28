@@ -11,10 +11,6 @@ from ytmusicapi import YTMusic
 from .metadata import clean_title, get_year
 from .tagging import MV_SEPARATOR_VISUAL, Tags, get_cover
 
-ITAG_AAC_128 = "140"
-ITAG_AAC_256 = "141"
-ITAG_OPUS_128 = "251"
-
 class Dl:
 	def __init__(
 		self,
@@ -228,7 +224,8 @@ class Dl:
 
 	def fixup(self, temp_location, fixed_location):
 		fixup = [self.ffmpeg_location, "-loglevel", "error", "-i", temp_location]
-		if self.soundcloud is False and self.itag == ITAG_OPUS_128:
+		codec = self.get_audio_codec(temp_location)
+		if codec == "opus":
 			fixup.extend(["-f", "mp4"])
 		subprocess.run([*fixup, "-movflags", "+faststart", "-c", "copy", fixed_location], check=True)	
 
@@ -242,3 +239,19 @@ class Dl:
 
 	def cleanup(self):
 		shutil.rmtree(self.temp_path)
+
+	def get_audio_codec(self, file_path):
+		"""Use ffprobe to extract the audio codec of the given file."""
+		cmd = [
+			"ffprobe",
+			"-v", "error",
+			"-select_streams", "a:0",
+			"-show_entries", "stream=codec_name",
+			"-of", "json",
+			str(file_path)
+		]
+		# Run ffprobe and parse output
+		result = subprocess.run(cmd, capture_output=True, text=True, check=True)
+		codec_info = json.loads(result.stdout)
+		# Extract and return codec name
+		return codec_info["streams"][0]["codec_name"]

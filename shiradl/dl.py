@@ -31,6 +31,7 @@ class Dl:
 		exclude_tags: str | None,
 		truncate: int,
 		dump_json: bool = False,
+		use_playlist_name: bool = False,
 		**kwargs,
 	):
 
@@ -52,6 +53,7 @@ class Dl:
 		self.tags: Tags | None = None 
 		self.soundcloud = False
 		self.default_ydl_opts = {"progress": True, "quiet": True, "no_warnings": True, "fixup": "never"}
+		self.use_playlist_name = use_playlist_name
 
 	def get_ydl_extract_info(self, url) -> dict:
 		ydl_opts: dict[str, str | bool] = {"quiet": True, "no_warnings": True, "extract_flat": True}
@@ -84,6 +86,9 @@ class Dl:
 		if "MPREb_" in ydl_extract_info["webpage_url_basename"]:
 			ydl_extract_info = self.get_ydl_extract_info(ydl_extract_info["url"])
 		if "playlist" in ydl_extract_info["webpage_url_basename"]:
+			if self.use_playlist_name:
+				playlist_name = ydl_extract_info.get("title", "Unknown Playlist")
+				self.final_path = self.final_path / self.get_sanizated_string(playlist_name, True)
 			download_queue.extend(ydl_extract_info["entries"])
 		if "watch" in ydl_extract_info["webpage_url_basename"] or self.soundcloud:
 			download_queue.append(ydl_extract_info)

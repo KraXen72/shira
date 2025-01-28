@@ -65,6 +65,7 @@ def no_config_callback(ctx: click.Context, param: click.Parameter, no_config_fil
 @click.option("--url-txt", "-u", is_flag=True, help="Read URLs as location of text files containing URLs.")
 @click.option("--no-config-file", "-n", is_flag=True, callback=no_config_callback, help="Don't use the config file.")
 @click.option("--single-folder", "-w", is_flag=True, help="Wrap singles in their own folder instead of placing them directly into artist's folder.")
+@click.option("--use-playlist-name", type=bool, is_flag=True, help="Uses the playlist name in the final location when downloading a playlist.")
 @click.version_option(__version__)
 @click.help_option("-h", "--help")
 def cli(
@@ -90,7 +91,8 @@ def cli(
 	print_exceptions: bool,
 	url_txt: bool,
 	no_config_file: bool,
-	single_folder: bool
+	single_folder: bool,
+	use_playlist_name: bool
 ):
 	logger = logging.getLogger(__name__)
 	logger.setLevel(log_level)
@@ -121,7 +123,8 @@ def cli(
 		template_file, 
 		exclude_tags, 
 		truncate, 
-		dump_json=log_level == "DEBUG"
+		dump_json=log_level == "DEBUG",
+		use_playlist_name=use_playlist_name
 	)
 	download_queue = []
 	for i, url in enumerate(urls):

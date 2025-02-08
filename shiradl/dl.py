@@ -11,9 +11,6 @@ from ytmusicapi import YTMusic
 from .metadata import clean_title, get_year
 from .tagging import MV_SEPARATOR_VISUAL, Tags, get_cover
 
-ITAG_AAC_128 = "140"
-ITAG_AAC_256 = "141"
-ITAG_OPUS_128 = "251"
 
 class Dl:
 	def __init__(
@@ -31,6 +28,7 @@ class Dl:
 		exclude_tags: str | None,
 		truncate: int,
 		dump_json: bool = False,
+		use_playlist_name: bool = False,
 		**kwargs,
 	):
 
@@ -52,6 +50,7 @@ class Dl:
 		self.tags: Tags | None = None 
 		self.soundcloud = False
 		self.default_ydl_opts = {"progress": True, "quiet": True, "no_warnings": True, "fixup": "never"}
+		self.use_playlist_name = use_playlist_name
 
 	def get_ydl_extract_info(self, url) -> dict:
 		ydl_opts: dict[str, str | bool] = {"quiet": True, "no_warnings": True, "extract_flat": True}
@@ -77,6 +76,10 @@ class Dl:
 			f.close()
 
 		if "soundcloud" in ydl_extract_info["webpage_url"] :
+			# f = open("info.json", "w", encoding="utf8")
+			# json.dump(ydl_extract_info, f, indent=4, ensure_ascii=False)
+			# f.close()
+			
 			# raise Exception("Not a YouTube URL")
 			if str(self.final_path) == "./YouTube Music":
 				self.final_path = Path("./SoundCloud")
@@ -84,6 +87,9 @@ class Dl:
 		if "MPREb_" in ydl_extract_info["webpage_url_basename"]:
 			ydl_extract_info = self.get_ydl_extract_info(ydl_extract_info["url"])
 		if "playlist" in ydl_extract_info["webpage_url_basename"]:
+			if self.use_playlist_name:
+				playlist_name = ydl_extract_info.get("title", "Unknown Playlist")
+				self.final_path = self.final_path / self.get_sanizated_string(playlist_name, True)
 			download_queue.extend(ydl_extract_info["entries"])
 		if "watch" in ydl_extract_info["webpage_url_basename"] or self.soundcloud:
 			download_queue.append(ydl_extract_info)
@@ -146,11 +152,11 @@ class Dl:
 			if video["id"] == video_id:
 				tags["track"] = i + 1
 				break
-		if ytmusic_watch_playlist["lyrics"]:
-			lyrics = self.ytmusic.get_lyrics(ytmusic_watch_playlist["lyrics"])["lyrics"]
-			if lyrics is not None:
-				tags["lyrics"] = lyrics
-		
+			if ytmusic_watch_playlist["lyrics"]:   
+				lyrics_data = self.ytmusic.get_lyrics(ytmusic_watch_playlist["lyrics"])
+				if lyrics_data is not None and "lyrics" in lyrics_data:
+					tags["lyrics"] = lyrics_data["lyrics"]
+			
 		self.tags = tags
 		return self.tags
 
@@ -195,6 +201,8 @@ class Dl:
 			else:
 				filename_safe_tags[k] = v
 
+		# pprint(filename_safe_tags)
+
 		final_location_folder = [self.get_sanizated_string(i.format(**filename_safe_tags), True) for i in final_location_folder]
 		final_location_file = [self.get_sanizated_string(i.format(**filename_safe_tags), True) for i in final_location_file[:-1]] + [
 			self.get_sanizated_string(final_location_file[-1].format(**filename_safe_tags), False) + extension
@@ -226,7 +234,8 @@ class Dl:
 
 	def fixup(self, temp_location, fixed_location):
 		fixup = [self.ffmpeg_location, "-loglevel", "error", "-i", temp_location]
-		if self.soundcloud is False and self.itag == ITAG_OPUS_128:
+		codec = self.get_audio_codec(temp_location)
+		if codec == "opus":
 			fixup.extend(["-f", "mp4"])
 		subprocess.run([*fixup, "-movflags", "+faststart", "-c", "copy", fixed_location], check=True)	
 
@@ -240,3 +249,20 @@ class Dl:
 
 	def cleanup(self):
 		shutil.rmtree(self.temp_path)
+
+	def get_audio_codec(self, file_path):
+		"""Use ffprobe to extract the audio codec of the given file."""
+		# TODO make sure ffprobe is in path as well? otherwise just allow pre-determined codecs like before this MR
+		cmd = [
+			"ffprobe",
+			"-v", "error",
+			"-select_streams", "a:0",
+			"-show_entries", "stream=codec_name",
+			"-of", "json",
+			str(file_path)
+		]
+		# Run ffprobe and parse output
+		result = subprocess.run(cmd, capture_output=True, text=True, check=True)
+		codec_info = json.loads(result.stdout)
+		# Extract and return codec name
+		return codec_info["streams"][0]["codec_name"]

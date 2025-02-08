@@ -1,7 +1,6 @@
 click
 yt-dlp
 ytmusicapi
-requests
-websocket_server
+requests_cache
 pillow
 mediafile

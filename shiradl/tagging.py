@@ -2,21 +2,22 @@ from __future__ import annotations
 
 import functools
 import os
-from datetime import datetime
 from io import BytesIO
 from pathlib import Path
 from statistics import mean, stdev
 from typing import NotRequired, TypedDict
 
-import requests
+from dateutil import parser
 from mediafile import Image as MFImage
 from mediafile import ImageType, MediaFile
 from PIL import Image, ImageFilter, ImageOps
+from requests_cache import CachedSession
 
 AVG_THRESHOLD = 10
 CHANNEL_THRESHOLD = 15
 MV_SEPARATOR = "/"#" & " # TODO make this configurable
 MV_SEPARATOR_VISUAL = " & "
+req = CachedSession("shira", expire_after=3600)
 
 class Tags(TypedDict):
 	title: str
@@ -44,7 +45,7 @@ def metadata_applier(tags: Tags, fixed_location: Path, exclude_tags: list[str], 
 		if k in exclude_tags or k in ["cover_url", "cover_bytes"]: 
 			continue
 		if k == "date":
-			v = datetime.fromisoformat(str(v)).date()
+			v = parser.isoparse(str(v)).date()
 		if isinstance(v, list):
 			if not fallback_mv or (k not in fallback_mv_keys):
 				setattr(handle, f"{k}s", v) # will not work for all single => multi migrations
@@ -65,7 +66,7 @@ def metadata_applier(tags: Tags, fixed_location: Path, exclude_tags: list[str], 
 
 @functools.lru_cache
 def get_cover(url):
-	return requests.get(url).content
+	return req.get(url).content
 
 def get_cover_local(file_path: Path, id_or_url: str, is_soundcloud: bool):
 	"""
@@ -83,12 +84,17 @@ def get_cover_local(file_path: Path, id_or_url: str, is_soundcloud: bool):
 				return fp.read_bytes()
 	return None
 
-def get_dominant_color(pil_img):
-	img = pil_img.copy()
-	img = img.convert("RGBA")
-	img = img.resize((1, 1), resample=0)
-	dominant_color = img.getpixel((0, 0))
-	return dominant_color
+def get_dominant_color(pil_img: Image.Image) -> tuple[int, int, int, int]:
+	img = pil_img.copy().convert("RGBA")
+	img = img.resize((1, 1), resample=Image.Resampling.NEAREST)
+	
+	pixel = img.getpixel((0, 0))
+
+	# Explicitly ensure the return type is always Tuple[int, int, int, int]
+	if isinstance(pixel, tuple) and len(pixel) == 4:
+		return pixel
+	else:
+		return (0,0,0,255)
 
 def sample_image_corners(rgb_image, width, height, border_offset = 50):
 	sample_colors = []
@@ -109,8 +115,8 @@ def determine_image_crop(image_bytes: bytes):
 	"""
 	samples 4 pixels near the corners and 2 from centers of side slices of the thumbnail (which is first smoothed and reduced to 64 colors)
 
-	returns crop if average of standard deviation of r, g and b color channels 
-	from each sample point is lower than a than a treshold, otherwise returns pad
+	returns 'crop' if average of standard deviation of r, g and b color channels 
+	from each sample point is lower than a than a threshold, otherwise returns 'pad'
 	"""
 	pil_img = Image.open(BytesIO(image_bytes))
 	filt_image = pil_img.filter(ImageFilter.SMOOTH).convert("P", palette=Image.ADAPTIVE, colors=64)
@@ -142,7 +148,7 @@ def determine_image_crop(image_bytes: bytes):
 		return "pad", fill_recc
 
 def get_1x1_cover(url: str, temp_location: Path, uniqueid: str, cover_format = "JPEG", cover_crop_method = "auto"):
-	image_bytes = requests.get(url).content
+	image_bytes = req.get(url).content
 	pil_img = Image.open(BytesIO(image_bytes))
 
 	width, height = pil_img.size

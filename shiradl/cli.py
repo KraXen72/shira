@@ -6,9 +6,11 @@ from pathlib import Path
 
 import click
 
+from mbtag.musicbrainz import musicbrainz_enrich_tags
+
 from . import __version__
 from .dl import Dl
-from .metadata import TIGER_SINGLE, musicbrainz_enrich_tags, smart_metadata
+from .metadata import TIGER_SINGLE, smart_metadata
 from .tagging import get_cover_local, metadata_applier
 
 logging.basicConfig(
@@ -46,7 +48,7 @@ def no_config_callback(ctx: click.Context, param: click.Parameter, no_config_fil
 @click.option("--cookies-location", "-c", type=Path, default=None, help="Location of the cookies file.")
 @click.option("--ffmpeg-location", type=Path, default="ffmpeg", help="Location of the FFmpeg binary.")
 @click.option("--config-location", type=Path, default=Path.home() / ".shiradl" / "config.json", help="Location of the config file.")
-@click.option("--itag", "-i", type=click.Choice(["141", "251", "140"]), default="140", help="Itag (audio quality).")
+@click.option("--itag", "-i", type=str, default="140", help="Itag (audio quality).")
 @click.option("--cover-size", type=click.IntRange(0, 16383), default=1200, help="Size of the cover.")
 @click.option("--cover-format", type=click.Choice(["jpg", "png"]), default="jpg", help="Format of the cover.")
 @click.option("--cover-quality", type=click.IntRange(1, 100), default=94, help="JPEG quality of the cover.")
@@ -63,6 +65,7 @@ def no_config_callback(ctx: click.Context, param: click.Parameter, no_config_fil
 @click.option("--url-txt", "-u", is_flag=True, help="Read URLs as location of text files containing URLs.")
 @click.option("--no-config-file", "-n", is_flag=True, callback=no_config_callback, help="Don't use the config file.")
 @click.option("--single-folder", "-w", is_flag=True, help="Wrap singles in their own folder instead of placing them directly into artist's folder.")
+@click.option("--use-playlist-name", type=bool, is_flag=True, help="Uses the playlist name in the final location when downloading a playlist.")
 @click.version_option(__version__)
 @click.help_option("-h", "--help")
 def cli(
@@ -88,7 +91,8 @@ def cli(
 	print_exceptions: bool,
 	url_txt: bool,
 	no_config_file: bool,
-	single_folder: bool
+	single_folder: bool,
+	use_playlist_name: bool
 ):
 	logger = logging.getLogger(__name__)
 	logger.setLevel(log_level)
@@ -119,7 +123,8 @@ def cli(
 		template_file, 
 		exclude_tags, 
 		truncate, 
-		dump_json=log_level == "DEBUG"
+		dump_json=log_level == "DEBUG",
+		use_playlist_name=use_playlist_name
 	)
 	download_queue = []
 	for i, url in enumerate(urls):
@@ -149,14 +154,15 @@ def cli(
 						tag_track = dl.get_ydl_extract_info(track["url"])
 					logger.debug("Starting Tigerv2")
 					tags = smart_metadata(tag_track, temp_path, "JPEG" if dl.cover_format == "jpg" else "PNG", cover_crop)
-					is_single = tags["comments"] == TIGER_SINGLE
+					is_single = tags.get("comments") == TIGER_SINGLE
 					if is_single:
-						tags["comments"] = track.get("webpage_url") or track.get("original_url") or track.get("url") or url
+						tags["comments"] = str(track.get("webpage_url") or track.get("original_url") or track.get("url") or url)
 				else:
 					tags = dl.get_tags(ytmusic_watch_playlist, track)
 					is_single = tags["tracktotal"] == 1
 				logger.debug("Tags applied, fetching MusicBrainz Database")
 				tags = musicbrainz_enrich_tags(tags, dl.soundcloud, dl.exclude_tags)
+				# pprint(tags)
 				logger.debug("Applied MusicBrainz Tags")
 				if cover_img:
 					local_img_bytes = get_cover_local(cover_img, track["url"] if dl.soundcloud else track["id"], dl.soundcloud)

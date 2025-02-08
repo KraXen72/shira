@@ -48,7 +48,7 @@ def no_config_callback(ctx: click.Context, param: click.Parameter, no_config_fil
 @click.option("--cookies-location", "-c", type=Path, default=None, help="Location of the cookies file.")
 @click.option("--ffmpeg-location", type=Path, default="ffmpeg", help="Location of the FFmpeg binary.")
 @click.option("--config-location", type=Path, default=Path.home() / ".shiradl" / "config.json", help="Location of the config file.")
-@click.option("--itag", "-i", type=click.Choice(["141", "251", "140"]), default="140", help="Itag (audio quality).")
+@click.option("--itag", "-i", type=str, default="140", help="Itag (audio quality).")
 @click.option("--cover-size", type=click.IntRange(0, 16383), default=1200, help="Size of the cover.")
 @click.option("--cover-format", type=click.Choice(["jpg", "png"]), default="jpg", help="Format of the cover.")
 @click.option("--cover-quality", type=click.IntRange(1, 100), default=94, help="JPEG quality of the cover.")

@@ -64,7 +64,7 @@ def red_if_none(val: str | None):
 		return val
 
 
-def process_song(filepath: str, ind: int, total: int, fetch_complete: bool, fetch_partial: bool, dry_run=False, debug=False,):
+def process_song(filepath: str, ind: int, total: int, fetch_complete: bool, fetch_partial: bool, dry_run=False, debug=False):
 	handle = MediaFile(filepath)
 	has_all = has_all_mbid_tags(handle)
 	has_some = no_of_mbid_tags(handle)

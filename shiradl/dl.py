@@ -11,6 +11,7 @@ from ytmusicapi import YTMusic
 from .metadata import clean_title, get_year
 from .tagging import MV_SEPARATOR_VISUAL, Tags, get_cover
 
+
 class Dl:
 	def __init__(
 		self,
@@ -75,6 +76,10 @@ class Dl:
 			f.close()
 
 		if "soundcloud" in ydl_extract_info["webpage_url"] :
+			# f = open("info.json", "w", encoding="utf8")
+			# json.dump(ydl_extract_info, f, indent=4, ensure_ascii=False)
+			# f.close()
+			
 			# raise Exception("Not a YouTube URL")
 			if str(self.final_path) == "./YouTube Music":
 				self.final_path = Path("./SoundCloud")
@@ -247,6 +252,7 @@ class Dl:
 
 	def get_audio_codec(self, file_path):
 		"""Use ffprobe to extract the audio codec of the given file."""
+		# TODO make sure ffprobe is in path as well? otherwise just allow pre-determined codecs like before this MR
 		cmd = [
 			"ffprobe",
 			"-v", "error",

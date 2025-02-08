@@ -2,12 +2,12 @@ from __future__ import annotations
 
 import functools
 import os
-from datetime import datetime
 from io import BytesIO
 from pathlib import Path
 from statistics import mean, stdev
 from typing import NotRequired, TypedDict
 
+from dateutil import parser
 from mediafile import Image as MFImage
 from mediafile import ImageType, MediaFile
 from PIL import Image, ImageFilter, ImageOps
@@ -45,7 +45,7 @@ def metadata_applier(tags: Tags, fixed_location: Path, exclude_tags: list[str], 
 		if k in exclude_tags or k in ["cover_url", "cover_bytes"]: 
 			continue
 		if k == "date":
-			v = datetime.fromisoformat(str(v)).date()
+			v = parser.isoparse(str(v)).date()
 		if isinstance(v, list):
 			if not fallback_mv or (k not in fallback_mv_keys):
 				setattr(handle, f"{k}s", v) # will not work for all single => multi migrations
@@ -84,12 +84,17 @@ def get_cover_local(file_path: Path, id_or_url: str, is_soundcloud: bool):
 				return fp.read_bytes()
 	return None
 
-def get_dominant_color(pil_img):
-	img = pil_img.copy()
-	img = img.convert("RGBA")
-	img = img.resize((1, 1), resample=0)
-	dominant_color = img.getpixel((0, 0))
-	return dominant_color
+def get_dominant_color(pil_img: Image.Image) -> tuple[int, int, int, int]:
+	img = pil_img.copy().convert("RGBA")
+	img = img.resize((1, 1), resample=Image.Resampling.NEAREST)
+	
+	pixel = img.getpixel((0, 0))
+
+	# Explicitly ensure the return type is always Tuple[int, int, int, int]
+	if isinstance(pixel, tuple) and len(pixel) == 4:
+		return pixel
+	else:
+		return (0,0,0,255)
 
 def sample_image_corners(rgb_image, width, height, border_offset = 50):
 	sample_colors = []

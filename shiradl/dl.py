@@ -65,6 +65,7 @@ class Dl:
 	def get_download_queue(self, url):
 		url = url.split("&")[0]
 		download_queue = []
+		
 		ydl_extract_info: dict = self.get_ydl_extract_info(url)
 		
 		if self.dump_json:

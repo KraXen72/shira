@@ -5,3 +5,5 @@ __pycache__
 *.wav
 *.flac
 *.sqlite
+tests/temp/**/*
+tests/downloads/**/*

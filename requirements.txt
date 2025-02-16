@@ -4,3 +4,4 @@ ytmusicapi
 requests_cache
 pillow
 mediafile
+dateutil

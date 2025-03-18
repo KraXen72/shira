@@ -5,3 +5,4 @@ requests_cache
 pillow
 mediafile
 pytest
+dateutil

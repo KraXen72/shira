@@ -13,7 +13,8 @@
   
 On some systems, you might have to use the `python3` or `python3.x` command instead of `python`  
 **Guides**: [Using a cookies file](#setting-a-cookies-file), [Troubleshooting](#troubleshooting)
-  
+
+> [!IMPORTANT]
 > In case shira can't download songs / you're having other issues, as a temporary measure, [try these steps](https://github.com/KraXen72/shira/issues/19#issuecomment-2661907637)
 
 ## Usage Examples

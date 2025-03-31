@@ -1,7 +1,0 @@
-click
-yt-dlp
-ytmusicapi
-requests_cache
-pillow
-mediafile
-python-dateutil

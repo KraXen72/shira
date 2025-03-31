@@ -9,7 +9,8 @@ dependencies = [
 	"ytmusicapi",
 	"mediafile",
 	"pillow",
-	"requests_cache"
+	"requests_cache",
+	"python-dateutil"
 ]
 readme = "README.md"
 dynamic = ["version"]

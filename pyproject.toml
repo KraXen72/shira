@@ -23,3 +23,4 @@ build-backend = "flit_core.buildapi"
 
 [project.scripts]
 shiradl = "shiradl.cli:cli"
+mbtag = "shiradl.mbtag:mbtag_cli"

@@ -10,10 +10,7 @@
 - Have `ffmpeg` installed (See [Installing ffmpeg](#installing-ffmpeg)) and added to PATH, or [specify it with `--ffmpeg-location`](#configuration)/[config](#configuration)
 - `pipx install git+https://github.com/KraXen72/shira`
   
-**Guides**: [Using a cookies file](#setting-a-cookies-file), [Troubleshooting](#troubleshooting)
-
-> [!IMPORTANT]
-> In case shira can't download songs / you're having other issues, as a temporary measure, [try these steps](https://github.com/KraXen72/shira/issues/19#issuecomment-2661907637)
+**Guides**: [Using a cookies file](#setting-a-cookies-file), --> [Troubleshooting](#troubleshooting) <--
 
 ## Usage Examples
 - `shiradl https://music.youtube.com/watch?v=HdX2COsY2Xk` **YouTube Music**
@@ -49,7 +46,7 @@
 <summary>More info about YouTube thumbnail to Album Art algorithm</summary>
 <ol>
 <li>samples 4 pixels near the corners of the thumbnail (which is first smoothed and reduced to 64 colors)</li>
-<li>decides to crop if average of standard deviations of r, g and b color channels from each sample point is lower than a than a treshold</li>
+<li>decides to crop if average of standard deviations of r, g and b color channels from each sample point is lower than a than a threshold</li>
 <li>otherwise pads the image to 1:1 with it's dominant color</li>
 </ol>
 </details>
@@ -118,10 +115,12 @@ Can be either `jpg` or `png`.
 - Pass in a path to a folder, and the script will use the first image matching the track/video id and jpeg/png format
   - You don't have to create covers for all tracks/videos in the playlist/album/etc.
   - SoundCloud will also consider images based on the URL slug instead of id
-  - *for example*: `https://soundcloud.com/yatashi-gang-63564467/lovely-bastards-yatashigang` => `lovely-bastards-yatashigang.jpg` or `.png`
+  - *for example*: `https://soundcloud.com/yatashi-gang-63564467/lovely-bastards-yatashigang` => `lovely-bastards-yatashigang.jpg` / `.png`
 
 ## Troubleshooting
-- `pipx upgrade shiradl --pip-args='--upgrade-strategy=eager'`
+- run `pipx upgrade shiradl --pip-args='--upgrade-strategy=eager'`, as it's likely yt-dlp or something else needs updating
+- In case shira can't download songs / you're having other issues:
+	- as a temporary measure, you can [try these steps](https://github.com/KraXen72/shira/issues/19#issuecomment-2661907637)
 - `python: No module named shiradl` 
   - Make sure you are not already in the `shiradl` directory, e.g. `/shira/shiradl`. if yes, move up one directory with `cd ..` and retry.
 - I really need to run this on `python` 3.8+ and updating to 3.11+ is not an option
@@ -152,7 +151,7 @@ Can be either `jpg` or `png`.
 - Use the [config](#configuration) option `ffmpeg_location` or the cli flag `--ffmpeg-location` to point to the `ffmpeg.exe` file.
 - Keep the `ffplay.exe` and `ffprobe.exe` files in the same directory.
 #### Installing ffmpeg on linux
-- use your distro's package manager to install `ffmpeg`
+- use your distro's package manager to install `ffmpeg` - 
 
 ### Setting a cookies file
 - By setting a cookies file, you can download age restricted tracks, private playlists and songs in 256kbps AAC if you are a premium user.
@@ -160,4 +159,11 @@ Can be either `jpg` or `png`.
 
 ## Contributing
 - Please report any bugs in Issues. Pull requests are welcome!
-- Fork this repo, [Follow installation steps](#Installation), Make changes, Open a pull request
+- To contribute, you'll (likely) need a local installation of shira
+	- Fork this repo
+	- Verify [installation prerequisites](#Installation)
+	- Install dependencies locally with `pip install .` (if you know of a better way, lmk)
+	- Make changes
+	- Open a pull request
+- If you're planning on implementing something big / that changes a lot, it's worth opening an issue about it to discuss it first.
+- Thanks!

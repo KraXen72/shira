@@ -4,8 +4,8 @@ import os
 import click
 from mediafile import MediaFile
 
-from mbtag.musicbrainz import MBSong
-from shiradl.util import TermColors, end_path, pprint, progprint
+from .musicbrainz import MBSong
+from .util import TermColors, end_path, pprint, progprint
 
 # Define supported extensions list using the keys from the TYPES dictionary
 SONG_EXTS = ["mp3", "aac", "alac", "ogg", "opus", "flac", "ape", "wv", "mpc", "asf", "aiff", "dsf", "wav"]

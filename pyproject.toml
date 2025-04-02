@@ -5,11 +5,12 @@ requires-python = ">=3.8"
 authors =  [{ name = "KraXen72" }, { name = "glomatico" }]
 dependencies = [
 	"click",
-	"yt-dlp",
-	"ytmusicapi",
+	"yt-dlp >= 2025.03.27",
+	"ytmusicapi >= 1.10.2",
 	"mediafile",
 	"pillow",
-	"requests_cache"
+	"requests_cache",
+	"python-dateutil"
 ]
 readme = "README.md"
 dynamic = ["version"]
@@ -23,3 +24,4 @@ build-backend = "flit_core.buildapi"
 
 [project.scripts]
 shiradl = "shiradl.cli:cli"
+mbtag = "shiradl.mbtag:mbtag_cli"

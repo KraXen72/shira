@@ -6,7 +6,7 @@ from pathlib import Path
 
 import click
 
-from mbtag.musicbrainz import musicbrainz_enrich_tags
+from .musicbrainz import musicbrainz_enrich_tags
 
 from . import __version__
 from .dl import Dl

@@ -6,24 +6,22 @@
 </p>
 
 ## Installation
-- Have [python](https://www.python.org/downloads/) (**3.11+**) and [git](https://git-scm.com/downloads) installed
+- Have [python](https://www.python.org/downloads/) (**3.11+**) and [pipx](https://pipx.pypa.io/stable/installation/#installing-pipx) installed
 - Have `ffmpeg` installed (See [Installing ffmpeg](#installing-ffmpeg)) and added to PATH, or [specify it with `--ffmpeg-location`](#configuration)/[config](#configuration)
-- `git clone https://github.com/KraXen72/shira`, `cd shira`
-- `pip install -r requirements.txt`
+- `pipx install git+https://github.com/KraXen72/shira`
   
-On some systems, you might have to use the `python3` or `python3.x` command instead of `python`  
 **Guides**: [Using a cookies file](#setting-a-cookies-file), [Troubleshooting](#troubleshooting)
 
 > [!IMPORTANT]
 > In case shira can't download songs / you're having other issues, as a temporary measure, [try these steps](https://github.com/KraXen72/shira/issues/19#issuecomment-2661907637)
 
 ## Usage Examples
-- `python -m shiradl https://music.youtube.com/watch?v=HdX2COsY2Xk` **YouTube Music**
-- `python -m shiradl "https://music.youtube.com/watch?v=8YwKlPH93Ps&list=PLC1og_v3eb4jE0bmdkWtizrSQ4zt86-3D"`
-- `python -m shiradl https://www.youtube.com/watch?v=X0-AvRA7kB0` **YouTube (video)**
-- `python -m shiradl https://soundcloud.com/neffexmusic/fight-back` **SoundCloud**
-- `python -m shiradl https://music.youtube.com/playlist?list=PLC1og_v3eb4jE0bmdkWtizrSQ4zt86-3D` **Album/Playlist**
-- `python -m shiradl -u ./links.txt` **List of links to download**
+- `shiradl https://music.youtube.com/watch?v=HdX2COsY2Xk` **YouTube Music**
+- `shiradl "https://music.youtube.com/watch?v=8YwKlPH93Ps&list=PLC1og_v3eb4jE0bmdkWtizrSQ4zt86-3D"`
+- `shiradl https://www.youtube.com/watch?v=X0-AvRA7kB0` **YouTube (video)**
+- `shiradl https://soundcloud.com/neffexmusic/fight-back` **SoundCloud**
+- `shiradl https://music.youtube.com/playlist?list=PLC1og_v3eb4jE0bmdkWtizrSQ4zt86-3D` **Album/Playlist**
+- `shiradl -u ./links.txt` **List of links to download**
   - [See all cli options/flags](#Configuration)
 
 ## Goals
@@ -123,6 +121,7 @@ Can be either `jpg` or `png`.
   - *for example*: `https://soundcloud.com/yatashi-gang-63564467/lovely-bastards-yatashigang` => `lovely-bastards-yatashigang.jpg` or `.png`
 
 ## Troubleshooting
+- `pipx upgrade shiradl --pip-args='--upgrade-strategy=eager'`
 - `python: No module named shiradl` 
   - Make sure you are not already in the `shiradl` directory, e.g. `/shira/shiradl`. if yes, move up one directory with `cd ..` and retry.
 - I really need to run this on `python` 3.8+ and updating to 3.11+ is not an option

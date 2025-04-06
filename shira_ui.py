@@ -1,11 +1,44 @@
 import sys
-import subprocess
+import os
+import contextlib
 from PyQt6.QtWidgets import (
     QApplication, QWidget, QVBoxLayout, QLabel, QLineEdit,
     QPushButton, QTextEdit, QFileDialog, QComboBox, QCheckBox, QHBoxLayout
 )
 from PyQt6.QtCore import QThread, pyqtSignal
 from PyQt6.QtGui import QIcon
+
+from shiradl.cli import cli as shira_cli
+
+class DummyBuffer:
+    def __init__(self, stream):
+        self.stream = stream
+    def write(self, b):
+        # b is bytes; decode and forward as text
+        text = b.decode(self.stream.encoding, errors='ignore')
+        self.stream.write(text)
+
+class EmittingStream:
+    def __init__(self, emit_func):
+        self.emit_func = emit_func
+        self._buffer = ""
+    @property
+    def encoding(self):
+        return "utf-8"
+    def write(self, text):
+        self._buffer += text
+        while "\n" in self._buffer:
+            line, self._buffer = self._buffer.split("\n", 1)
+            self.emit_func(line)
+    def flush(self):
+        if self._buffer:
+            self.emit_func(self._buffer)
+            self._buffer = ""
+    def isatty(self):
+        return False
+    @property
+    def buffer(self):
+        return DummyBuffer(self)
 
 class DownloadThread(QThread):
     line_output = pyqtSignal(str)
@@ -16,17 +49,14 @@ class DownloadThread(QThread):
 
     def run(self):
         try:
-            process = subprocess.Popen(
-                self.args,
-                stdout=subprocess.PIPE,
-                stderr=subprocess.STDOUT,
-                universal_newlines=True
-            )
-            for line in process.stdout:
-                self.line_output.emit(line.strip())
+            stream = EmittingStream(self.line_output.emit)
+            with contextlib.redirect_stdout(stream):
+                try:
+                    shira_cli(self.args, standalone_mode=False)
+                except SystemExit:
+                    pass
         except Exception as e:
             self.line_output.emit(f"Error: {str(e)}")
-
 
 class ShiraDownloader(QWidget):
     def __init__(self):
@@ -110,8 +140,7 @@ class ShiraDownloader(QWidget):
 
     def start_download(self):
         url = self.url_input.text().strip()
-        platform = self.platform_select.currentText()
-        args = ["python", "-m", "shiradl"]
+        args = []
 
         if url.endswith(".txt"):
             args += ["-u", url]
@@ -119,17 +148,18 @@ class ShiraDownloader(QWidget):
             args.append(url)
 
         if self.cookies_checkbox.isChecked():
-            args += ["--cookies-location", "cookies.txt"]
+            cookies_path = os.path.expanduser("~/.shira/cookies.txt")
+            if os.path.exists(cookies_path):
+                args += ["--cookies-location", cookies_path]
 
         if self.overwrite_checkbox.isChecked():
             args.append("--overwrite")
 
-        self.log_output.append(f"\nRunning: {' '.join(args)}\n")
+        self.log_output.append(f"\nRunning: python -m shiradl {' '.join(args)}\n")
 
         self.thread = DownloadThread(args)
         self.thread.line_output.connect(self.log_output.append)
         self.thread.start()
-
 
 if __name__ == "__main__":
     app = QApplication(sys.argv)

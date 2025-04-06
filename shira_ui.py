@@ -14,7 +14,6 @@ class DummyBuffer:
     def __init__(self, stream):
         self.stream = stream
     def write(self, b):
-        # b is bytes; decode and forward as text
         text = b.decode(self.stream.encoding, errors='ignore')
         self.stream.write(text)
 

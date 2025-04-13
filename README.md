@@ -1,6 +1,6 @@
 # Shira UI
 
-A lightweight PyQt6 interface for [shira](https://github.com/KraXen72/shira) — smart music downloader.
+A lightweight PyQt6 interface for [shira](https://github.com/KraXen72/shira) - music downloader.
 
 ### Features
 - Supports YouTube, YouTube Music, and SoundCloud

@@ -202,7 +202,7 @@ def smart_metadata(info, temp_location: Path, cover_format = "JPEG", cover_crop_
 
 	return md
 
-bracket_tuples =[["[", "]"], ["(", ")"], ["【", "】"], ["「", "」"], ["（", "）"]]
+bracket_tuples =[["[", "]"], ["【", "】"], ["「", "」"], ["（", "）"]]
 title_banned_chars = ["♪"]
 
 # https://stackoverflow.com/a/49986645/13342359

@@ -5,3 +5,5 @@ __pycache__
 *.wav
 *.flac
 *.sqlite
+test.py
+cookies.txt

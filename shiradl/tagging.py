@@ -17,7 +17,7 @@ AVG_THRESHOLD = 10
 CHANNEL_THRESHOLD = 15
 MV_SEPARATOR = "/"#" & " # TODO make this configurable
 MV_SEPARATOR_VISUAL = " & "
-req = CachedSession("shira", expire_after=3600)
+req = CachedSession("shira", expire_after=3600, use_cache_dir=True)
 
 class Tags(TypedDict):
 	title: str

@@ -158,7 +158,7 @@ class MBSong:
 		self.album = album
 		self.base = "https://musicbrainz.org/ws/2"
 		self.default_params = { "fmt": "json" }
-		self.req = CachedSession("shira", expire_after=cache_lifetime_seconds)
+		self.req = CachedSession("shira", expire_after=cache_lifetime_seconds, use_cache_dir=True)
 		self.head = { "User-Agent": f"shiradl+mbtag/{shiraver} ( https://github.com/KraXen72/shira )" }
 
 		self.song_dict = None # MBRecording

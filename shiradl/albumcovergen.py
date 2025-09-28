@@ -153,6 +153,7 @@ def get_unique_filename(filepath):
 def render_svg_to_image(svg_string, output_path, format="jpeg"):
 	"""Render SVG to image file"""
 	try:
+		# todo refactor this out after adding PIL and cairosvg as dependencies
 		import io
 
 		from cairosvg import svg2png

@@ -27,6 +27,7 @@ PATTERNS = {
 			</g>
 		</pattern>
 	""",
+	# credit: https://heropatterns.com
 	"plus": lambda _: """
 		<pattern id="plus" width="60" height="60" patternUnits="userSpaceOnUse">
 			<g fill="none" fill-rule="evenodd">

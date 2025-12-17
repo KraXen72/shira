@@ -1,7 +1,7 @@
 [project]
 name = "shiradl"
 description = "Download music from YouTube, YouTube Music and Soundcloud, with great metadata and little effort."
-requires-python = ">=3.8"
+requires-python = ">=3.12"
 authors =  [{ name = "KraXen72" }, { name = "glomatico" }]
 dependencies = [
 	"click",

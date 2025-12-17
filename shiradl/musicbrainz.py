@@ -183,7 +183,7 @@ class MBSong:
 		if self.debug:
 			print(res.url, res.status_code)
 			print("fetch_song query:", params["query"])
-		if res.status_code >= 200 and res.status_code < 300:
+		if res.status_code and res.status_code >= 200 and res.status_code < 300:
 			resjson = json.loads(res.text)
 			self.save_song_dict(resjson["recordings"])
 		else:
@@ -199,7 +199,7 @@ class MBSong:
 		if self.debug:
 			print(res.url)
 			print("fetch_artist query:", params["query"])
-		if res.status_code >= 200 and res.status_code < 300:
+		if res.status_code and res.status_code >= 200 and res.status_code < 300:
 			resjson = json.loads(res.text)
 			self.save_artist_dict(resjson["artists"])
 

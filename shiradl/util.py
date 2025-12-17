@@ -31,7 +31,7 @@ def pprint(val, no_null = False):
 			decoded = ""
 			try: 
 				decoded = v.decode("utf-8")
-			except:
+			except UnicodeDecodeError:
 				decoded = "<non-utf8 bytes>"
 			d[k] = decoded
 		elif isinstance(v, datetime.date):
@@ -45,7 +45,7 @@ def pprint(val, no_null = False):
 			try:
 				json.dumps(v)
 				d[k] = v
-			except:
+			except TypeError:
 				d[k] = f"{str(type(v))} is/contains non-serializable"
 	print(json.dumps(d, indent=2))
 

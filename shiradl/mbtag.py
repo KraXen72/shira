@@ -2,7 +2,7 @@ import json
 import os
 
 import click
-from mediafile import MediaFile
+from mediafile import MediaFile, FileTypeError
 
 from .musicbrainz import MBSong
 from .util import TermColors, end_path, pprint, progprint
@@ -19,7 +19,7 @@ def is_supported_song_file(filename):
 	try:
 		MediaFile(filename)
 		return True
-	except:
+	except FileTypeError:
 		return False
 
 

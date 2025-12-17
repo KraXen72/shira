@@ -119,7 +119,7 @@ def determine_image_crop(image_bytes: bytes):
 	from each sample point is lower than a than a threshold, otherwise returns 'pad'
 	"""
 	pil_img = Image.open(BytesIO(image_bytes))
-	filt_image = pil_img.filter(ImageFilter.SMOOTH).convert("P", palette=Image.ADAPTIVE, colors=64)
+	filt_image = pil_img.filter(ImageFilter.SMOOTH).convert("P", palette=Image.Palette.ADAPTIVE, colors=64)
 	rgb_filt_image = filt_image.convert("RGB")
 	
 	width, height = rgb_filt_image.size

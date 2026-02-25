@@ -7,3 +7,4 @@ __pycache__
 *.flac
 *.sqlite
 !test_config.json
+repomix-output*

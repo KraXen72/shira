@@ -16,7 +16,7 @@ _output_line_count = [0]
 
 def _print_invoke_output(text: str) -> None:
 	if not text:
-		return
+		return	
 	if not text.endswith("\n"):
 		text += "\n"
 	sys.stdout.write(text)

@@ -5,7 +5,7 @@ requires-python = ">=3.12"
 authors = [{ name = "KraXen72" }, { name = "glomatico" }]
 dependencies = [
 	"click",
-	"yt-dlp >= 2025.03.27",
+	"yt-dlp >= 2026.02.21",
 	"ytmusicapi >= 1.10.2",
 	"mediafile",
 	"pillow",
@@ -44,5 +44,5 @@ markers = [
 ]
 
 [tool.taskipy.tasks]
-"test:meta" = "pytest tests/metadata.test.py -v"
-"test:dl" = "pytest tests/download.test.py -v"
+"test:meta" = "pytest tests/metadata.test.py -v -x"
+"test:dl" = "pytest tests/download.test.py -v -x"

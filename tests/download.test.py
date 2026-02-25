@@ -42,4 +42,4 @@ def test_download(url, label):
 	files = audio_files(final_path)
 	assert len(files) > 0, "No audio file written"
 	for f in files:
-		assert f.stat().st_size > 50_000, f"Suspiciously small: {f.name}"
+		assert f.stat().st_size > 1_048_576, f"Suspiciously small: {f.name}"

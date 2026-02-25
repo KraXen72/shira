@@ -22,6 +22,10 @@ optional-dependencies.dev = [
 readme = "README.md"
 dynamic = ["version"]
 
+[project.scripts]
+shiradl = "shiradl.cli:cli"
+mbtag = "shiradl.mbtag:mbtag_cli"
+
 [project.urls]
 repository = "https://github.com/KraXen72/shira"
 
@@ -29,11 +33,10 @@ repository = "https://github.com/KraXen72/shira"
 requires = ["flit_core"]
 build-backend = "flit_core.buildapi"
 
-[project.scripts]
-shiradl = "shiradl.cli:cli"
-mbtag = "shiradl.mbtag:mbtag_cli"
 [tool.pytest.ini_options]
 python_files = ["*.test.py", "test_*.py"]
+testpaths = ["tests"]
+pythonpath = ["tests"]
 addopts = "--import-mode=importlib"
 markers = [
 	"integration: tests requiring network access",
@@ -41,5 +44,5 @@ markers = [
 ]
 
 [tool.taskipy.tasks]
-test = "pytest -m 'integration and not download' -v"
-"test:dl" = "pytest -m download -v"
+test = "pytest tests/integration.test.py -v"
+"test:dl" = "pytest tests/download.test.py -v"

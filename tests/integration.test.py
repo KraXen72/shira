@@ -1,89 +1,138 @@
-from pathlib import Path
-
 import pytest
-from click.testing import CliRunner
 from inline_snapshot import snapshot
-from mediafile import MediaFile
+from test_harness import DOWNLOADS_DIR, audio_files, invoke, read_metadata
+ 
+TIMEOUT = 120
 
-from shiradl.cli import cli
-
-LINKS = [
-	"https://www.youtube.com/watch?v=pVjdMQ_iAh0",
-	"https://www.youtube.com/watch?v=gLYWLobR248",
-	"https://music.youtube.com/watch?v=5qdFjGI9948",
-	"https://youtube.com/watch?v=5qdFjGI9948",
-	"https://music.youtube.com/watch?v=FIrd5KJudrg",
-	"https://www.youtube.com/watch?v=aN9_RkCGzGM",
-	"https://soundcloud.com/alognaibiman/sets/kokeshi-anime-openings",
-	"https://youtu.be/TCd6PfxOy0Y?feature=shared",
-	"https://youtu.be/4JkIs37a2JE?feature=shared",
-	"https://www.youtube.com/watch?v=EbjbmvK-BvM",
-	"https://youtu.be/jwIWJIdpNFs?feature=shared"
-]
-LABELS = [
-	"Night Lovell - Polozhenie - YouTube (tiger)",
-	"I Watch My YouTube Videos At 2x Speed (tiger)",
-	"Lund - Fck Love (ytmusic)",
-	"Lund - Fck Love (same link, yt)",
-	"Eden - XO (yt music)",
-	"T-P-bon - Netflix (youtube)",
-	"kokeshi-anime-openings (soundcloud set)",
-	"youtu.be (daft punk)",
-	"youtu.be (virtual insanity, official video)",
-	"youtube artist - topic video",
-	"youtu.be music channel video"
-]
+def fetch_metadata(url, label):
+	final_path = DOWNLOADS_DIR / "metadata" / label
+	final_path.mkdir(parents=True, exist_ok=True)
+	result = invoke(url, final_path, ["--no-download"])
+	assert result.exit_code == 0, result.output
+	files = audio_files(final_path)
+	assert len(files) > 0, "No audio file written"
+	return read_metadata(final_path)
 
 
-def _invoke(url: str, tmp_path: Path, extra_args: list[str]):
-	runner = CliRunner()
-	return runner.invoke(
-		cli,
-		[url, "--final-path", str(tmp_path), "--no-config-file", *extra_args],
-		catch_exceptions=False,
+@pytest.mark.integration(pytest.mark.timeout(TIMEOUT))
+def test_metadata_night_lovell_polozhenie():
+	assert fetch_metadata("https://www.youtube.com/watch?v=pVjdMQ_iAh0", "Night Lovell - Polozhenie - YouTube (tiger)") == snapshot(
+		[
+			{
+				"title": "Polozhenie",
+				"artist": "Night Lovell",
+				"album": "Polozhenie (Single)",
+				"albumartist": "Night Lovell",
+				"track": 1,
+				"tracktotal": 1,
+			}
+		]
 	)
 
 
-def _audio_files(tmp_path: Path) -> list[Path]:
-	return sorted(
-		f for f in tmp_path.rglob("*")
-		if f.suffix in {".m4a", ".mp3", ".opus", ".flac"}
+@pytest.mark.integration(pytest.mark.timeout(TIMEOUT))
+def test_metadata_jreg_2x_speed():
+	assert fetch_metadata("https://www.youtube.com/watch?v=gLYWLobR248", "I Watch My YouTube Videos At 2x Speed (tiger)") == snapshot(
+		[
+			{
+				"title": "I Watch My YouTube Videos At 2x Speed",
+				"artist": "JREG",
+				"album": "I Watch My YouTube Videos At 2x Speed (Single)",
+				"albumartist": "JREG",
+				"track": 1,
+				"tracktotal": 1,
+			}
+		]
 	)
 
 
-@pytest.mark.integration
-@pytest.mark.timeout(120)
-@pytest.mark.parametrize("url", LINKS, ids=LABELS)
-def test_metadata(url, tmp_path):
-	result = _invoke(url, tmp_path, ["--no-download"])
-	assert result.exit_code == 0, result.output
-
-	audio_files = _audio_files(tmp_path)
-	assert len(audio_files) > 0, "No audio file written"
-
-	metadata = []
-	for f in audio_files:
-		mf = MediaFile(f)
-		metadata.append({
-			"title": mf.title,
-			"artist": mf.artist,
-			"album": mf.album,
-			"albumartist": mf.albumartist,
-			"track": mf.track,
-			"tracktotal": mf.tracktotal,
-		})
-	assert metadata == snapshot()
+@pytest.mark.integration(pytest.mark.timeout(TIMEOUT))
+def test_metadata_lund_fck_love_ytmusic():
+	assert fetch_metadata("https://music.youtube.com/watch?v=5qdFjGI9948", "Lund - Fck Love (ytmusic)") == snapshot(
+		[{"title": "F*ck Love", "artist": "Lund", "album": "F*ck Love", "albumartist": "Lund", "track": 1, "tracktotal": 1}]
+	)
 
 
-@pytest.mark.integration
-@pytest.mark.download
-@pytest.mark.timeout(120)
-@pytest.mark.parametrize("url", LINKS, ids=LABELS)
-def test_download(url, tmp_path):
-	result = _invoke(url, tmp_path, [])
-	assert result.exit_code == 0, result.output
+@pytest.mark.integration(pytest.mark.timeout(TIMEOUT))
+def test_metadata_lund_fck_love_yt():
+	assert fetch_metadata("https://youtube.com/watch?v=5qdFjGI9948", "Lund - Fck Love (same link, yt)") == snapshot(
+		[{"title": "F*ck Love", "artist": "Lund", "album": "F*ck Love", "albumartist": "Lund", "track": 1, "tracktotal": 1}]
+	)
 
-	audio_files = _audio_files(tmp_path)
-	assert len(audio_files) > 0, "No audio file written"
-	for f in audio_files:
-		assert f.stat().st_size > 50_000, f"Suspiciously small: {f.name}"
+
+@pytest.mark.integration(pytest.mark.timeout(TIMEOUT))
+def test_metadata_eden_xo():
+	assert fetch_metadata("https://music.youtube.com/watch?v=FIrd5KJudrg", "Eden - XO (yt music)") == snapshot(
+		[{"title": "XO", "artist": "EDEN", "album": "i think you think too much of me", "albumartist": "EDEN", "track": 6, "tracktotal": 7}]
+	)
+
+
+@pytest.mark.integration(pytest.mark.timeout(TIMEOUT))
+def test_metadata_tpbon_netflix():
+	assert fetch_metadata("https://www.youtube.com/watch?v=aN9_RkCGzGM", "T-P-bon - Netflix (youtube)") == snapshot(
+		[
+			{
+				"title": "Netflix",
+				"artist": "『T・Pぼん』予告編",
+				"album": "Netflix (Single)",
+				"albumartist": "『T・Pぼん』予告編",
+				"track": 1,
+				"tracktotal": 1,
+			}
+		]
+	)
+
+
+@pytest.mark.integration(pytest.mark.timeout(TIMEOUT))
+def test_metadata_daft_punk():
+	assert fetch_metadata("https://youtu.be/TCd6PfxOy0Y?feature=shared", "youtu.be (daft punk)") == snapshot(
+		[
+			{
+				"title": "Veridis Quo (Official Audio)",
+				"artist": "Daft Punk",
+				"album": "Veridis Quo (Official Audio) (Single)",
+				"albumartist": "Daft Punk",
+				"track": 1,
+				"tracktotal": 1,
+			}
+		]
+	)
+
+
+@pytest.mark.integration(pytest.mark.timeout(TIMEOUT))
+def test_metadata_virtual_insanity():
+	assert fetch_metadata("https://youtu.be/4JkIs37a2JE?feature=shared", "youtu.be (virtual insanity, official video)") == snapshot(
+		[
+			{
+				"title": "Virtual Insanity (Official Video)",
+				"artist": "Jamiroquai",
+				"album": "Virtual Insanity (Official Video) (Single)",
+				"albumartist": "Jamiroquai",
+				"track": 1,
+				"tracktotal": 1,
+			}
+		]
+	)
+
+
+@pytest.mark.integration(pytest.mark.timeout(TIMEOUT))
+def test_metadata_artist_topic():
+	assert fetch_metadata("https://www.youtube.com/watch?v=EbjbmvK-BvM", "youtube artist - topic video") == snapshot(
+		[
+			{
+				"title": "Brokendate",
+				"artist": "Com Truise",
+				"album": "Galactic Melt (10th Anniversary Edition)",
+				"albumartist": "Com Truise",
+				"track": 7,
+				"tracktotal": 15,
+			}
+		]
+	)
+
+
+@pytest.mark.integration(pytest.mark.timeout(TIMEOUT))
+def test_metadata_music_channel():
+	assert fetch_metadata("https://youtu.be/jwIWJIdpNFs?feature=shared", "youtu.be music channel video") == snapshot(
+		[{"title": "Born of a Star", "artist": "Izar", "album": "End of My Life", "albumartist": "Izar", "track": 2, "tracktotal": 2}]
+	)

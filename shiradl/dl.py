@@ -212,6 +212,7 @@ class Dl:
 
 	def stub_download(self, temp_location: Path):
 		"""Create a minimal silent audio stub for metadata-only testing."""
+		temp_location.parent.mkdir(parents=True, exist_ok=True)
 		codec = "libmp3lame" if self.soundcloud else "aac"
 		subprocess.run(
 			[

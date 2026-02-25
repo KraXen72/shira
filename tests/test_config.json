@@ -1,0 +1,22 @@
+{
+	"final_path": "./tests/downloads",
+	"temp_path": "./tests/temp",
+	"cookies_location": null,
+	"ffmpeg_location": "ffmpeg",
+	"itag": "140",
+	"cover_size": 1200,
+	"cover_format": "jpg",
+	"cover_quality": 94,
+	"template_folder": "{albumartist}/{album}",
+	"template_file": "{track:02d} {title}",
+	"exclude_tags": null,
+	"truncate": 60,
+	"log_level": "INFO",
+	"save_cover": false,
+	"overwrite": false,
+	"print_exceptions": true,
+	"url_txt": false,
+	"no_config_file": false,
+	"single_folder": false,
+	"use_playlist_name": false
+  }

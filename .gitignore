@@ -2,6 +2,8 @@ __pycache__
 *.json
 *.opus
 *.mp3
+*.m4a
 *.wav
 *.flac
 *.sqlite
+!test_config.json

@@ -323,7 +323,11 @@ def musicbrainz_enrich_tags(tags: Tags, skip_encode = False, exclude_tags: list[
 	"""takes in a tags dict, adds mbid tags and (by default) also other mb info, returns it"""
 
 	mb = MBSong(title=tags["title"], artist=str(tags["artist"]), album=tags["album"])
-	mb.fetch_song()
+	try:
+		mb.fetch_song()
+	except:
+		print("coundn't fetch tags from musicbrainz, skipping...")
+		return tags
 
 	if use_mbid_data:
 		if mb.artist_dict:

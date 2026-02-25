@@ -97,7 +97,10 @@ def process_song(filepath: str, ind: int, total: int, fetch_complete: bool, fetc
 		skip_clean_title=True, # this is only useful for youtube songs with messed up titles
 		debug=debug
 	)
-	mb.fetch_song()
+	try:
+		mb.fetch_song()
+	except:
+		print("coundn't fetch tags from musicbrainz, skipping...")
 
 	if debug:
 		pprint(mb.get_mbid_tags())

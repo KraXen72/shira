@@ -2,7 +2,7 @@ import json
 import os
 
 import click
-from mediafile import MediaFile, FileTypeError
+from mediafile import FileTypeError, MediaFile
 
 from .musicbrainz import MBSong
 from .util import TermColors, end_path, pprint, progprint

@@ -1,6 +1,6 @@
 """Shared test infrastructure for shira integration tests."""
 
-import shutil
+import sys
 from pathlib import Path
 
 from click.testing import CliRunner
@@ -12,20 +12,30 @@ TESTS_DIR = Path(__file__).parent
 CONFIG_FILE = TESTS_DIR / "test_config.json"
 DOWNLOADS_DIR = TESTS_DIR / "downloads"
 
-# Clear downloads dir once at import time (before any tests run)
-if DOWNLOADS_DIR.exists():
-	shutil.rmtree(DOWNLOADS_DIR)
-DOWNLOADS_DIR.mkdir(parents=True, exist_ok=True)
+# Tracks lines printed to stdout during the current test for ANSI clearing.
+_output_line_count = [0]
+
+
+def _print_invoke_output(text: str) -> None:
+	if not text:
+		return
+	if not text.endswith("\n"):
+		text += "\n"
+	sys.stdout.write(text)
+	sys.stdout.flush()
+	_output_line_count[0] += text.count("\n")
 
 
 def invoke(url: str, final_path: Path, extra_args: list[str] | None = None):
 	"""Invoke the shira CLI using the shared test config, with final_path overridden."""
 	runner = CliRunner()
-	return runner.invoke(
+	result = runner.invoke(
 		cli,
 		[url, "--config-location", str(CONFIG_FILE), "--final-path", str(final_path), *(extra_args or [])],
 		catch_exceptions=False,
 	)
+	_print_invoke_output(result.output)
+	return result
 
 
 def audio_files(path: Path) -> list[Path]:

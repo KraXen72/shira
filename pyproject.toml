@@ -37,12 +37,8 @@ build-backend = "flit_core.buildapi"
 python_files = ["*.test.py", "test_*.py"]
 testpaths = ["tests"]
 pythonpath = ["tests"]
-addopts = "--import-mode=importlib"
-markers = [
-	"integration: tests requiring network access",
-	"download: tests that perform actual file downloads (subset of integration)",
-]
+addopts = "--import-mode=importlib -s"
 
 [tool.taskipy.tasks]
-test = "pytest tests/integration.test.py -v"
+"test:meta" = "pytest tests/metadata.test.py -v"
 "test:dl" = "pytest tests/download.test.py -v"

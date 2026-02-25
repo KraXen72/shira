@@ -2,7 +2,7 @@
 name = "shiradl"
 description = "Download music from YouTube, YouTube Music and Soundcloud, with great metadata and little effort."
 requires-python = ">=3.12"
-authors =  [{ name = "KraXen72" }, { name = "glomatico" }]
+authors = [{ name = "KraXen72" }, { name = "glomatico" }]
 dependencies = [
 	"click",
 	"yt-dlp >= 2025.03.27",
@@ -10,8 +10,15 @@ dependencies = [
 	"mediafile",
 	"pillow",
 	"requests_cache",
-	"python-dateutil"
+	"python-dateutil",
 ]
+optional-dependencies.dev = [
+	"pytest",
+	"pytest-timeout",
+	"inline-snapshot",
+	"taskipy",
+]
+
 readme = "README.md"
 dynamic = ["version"]
 
@@ -25,3 +32,14 @@ build-backend = "flit_core.buildapi"
 [project.scripts]
 shiradl = "shiradl.cli:cli"
 mbtag = "shiradl.mbtag:mbtag_cli"
+[tool.pytest.ini_options]
+python_files = ["*.test.py", "test_*.py"]
+addopts = "--import-mode=importlib"
+markers = [
+	"integration: tests requiring network access",
+	"download: tests that perform actual file downloads (subset of integration)",
+]
+
+[tool.taskipy.tasks]
+test = "pytest -m 'integration and not download' -v"
+"test:dl" = "pytest -m download -v"

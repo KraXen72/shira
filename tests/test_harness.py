@@ -1,5 +1,3 @@
-"""Shared test infrastructure for shira integration tests."""
-
 import sys
 from pathlib import Path
 

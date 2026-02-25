@@ -28,7 +28,6 @@ LABELS = [
 	"youtu.be music channel video",
 ]
 
-@pytest.mark.integration
 @pytest.mark.download
 @pytest.mark.timeout(120)
 @pytest.mark.parametrize("url,label", zip(LINKS, LABELS), ids=LABELS)

@@ -175,6 +175,3 @@ Can be either `jpg` or `png`.
   - **Full download tests:** `task test:dl`: preforms real downloads as well as checking metadata
   - To record or refresh inline snapshots run: `task test:meta -- --inline-snapshot=review`
   - You can append additional pytest args after `--` when using the `task` helpers.
-- You can also run pytest directly:
-  - `pytest -m 'integration and not download' -v`
-  - `pytest -m download -v`

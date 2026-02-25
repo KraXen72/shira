@@ -14,7 +14,7 @@ def fetch_metadata(url, label):
 	return read_metadata(final_path)
 
 
-@pytest.mark.integration(pytest.mark.timeout(TIMEOUT))
+@pytest.mark.metadata(pytest.mark.timeout(TIMEOUT))
 def test_metadata_night_lovell_polozhenie():
 	assert fetch_metadata("https://www.youtube.com/watch?v=pVjdMQ_iAh0", "Night Lovell - Polozhenie - YouTube (tiger)") == snapshot(
 		[
@@ -30,7 +30,7 @@ def test_metadata_night_lovell_polozhenie():
 	)
 
 
-@pytest.mark.integration(pytest.mark.timeout(TIMEOUT))
+@pytest.mark.metadata(pytest.mark.timeout(TIMEOUT))
 def test_metadata_jreg_2x_speed():
 	assert fetch_metadata("https://www.youtube.com/watch?v=gLYWLobR248", "I Watch My YouTube Videos At 2x Speed (tiger)") == snapshot(
 		[
@@ -46,28 +46,28 @@ def test_metadata_jreg_2x_speed():
 	)
 
 
-@pytest.mark.integration(pytest.mark.timeout(TIMEOUT))
+@pytest.mark.metadata(pytest.mark.timeout(TIMEOUT))
 def test_metadata_lund_fck_love_ytmusic():
 	assert fetch_metadata("https://music.youtube.com/watch?v=5qdFjGI9948", "Lund - Fck Love (ytmusic)") == snapshot(
 		[{"title": "F*ck Love", "artist": "Lund", "album": "F*ck Love", "albumartist": "Lund", "track": 1, "tracktotal": 1}]
 	)
 
 
-@pytest.mark.integration(pytest.mark.timeout(TIMEOUT))
+@pytest.mark.metadata(pytest.mark.timeout(TIMEOUT))
 def test_metadata_lund_fck_love_yt():
 	assert fetch_metadata("https://youtube.com/watch?v=5qdFjGI9948", "Lund - Fck Love (same link, yt)") == snapshot(
 		[{"title": "F*ck Love", "artist": "Lund", "album": "F*ck Love", "albumartist": "Lund", "track": 1, "tracktotal": 1}]
 	)
 
 
-@pytest.mark.integration(pytest.mark.timeout(TIMEOUT))
+@pytest.mark.metadata(pytest.mark.timeout(TIMEOUT))
 def test_metadata_eden_xo():
 	assert fetch_metadata("https://music.youtube.com/watch?v=FIrd5KJudrg", "Eden - XO (yt music)") == snapshot(
 		[{"title": "XO", "artist": "EDEN", "album": "i think you think too much of me", "albumartist": "EDEN", "track": 6, "tracktotal": 7}]
 	)
 
 
-@pytest.mark.integration(pytest.mark.timeout(TIMEOUT))
+@pytest.mark.metadata(pytest.mark.timeout(TIMEOUT))
 def test_metadata_tpbon_netflix():
 	assert fetch_metadata("https://www.youtube.com/watch?v=aN9_RkCGzGM", "T-P-bon - Netflix (youtube)") == snapshot(
 		[
@@ -83,7 +83,7 @@ def test_metadata_tpbon_netflix():
 	)
 
 
-@pytest.mark.integration(pytest.mark.timeout(TIMEOUT))
+@pytest.mark.metadata(pytest.mark.timeout(TIMEOUT))
 def test_metadata_daft_punk():
 	assert fetch_metadata("https://youtu.be/TCd6PfxOy0Y?feature=shared", "youtu.be (daft punk)") == snapshot(
 		[
@@ -99,7 +99,7 @@ def test_metadata_daft_punk():
 	)
 
 
-@pytest.mark.integration(pytest.mark.timeout(TIMEOUT))
+@pytest.mark.metadata(pytest.mark.timeout(TIMEOUT))
 def test_metadata_virtual_insanity():
 	assert fetch_metadata("https://youtu.be/4JkIs37a2JE?feature=shared", "youtu.be (virtual insanity, official video)") == snapshot(
 		[
@@ -115,7 +115,7 @@ def test_metadata_virtual_insanity():
 	)
 
 
-@pytest.mark.integration(pytest.mark.timeout(TIMEOUT))
+@pytest.mark.metadata(pytest.mark.timeout(TIMEOUT))
 def test_metadata_artist_topic():
 	assert fetch_metadata("https://www.youtube.com/watch?v=EbjbmvK-BvM", "youtube artist - topic video") == snapshot(
 		[
@@ -131,7 +131,7 @@ def test_metadata_artist_topic():
 	)
 
 
-@pytest.mark.integration(pytest.mark.timeout(TIMEOUT))
+@pytest.mark.metadata(pytest.mark.timeout(TIMEOUT))
 def test_metadata_music_channel():
 	assert fetch_metadata("https://youtu.be/jwIWJIdpNFs?feature=shared", "youtu.be music channel video") == snapshot(
 		[{"title": "Born of a Star", "artist": "Izar", "album": "End of My Life", "albumartist": "Izar", "track": 2, "tracktotal": 2}]

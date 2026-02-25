@@ -65,6 +65,7 @@ def no_config_callback(ctx: click.Context, param: click.Parameter, no_config_fil
 @click.option("--no-config-file", "-n", is_flag=True, callback=no_config_callback, help="Don't use the config file.")
 @click.option("--single-folder", "-w", is_flag=True, help="Wrap singles in their own folder instead of placing them directly into artist's folder.")
 @click.option("--use-playlist-name", type=bool, is_flag=True, help="Uses the playlist name in the final location when downloading a playlist.")
+@click.option("--no-download", is_flag=True, help="Skip actual download; write a silent stub file for metadata-only testing.")
 @click.version_option(__version__)
 @click.help_option("-h", "--help")
 def cli(
@@ -91,7 +92,8 @@ def cli(
 	url_txt: bool,
 	no_config_file: bool,
 	single_folder: bool,
-	use_playlist_name: bool
+	use_playlist_name: bool,
+	no_download: bool,
 ):
 	logger = logging.getLogger(__name__)
 	logger.setLevel(log_level)
@@ -173,7 +175,9 @@ def cli(
 				temp_location = dl.get_temp_location(track["id"])	
 				if not final_location.exists() or overwrite:
 					logger.debug(f'Downloading to "{temp_location}"')
-					if dl.soundcloud is False:
+					if no_download:
+						dl.stub_download(temp_location)
+					elif dl.soundcloud is False:
 						dl.download(track["id"], temp_location)
 					else:
 						dl.download_souncloud(track.get("original_url") or track["webpage_url"], temp_location)

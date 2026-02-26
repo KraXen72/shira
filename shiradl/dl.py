@@ -1,4 +1,3 @@
-import functools
 import json
 import re
 import shutil
@@ -115,8 +114,7 @@ class Dl:
 
 	def search_track(self, title):
 		return self.ytmusic.search(title, "songs")[0]["videoId"]
-
-	@functools.lru_cache
+		
 	def get_ytmusic_album(self, browse_id):
 		return self.ytmusic.get_album(browse_id)
 
@@ -211,6 +209,19 @@ class Dl:
 
 	def get_cover_location(self, final_location):
 		return final_location.parent / f"Cover.{self.cover_format}"
+
+	def stub_download(self, temp_location: Path):
+		"""Create a minimal silent audio stub for metadata-only testing."""
+		temp_location.parent.mkdir(parents=True, exist_ok=True)
+		codec = "libmp3lame" if self.soundcloud else "aac"
+		subprocess.run(
+			[
+				str(self.ffmpeg_location), "-loglevel", "error",
+				"-f", "lavfi", "-i", "anullsrc=r=44100:cl=mono",
+				"-t", "0.1", "-c:a", codec, str(temp_location),
+			],
+			check=True,
+		)
 
 	def download(self, video_id, temp_location):
 		ydl_opts = {**self.default_ydl_opts, "format": self.itag, "outtmpl": str(temp_location)}

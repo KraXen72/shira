@@ -162,8 +162,17 @@ Can be either `jpg` or `png`.
 - To contribute, you'll (likely) need a local installation of shira
 	- Fork this repo
 	- Verify [installation prerequisites](#Installation)
-	- Install dependencies locally with `pip install .` (if you know of a better way, lmk)
+	- Install dependencies locally with `pip install -e .[dev]`
 	- Make changes
 	- Open a pull request
 - If you're planning on implementing something big / that changes a lot, it's worth opening an issue about it to discuss it first.
 - Thanks!
+
+### Running tests
+- **Install dev dependencies:** `pip install -e .[dev]`
+- There are different types of tests
+  - **Metadata-only** `task test:meta`: has shira grab some files, but skips downloading and only verifies metadata
+  - **Full download tests:** `task test:dl`: preforms real downloads as well as checking metadata
+  - To record or refresh inline snapshots run: `task test:meta -- --inline-snapshot=review`
+
+  - You can append additional pytest args after `--` when using the `task` helpers.

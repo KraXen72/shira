@@ -2,18 +2,29 @@
 name = "shiradl"
 description = "Download music from YouTube, YouTube Music and Soundcloud, with great metadata and little effort."
 requires-python = ">=3.12"
-authors =  [{ name = "KraXen72" }, { name = "glomatico" }]
+authors = [{ name = "KraXen72" }, { name = "glomatico" }]
 dependencies = [
 	"click",
-	"yt-dlp >= 2025.03.27",
+	"yt-dlp >= 2026.02.21",
 	"ytmusicapi >= 1.10.2",
 	"mediafile",
 	"pillow",
 	"requests_cache",
-	"python-dateutil"
+	"python-dateutil",
 ]
+optional-dependencies.dev = [
+	"pytest",
+	"pytest-timeout",
+	"inline-snapshot",
+	"taskipy",
+]
+
 readme = "README.md"
 dynamic = ["version"]
+
+[project.scripts]
+shiradl = "shiradl.cli:cli"
+mbtag = "shiradl.mbtag:mbtag_cli"
 
 [project.urls]
 repository = "https://github.com/KraXen72/shira"
@@ -22,6 +33,16 @@ repository = "https://github.com/KraXen72/shira"
 requires = ["flit_core"]
 build-backend = "flit_core.buildapi"
 
-[project.scripts]
-shiradl = "shiradl.cli:cli"
-mbtag = "shiradl.mbtag:mbtag_cli"
+[tool.pytest.ini_options]
+python_files = ["*.test.py", "test_*.py"]
+testpaths = ["tests"]
+pythonpath = ["tests"]
+addopts = "--import-mode=importlib -s"
+markers = [
+	"metadata: tests requiring network access",
+	"download: tests that perform actual file downloads",
+]
+
+[tool.taskipy.tasks]
+"test:meta" = "pytest tests/metadata.test.py -v -x"
+"test:dl" = "pytest tests/download.test.py -v -x"

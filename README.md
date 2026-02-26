@@ -170,8 +170,9 @@ Can be either `jpg` or `png`.
 
 ### Running tests
 - **Install dev dependencies:** `pip install -e .[dev]`
-- There are differen types of tests
+- There are different types of tests
   - **Metadata-only** `task test:meta`: has shira grab some files, but skips downloading and only verifies metadata
   - **Full download tests:** `task test:dl`: preforms real downloads as well as checking metadata
   - To record or refresh inline snapshots run: `task test:meta -- --inline-snapshot=review`
+
   - You can append additional pytest args after `--` when using the `task` helpers.

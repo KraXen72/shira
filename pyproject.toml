@@ -16,7 +16,7 @@ optional-dependencies.dev = [
 	"pytest",
 	"pytest-timeout",
 	"inline-snapshot",
-	"taskipy",
+	"taskipy"
 ]
 
 readme = "README.md"
@@ -32,6 +32,9 @@ repository = "https://github.com/KraXen72/shira"
 [build-system]
 requires = ["hatchling"]
 build-backend = "hatchling.build"
+
+[tool.hatch.version]
+path = "shiradl/__init__.py"
 
 [tool.pytest.ini_options]
 python_files = ["*.test.py", "test_*.py"]

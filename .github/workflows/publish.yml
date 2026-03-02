@@ -1,7 +1,6 @@
 name: publish
 
 on:
-
     # Workflow will run when a release has been published
     release:
         types:
@@ -11,22 +10,20 @@ on:
     workflow_dispatch:
 
 jobs:
-
     publish:
         runs-on: ubuntu-latest
         environment: pypi
         permissions:
-            id-token: write  # required for OIDC trusted publishing
+            id-token: write # required for OIDC trusted publishing
 
         steps:
+            - uses: actions/checkout@v4
 
-            -   uses: actions/checkout@v4
+            - name: Set up uv
+              uses: astral-sh/setup-uv@v5
 
-            -   name: Set up uv
-                uses: astral-sh/setup-uv@v5
+            - name: Build package
+              run: uv build
 
-            -   name: Build package
-                run: uv build
-
-            -   name: Publish to PyPI
-                run: uv publish
+            - name: Publish to PyPI
+              run: uv publish

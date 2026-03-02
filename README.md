@@ -19,18 +19,15 @@ Installation methods:
     ```bash
     pipx install shiradl
     ```
-3. local installation with uv (for development) - see [Contributing](#Contributing)
+3. local installation with uv (for development) - see [Contributing](#Contributing)  
   
+> If you don't want to install shira and just want to try it out / use it once, run `uvx shiradl <args>`  
+
 ### Updating
 If you have previously installed shira, it's important to update it to the last version, otherwise it may not work.
 - [uv](https://docs.astral.sh/uv/getting-started/installation/): `uv tool upgrade shiradl`
 - [pipx](https://pipx.pypa.io/stable/installation/#installing-pipx): `pipx upgrade shiradl --pip-args='--upgrade-strategy=eager'`
   
-> [!NOTE]  
-> If you don't want to install shira and just want to try it out / use it once, you can use `uvx`:  
->  ```bash
->  uvx shiradl <args>
->  ```  
   
 **Guides**: [Using a cookies file](#setting-a-cookies-file), [**Troubleshooting**](#troubleshooting)
 

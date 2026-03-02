@@ -6,11 +6,25 @@
 </p>
 
 ## Installation
-- Have [python](https://www.python.org/downloads/) (**3.11+**) and [pipx](https://pipx.pypa.io/stable/installation/#installing-pipx) installed
 - Have `ffmpeg` installed (See [Installing ffmpeg](#installing-ffmpeg)) and added to PATH, or [specify it with `--ffmpeg-location`](#configuration)/[config](#configuration)
-- `pipx install git+https://github.com/KraXen72/shira`
+- Install with **[uv](https://docs.astral.sh/uv/getting-started/installation/)** (preferred):
+  ```bash
+  uv tool install git+https://github.com/KraXen72/shira
+  ```
+- Or with [pipx](https://pipx.pypa.io/stable/installation/#installing-pipx):
+  ```bash
+  pipx install git+https://github.com/KraXen72/shira
+  ```
+- Or run once without installing (uv only):
+  ```bash
+  uvx --from git+https://github.com/KraXen72/shira shiradl <args>
+  ```
   
 **Guides**: [Using a cookies file](#setting-a-cookies-file), --> [Troubleshooting](#troubleshooting) <--
+
+## Updating
+- **uv:** `uv tool upgrade shiradl`
+- **pipx:** `pipx upgrade shiradl --pip-args='--upgrade-strategy=eager'`
 
 ## Usage Examples
 - `shiradl https://music.youtube.com/watch?v=HdX2COsY2Xk` **YouTube Music**
@@ -118,8 +132,8 @@ Can be either `jpg` or `png`.
   - *for example*: `https://soundcloud.com/yatashi-gang-63564467/lovely-bastards-yatashigang` => `lovely-bastards-yatashigang.jpg` / `.png`
 
 ## Troubleshooting
-- run `pipx upgrade shiradl --pip-args='--upgrade-strategy=eager'`, as it's likely yt-dlp or something else needs updating
-- In case shira can't download songs / you're having other issues:
+- if shira can't download songs, first try [updating](#updating) — it's likely yt-dlp or something else needs updating
+- In case shira still can't download songs / you're having other issues:
 	- as a temporary measure, you can [try these steps](https://github.com/KraXen72/shira/issues/19#issuecomment-2661907637)
 - `python: No module named shiradl` 
   - Make sure you are not already in the `shiradl` directory, e.g. `/shira/shiradl`. if yes, move up one directory with `cd ..` and retry.
@@ -161,18 +175,18 @@ Can be either `jpg` or `png`.
 - Please report any bugs in Issues. Pull requests are welcome!
 - To contribute, you'll (likely) need a local installation of shira
 	- Fork this repo
-	- Verify [installation prerequisites](#Installation)
-	- Install dependencies locally with `pip install -e .[dev]`
-	- Make changes
+	- Have `ffmpeg` and [uv](https://docs.astral.sh/uv/getting-started/installation/) installed
+	- Install dependencies locally with `uv sync`
+	- Make changes (`uv run shiradl` to test)
 	- Open a pull request
 - If you're planning on implementing something big / that changes a lot, it's worth opening an issue about it to discuss it first.
 - Thanks!
 
 ### Running tests
-- **Install dev dependencies:** `pip install -e .[dev]`
+- **Install dev dependencies:** `uv sync` (includes dev deps automatically)
 - There are different types of tests
-  - **Metadata-only** `task test:meta`: has shira grab some files, but skips downloading and only verifies metadata
-  - **Full download tests:** `task test:dl`: preforms real downloads as well as checking metadata
-  - To record or refresh inline snapshots run: `task test:meta -- --inline-snapshot=review`
+  - **Metadata-only** `uv run test:meta`: has shira grab some files, but skips downloading and only verifies metadata
+  - **Full download tests:** `uv run test:dl`: preforms real downloads as well as checking metadata
+  - To record or refresh inline snapshots run: `uv run test:meta -- --inline-snapshot=review`
 
-  - You can append additional pytest args after `--` when using the `task` helpers.
+  - You can append additional pytest args after `--` when using the `uv run` helpers.

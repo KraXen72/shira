@@ -1,10 +1,10 @@
 import json
 import re
+from importlib.metadata import version as _pkg_version
 from typing import TypedDict
 
 from requests_cache import CachedSession
 
-from .__init__ import __version__ as shiraver
 from .metadata import clean_title, parse_datestring
 from .tagging import Tags
 
@@ -159,7 +159,7 @@ class MBSong:
 		self.base = "https://musicbrainz.org/ws/2"
 		self.default_params = { "fmt": "json" }
 		self.req = CachedSession("shira_requests_cache", expire_after=cache_lifetime_seconds, use_cache_dir=True)
-		self.head = { "User-Agent": f"shiradl/{shiraver} ( https://github.com/KraXen72/shira )" }
+		self.head = { "User-Agent": f"shiradl/{_pkg_version('shiradl')} ( https://github.com/KraXen72/shira )" }
 
 		self.song_dict = None # MBRecording
 		self.artist_dict = None # MBArtistCredit

@@ -6,11 +6,33 @@
 </p>
 
 ## Installation
-- Have [python](https://www.python.org/downloads/) (**3.11+**) and [pipx](https://pipx.pypa.io/stable/installation/#installing-pipx) installed
-- Have `ffmpeg` installed (See [Installing ffmpeg](#installing-ffmpeg)) and added to PATH, or [specify it with `--ffmpeg-location`](#configuration)/[config](#configuration)
-- `pipx install git+https://github.com/KraXen72/shira`
+You need to have:  
+- [python](https://www.python.org/downloads/) (**3.11+**) installed
+- `ffmpeg` installed (See [Installing ffmpeg](#installing-ffmpeg)) and added to PATH, or [specify it with `--ffmpeg-location`](#configuration)/[config](#configuration)
   
-**Guides**: [Using a cookies file](#setting-a-cookies-file), --> [Troubleshooting](#troubleshooting) <--
+Installation methods:
+1. **uv** (preferred) -> [install uv](https://docs.astral.sh/uv/getting-started/installation/), then run:
+    ```bash
+    uv tool install git+https://github.com/KraXen72/shira
+    ```
+2. **pipx** -> [install pipx](https://pipx.pypa.io/stable/installation/#installing-pipx), then run:
+    ```bash
+    pipx install git+https://github.com/KraXen72/shira
+    ```
+3. local installation with uv (for development) - see [Contributing](#Contributing)
+  
+### Updating
+If you have previously installed shira, it's important to update it to the last version, otherwise it may not work.
+- [uv](https://docs.astral.sh/uv/getting-started/installation/): `uv tool upgrade shiradl`
+- [pipx](https://pipx.pypa.io/stable/installation/#installing-pipx): `pipx upgrade shiradl --pip-args='--upgrade-strategy=eager'`
+  
+> [!NOTE]  
+> If you don't want to install shira and just want to try it out / use it once, you can use `uvx`:  
+>  ```bash
+>  uvx --from git+https://github.com/KraXen72/shira shiradl <args>
+>  ```  
+  
+**Guides**: [Using a cookies file](#setting-a-cookies-file), [**Troubleshooting**](#troubleshooting)
 
 ## Usage Examples
 - `shiradl https://music.youtube.com/watch?v=HdX2COsY2Xk` **YouTube Music**
@@ -118,13 +140,13 @@ Can be either `jpg` or `png`.
   - *for example*: `https://soundcloud.com/yatashi-gang-63564467/lovely-bastards-yatashigang` => `lovely-bastards-yatashigang.jpg` / `.png`
 
 ## Troubleshooting
-- run `pipx upgrade shiradl --pip-args='--upgrade-strategy=eager'`, as it's likely yt-dlp or something else needs updating
-- In case shira can't download songs / you're having other issues:
+- if shira can't download songs, first try [updating](#updating); the issue is likely that `yt-dlp` or something else needs updating
+- In case shira still can't download songs / you're having other issues:
 	- as a temporary measure, you can [try these steps](https://github.com/KraXen72/shira/issues/19#issuecomment-2661907637)
 - `python: No module named shiradl` 
   - Make sure you are not already in the `shiradl` directory, e.g. `/shira/shiradl`. if yes, move up one directory with `cd ..` and retry.
 - I really need to run this on `python` 3.8+ and updating to 3.11+ is not an option
-  - run `pip install typing-extensions` and modify `tagging.py` accordingly:
+  - run `uv add typing-extensions` and modify `tagging.py` accordingly:
   ```diff
   - from typing import NotRequired, TypedDict
   + from typing_extensions import NotRequired, TypedDict
@@ -160,19 +182,21 @@ Can be either `jpg` or `png`.
 ## Contributing
 - Please report any bugs in Issues. Pull requests are welcome!
 - To contribute, you'll (likely) need a local installation of shira
+  - To install the required python version, you can use either:
+    - [mise](https://mise.jdx.dev): `mise install` (what I use) 
+    - [uv](https://docs.astral.sh/uv/concepts/python-versions/): `uv sync` or `uv python install 3.12` (you will need uv anyway)
 	- Fork this repo
-	- Verify [installation prerequisites](#Installation)
-	- Install dependencies locally with `pip install -e .[dev]`
-	- Make changes
+	- Have `ffmpeg` and [uv](https://docs.astral.sh/uv/getting-started/installation/) installed
+	- Install dependencies locally with `uv sync`
+	- Make changes (`uv run shiradl` to test)
 	- Open a pull request
 - If you're planning on implementing something big / that changes a lot, it's worth opening an issue about it to discuss it first.
 - Thanks!
 
 ### Running tests
-- **Install dev dependencies:** `pip install -e .[dev]`
+- **Install dev dependencies:** `uv sync` (includes dev deps automatically)
 - There are different types of tests
-  - **Metadata-only** `task test:meta`: has shira grab some files, but skips downloading and only verifies metadata
-  - **Full download tests:** `task test:dl`: preforms real downloads as well as checking metadata
-  - To record or refresh inline snapshots run: `task test:meta -- --inline-snapshot=review`
-
-  - You can append additional pytest args after `--` when using the `task` helpers.
+  - **Metadata-only** `uv run task test:meta`: has shira grab some files, but skips downloading and only verifies metadata
+  - **Full download tests:** `uv run task test:dl`: preforms real downloads as well as checking metadata
+  - To record or refresh inline snapshots run: `uv run task test:meta -- --inline-snapshot=review`  
+  - You can append additional pytest args after `--` when using the `uv run task` helpers.

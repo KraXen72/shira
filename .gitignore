@@ -1,4 +1,6 @@
 __pycache__
+.pytest_cache
+.venv
 *.json
 *.opus
 *.mp3

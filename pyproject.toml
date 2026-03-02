@@ -1,7 +1,8 @@
 [project]
 name = "shiradl"
+version = "1.7.1"
 description = "Download music from YouTube, YouTube Music and Soundcloud, with great metadata and little effort."
-requires-python = ">=3.12"
+requires-python = ">=3.11"
 authors = [{ name = "KraXen72" }, { name = "glomatico" }]
 dependencies = [
 	"click",
@@ -16,11 +17,10 @@ optional-dependencies.dev = [
 	"pytest",
 	"pytest-timeout",
 	"inline-snapshot",
-	"taskipy",
+	"taskipy"
 ]
 
 readme = "README.md"
-dynamic = ["version"]
 
 [project.scripts]
 shiradl = "shiradl.cli:cli"

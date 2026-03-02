@@ -6,7 +6,6 @@ from pathlib import Path
 
 import click
 
-from . import __version__
 from .dl import Dl
 from .metadata import TIGER_SINGLE, smart_metadata
 from .musicbrainz import musicbrainz_enrich_tags
@@ -66,7 +65,7 @@ def no_config_callback(ctx: click.Context, param: click.Parameter, no_config_fil
 @click.option("--single-folder", "-w", is_flag=True, help="Wrap singles in their own folder instead of placing them directly into artist's folder.")
 @click.option("--use-playlist-name", type=bool, is_flag=True, help="Uses the playlist name in the final location when downloading a playlist.")
 @click.option("--no-download", is_flag=True, help="Skip actual download; write a silent stub file for metadata-only testing.")
-@click.version_option(__version__)
+@click.version_option(package_name="shiradl")
 @click.help_option("-h", "--help")
 def cli(
 	urls: tuple[str, ...],

@@ -9,4 +9,5 @@ __pycache__
 *.flac
 *.sqlite
 !test_config.json
+!renovate.json
 repomix-output*

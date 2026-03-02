@@ -11,11 +11,11 @@ You need to have:
 - `ffmpeg` installed (See [Installing ffmpeg](#installing-ffmpeg)) and added to PATH, or [specify it with `--ffmpeg-location`](#configuration)/[config](#configuration)
   
 Installation methods:
-1. uv (preferred) -> [install uv](https://docs.astral.sh/uv/getting-started/installation/), then run:
+1. **uv** (preferred) -> [install uv](https://docs.astral.sh/uv/getting-started/installation/), then run:
     ```bash
     uv tool install git+https://github.com/KraXen72/shira
     ```
-2. pipx -> [install pipx](https://pipx.pypa.io/stable/installation/#installing-pipx), then run:
+2. **pipx** -> [install pipx](https://pipx.pypa.io/stable/installation/#installing-pipx), then run:
     ```bash
     pipx install git+https://github.com/KraXen72/shira
     ```

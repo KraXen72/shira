@@ -6,15 +6,16 @@
 </p>
 
 ## Installation
+- Have [python](https://www.python.org/downloads/) (**3.11+**) and either:
+  1. **[uv](https://docs.astral.sh/uv/getting-started/installation/)** (preferred) — then run:
+     ```bash
+     uv tool install git+https://github.com/KraXen72/shira
+     ```
+  2. **[pipx](https://pipx.pypa.io/stable/installation/#installing-pipx)** — then run:
+     ```bash
+     pipx install git+https://github.com/KraXen72/shira
+     ```
 - Have `ffmpeg` installed (See [Installing ffmpeg](#installing-ffmpeg)) and added to PATH, or [specify it with `--ffmpeg-location`](#configuration)/[config](#configuration)
-- Install with **[uv](https://docs.astral.sh/uv/getting-started/installation/)** (preferred):
-  ```bash
-  uv tool install git+https://github.com/KraXen72/shira
-  ```
-- Or with [pipx](https://pipx.pypa.io/stable/installation/#installing-pipx):
-  ```bash
-  pipx install git+https://github.com/KraXen72/shira
-  ```
 - Or run once without installing (uv only):
   ```bash
   uvx --from git+https://github.com/KraXen72/shira shiradl <args>

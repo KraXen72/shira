@@ -215,6 +215,7 @@ To uninstall, run the appropriate command. If unsure which way you installed shi
 1. Bump the version in `pyproject.toml` (`version = "X.Y.Z"`).
 2. Commit, tag and push:
    ```bash
+   uv version --bump patch
    git commit -am "chore: bump version to X.Y.Z"
    git tag "vX.Y.Z"
    git push && git push --tags

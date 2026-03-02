@@ -13,11 +13,11 @@ You need to have:
 Installation methods:
 1. **uv** (preferred) -> [install uv](https://docs.astral.sh/uv/getting-started/installation/), then run:
     ```bash
-    uv tool install git+https://github.com/KraXen72/shira
+    uv tool install shiradl
     ```
 2. **pipx** -> [install pipx](https://pipx.pypa.io/stable/installation/#installing-pipx), then run:
     ```bash
-    pipx install git+https://github.com/KraXen72/shira
+    pipx install shiradl
     ```
 3. local installation with uv (for development) - see [Contributing](#Contributing)
   
@@ -29,7 +29,7 @@ If you have previously installed shira, it's important to update it to the last 
 > [!NOTE]  
 > If you don't want to install shira and just want to try it out / use it once, you can use `uvx`:  
 >  ```bash
->  uvx --from git+https://github.com/KraXen72/shira shiradl <args>
+>  uvx shiradl <args>
 >  ```  
   
 **Guides**: [Using a cookies file](#setting-a-cookies-file), [**Troubleshooting**](#troubleshooting)
@@ -142,6 +142,10 @@ Can be either `jpg` or `png`.
 ## Troubleshooting
 - if shira can't download songs, first try [updating](#updating); the issue is likely that `yt-dlp` or something else needs updating
 - In case shira still can't download songs / you're having other issues:
+- If the PyPI version is outdated or broken, you can install directly from git as a workaround:
+  - uv: `uv tool install git+https://github.com/KraXen72/shira`
+  - pipx: `pipx install git+https://github.com/KraXen72/shira`
+  - uvx: `uvx --from git+https://github.com/KraXen72/shira shiradl <args>` (doesen't install, only runs)
 	- as a temporary measure, you can [try these steps](https://github.com/KraXen72/shira/issues/19#issuecomment-2661907637)
 - `python: No module named shiradl` 
   - Make sure you are not already in the `shiradl` directory, e.g. `/shira/shiradl`. if yes, move up one directory with `cd ..` and retry.
@@ -151,6 +155,12 @@ Can be either `jpg` or `png`.
   - from typing import NotRequired, TypedDict
   + from typing_extensions import NotRequired, TypedDict
   ```
+
+### Uninstalling
+If you're uninstalling because shira doesen't work, I would like to kindly ask you to [please make a GitHub issue](https://github.com/KraXen72/shira/issues/new/choose) about what exactly doesen't work. Thanks!  
+To uninstall, run the appropriate command. If unsure which way you installed shira, run both.  
+- **uv:** `uv tool uninstall shiradl`
+- **pipx:** `pipx uninstall shiradl`
 
 ### Installing ffmpeg
 #### Installing ffmpeg with scoop
@@ -200,3 +210,13 @@ Can be either `jpg` or `png`.
   - **Full download tests:** `uv run task test:dl`: preforms real downloads as well as checking metadata
   - To record or refresh inline snapshots run: `uv run task test:meta -- --inline-snapshot=review`  
   - You can append additional pytest args after `--` when using the `uv run task` helpers.
+
+### Publishing a new release
+1. Bump the version in `pyproject.toml` (`version = "X.Y.Z"`).
+2. Commit, tag and push:
+   ```bash
+   git commit -am "chore: bump version to X.Y.Z"
+   git tag "vX.Y.Z"
+   git push && git push --tags
+   ```
+3. On GitHub, go to **Releases -> Draft a new release**, select the tag you just pushed, and click **Publish release**. The CI workflow will automatically run `uv build` + `uv publish` and push the new version to PyPI.

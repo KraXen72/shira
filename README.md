@@ -140,13 +140,13 @@ Can be either `jpg` or `png`.
   - *for example*: `https://soundcloud.com/yatashi-gang-63564467/lovely-bastards-yatashigang` => `lovely-bastards-yatashigang.jpg` / `.png`
 
 ## Troubleshooting
-- if shira can't download songs, first try [updating](#updating) — it's likely yt-dlp or something else needs updating
+- if shira can't download songs, first try [updating](#updating); the issue is likely that `yt-dlp` or something else needs updating
 - In case shira still can't download songs / you're having other issues:
 	- as a temporary measure, you can [try these steps](https://github.com/KraXen72/shira/issues/19#issuecomment-2661907637)
 - `python: No module named shiradl` 
   - Make sure you are not already in the `shiradl` directory, e.g. `/shira/shiradl`. if yes, move up one directory with `cd ..` and retry.
 - I really need to run this on `python` 3.8+ and updating to 3.11+ is not an option
-  - run `pip install typing-extensions` and modify `tagging.py` accordingly:
+  - run `uv add typing-extensions` and modify `tagging.py` accordingly:
   ```diff
   - from typing import NotRequired, TypedDict
   + from typing_extensions import NotRequired, TypedDict

@@ -210,7 +210,7 @@ To uninstall, run the appropriate command. If unsure which way you installed shi
 
 ### Publishing a new release
 1. Bump the version: `uv version --bump patch` (or `minor` / `major`)
-2. Commit, tag and push — replace `X.Y.Z` with the new version:
+2. Commit, tag and push (replace `X.Y.Z` with the new version):
    ```bash
    git commit -am "chore: bump version to X.Y.Z"
    git tag "vX.Y.Z"

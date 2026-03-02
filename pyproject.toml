@@ -1,6 +1,6 @@
 [project]
 name = "shiradl"
-version = "1.8.0"
+version = "1.8.1"
 description = "Download music from YouTube, YouTube Music and Soundcloud, with great metadata and little effort."
 requires-python = ">=3.11"
 authors = [{ name = "KraXen72" }, { name = "glomatico" }]

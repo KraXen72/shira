@@ -30,8 +30,8 @@ mbtag = "shiradl.mbtag:mbtag_cli"
 repository = "https://github.com/KraXen72/shira"
 
 [build-system]
-requires = ["flit_core"]
-build-backend = "flit_core.buildapi"
+requires = ["hatchling"]
+build-backend = "hatchling.build"
 
 [tool.pytest.ini_options]
 python_files = ["*.test.py", "test_*.py"]

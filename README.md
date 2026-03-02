@@ -6,26 +6,33 @@
 </p>
 
 ## Installation
-- Have [python](https://www.python.org/downloads/) (**3.11+**) and either:
-  1. **[uv](https://docs.astral.sh/uv/getting-started/installation/)** (preferred) — then run:
-     ```bash
-     uv tool install git+https://github.com/KraXen72/shira
-     ```
-  2. **[pipx](https://pipx.pypa.io/stable/installation/#installing-pipx)** — then run:
-     ```bash
-     pipx install git+https://github.com/KraXen72/shira
-     ```
-- Have `ffmpeg` installed (See [Installing ffmpeg](#installing-ffmpeg)) and added to PATH, or [specify it with `--ffmpeg-location`](#configuration)/[config](#configuration)
-- Or run once without installing (uv only):
-  ```bash
-  uvx --from git+https://github.com/KraXen72/shira shiradl <args>
-  ```
+You need to have:  
+- [python](https://www.python.org/downloads/) (**3.11+**) installed
+- `ffmpeg` installed (See [Installing ffmpeg](#installing-ffmpeg)) and added to PATH, or [specify it with `--ffmpeg-location`](#configuration)/[config](#configuration)
   
-**Guides**: [Using a cookies file](#setting-a-cookies-file), --> [Troubleshooting](#troubleshooting) <--
-
-## Updating
-- **uv:** `uv tool upgrade shiradl`
-- **pipx:** `pipx upgrade shiradl --pip-args='--upgrade-strategy=eager'`
+Installation methods (pick one):
+1. [uv](https://docs.astral.sh/uv/getting-started/installation/) (preferred):
+    ```bash
+    uv tool install git+https://github.com/KraXen72/shira
+    ```
+2. [pipx](https://pipx.pypa.io/stable/installation/#installing-pipx):
+    ```bash
+    pipx install git+https://github.com/KraXen72/shira
+    ```
+3. local installation with uv (for development) - see [Contributing](#Contributing)
+  
+### Updating
+If you have previously installed shira, it's important to update it to the last version, otherwise it may not work.
+- [uv](https://docs.astral.sh/uv/getting-started/installation/): `uv tool upgrade shiradl`
+- [pipx](https://pipx.pypa.io/stable/installation/#installing-pipx): `pipx upgrade shiradl --pip-args='--upgrade-strategy=eager'`
+  
+> [!NOTE]  
+> If you don't want to install shira and just want to try it out / use it once, you can use `uvx`:  
+>  ```bash
+>  uvx --from git+https://github.com/KraXen72/shira shiradl <args>
+>  ```  
+  
+**Guides**: [Using a cookies file](#setting-a-cookies-file), [**Troubleshooting**](#troubleshooting)
 
 ## Usage Examples
 - `shiradl https://music.youtube.com/watch?v=HdX2COsY2Xk` **YouTube Music**
@@ -175,6 +182,9 @@ Can be either `jpg` or `png`.
 ## Contributing
 - Please report any bugs in Issues. Pull requests are welcome!
 - To contribute, you'll (likely) need a local installation of shira
+  - To install the required python version, you can use either:
+    - [mise](https://mise.jdx.dev): `mise install` (what I use) 
+    - [uv](https://docs.astral.sh/uv/concepts/python-versions/): `uv sync` or `uv python install 3.12` (you will need uv anyway)
 	- Fork this repo
 	- Have `ffmpeg` and [uv](https://docs.astral.sh/uv/getting-started/installation/) installed
 	- Install dependencies locally with `uv sync`

@@ -212,12 +212,11 @@ To uninstall, run the appropriate command. If unsure which way you installed shi
   - You can append additional pytest args after `--` when using the `uv run task` helpers.
 
 ### Publishing a new release
-1. Bump the version in `pyproject.toml` (`version = "X.Y.Z"`).
-2. Commit, tag and push:
+1. Bump the version: `uv version --bump patch` (or `minor` / `major`)
+2. Commit, tag and push — replace `X.Y.Z` with the new version:
    ```bash
-   uv version --bump patch
    git commit -am "chore: bump version to X.Y.Z"
    git tag "vX.Y.Z"
    git push && git push --tags
    ```
-3. On GitHub, go to **Releases -> Draft a new release**, select the tag you just pushed, and click **Publish release**. The CI workflow will automatically run `uv build` + `uv publish` and push the new version to PyPI.
+   Pushing the tag automatically triggers the CI workflow, which runs `uv build` + `uv publish` to release the new version to PyPI.

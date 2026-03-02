@@ -1,5 +1,6 @@
 [project]
 name = "shiradl"
+version = "1.7.1"
 description = "Download music from YouTube, YouTube Music and Soundcloud, with great metadata and little effort."
 requires-python = ">=3.12"
 authors = [{ name = "KraXen72" }, { name = "glomatico" }]
@@ -20,7 +21,6 @@ optional-dependencies.dev = [
 ]
 
 readme = "README.md"
-dynamic = ["version"]
 
 [project.scripts]
 shiradl = "shiradl.cli:cli"
@@ -32,9 +32,6 @@ repository = "https://github.com/KraXen72/shira"
 [build-system]
 requires = ["hatchling"]
 build-backend = "hatchling.build"
-
-[tool.hatch.version]
-path = "shiradl/__init__.py"
 
 [tool.pytest.ini_options]
 python_files = ["*.test.py", "test_*.py"]

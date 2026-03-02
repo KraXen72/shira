@@ -3,6 +3,10 @@
   "extends": ["config:recommended"],
   "packageRules": [
     {
+      "matchPackageNames": ["python"],
+      "enabled": false
+    },
+    {
       "matchPackageNames": ["*"],
       "matchUpdateTypes": ["major"],
       "enabled": false

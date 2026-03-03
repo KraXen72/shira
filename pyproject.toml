@@ -49,6 +49,7 @@ markers = [
 ]
 
 [tool.taskipy.tasks]
+release = "bash ./scripts/release.sh"
 test = "pytest -v -x"
 "test:dl" = "pytest tests/download.test.py -v -x"
 "test:meta" = "pytest tests/metadata.test.py -v -x"

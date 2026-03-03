@@ -55,7 +55,7 @@ If you have previously installed shira, it's important to update it to the last 
   - `track`, `album`, `artist`, `albumartist` ids
     - falls back to `artist`, `albumartist` if this recording can't be found, but artist can.
 - uses my custom smart-metadata system from [tiger](https://github.com/KraXen72/tiger) for non-music videos
-  - collects as much information as possible for each tag, and selects the value with most occurences (with fallbacks)
+  - collects as much information as possible for each tag, and selects the value with most occurrences (with fallbacks)
 - Cleans up messy titles into more reasonable ones:
   - `IDOL【ENGLISH EDM COVER】「アイドル」 by ARTIST【Artist1 x @Artist2 】` =>
   - `IDOL [ENGLISH EDM COVER] [アイドル] by ARTIST`
@@ -76,7 +76,7 @@ If you have previously installed shira, it's important to update it to the last 
 - The name **Shira** was inspired by a saber-toothed [tiger](https://github.com/KraXen72/tiger) from [Ice Age](https://iceage.fandom.com/wiki/Shira). 
 - It also means ['poetry', 'singing' or 'music'](https://www.wikiwand.com/en/Shira_(given_name)) in Hebrew.
 - The project is based on my previous [YouTube downloader tiger](https://github.com/KraXen72/tiger) and [Glomatico's YouTube Music Downloader](https://github.com/glomatico/gytmdl)
-- Project logo is based on this [DeviantArt fanart](https://www.deviantart.com/f-a-e-l-e-s/art/Ice-age-5-Shira-and-Diego-757174602), which has been modified, vectorised and cleaned up.
+- Project logo is based on this [DeviantArt fanart](https://www.deviantart.com/f-a-e-l-e-s/art/Ice-age-5-Shira-and-Diego-757174602), which has been modified, vectorized and cleaned up.
 
 ### Support development
 [![Recurring donation via Liberapay](https://liberapay.com/assets/widgets/donate.svg)](https://liberapay.com/KraXen72) [![One-time donation via ko-fi.com](https://ko-fi.com/img/githubbutton_sm.svg)](https://ko-fi.com/kraxen72)  
@@ -142,7 +142,7 @@ Can be either `jpg` or `png`.
 - If the PyPI version is outdated or broken, you can install directly from git as a workaround:
   - uv: `uv tool install git+https://github.com/KraXen72/shira`
   - pipx: `pipx install git+https://github.com/KraXen72/shira`
-  - uvx: `uvx --from git+https://github.com/KraXen72/shira shiradl <args>` (doesen't install, only runs)
+  - uvx: `uvx --from git+https://github.com/KraXen72/shira shiradl <args>` (doesn't install, only runs)
 	- as a temporary measure, you can [try these steps](https://github.com/KraXen72/shira/issues/19#issuecomment-2661907637)
 - `python: No module named shiradl` 
   - Make sure you are not already in the `shiradl` directory, e.g. `/shira/shiradl`. if yes, move up one directory with `cd ..` and retry.
@@ -154,14 +154,14 @@ Can be either `jpg` or `png`.
   ```
 
 ### Uninstalling
-If you're uninstalling because shira doesen't work, I would like to kindly ask you to [please make a GitHub issue](https://github.com/KraXen72/shira/issues/new/choose) about what exactly doesen't work. Thanks!  
+If you're uninstalling because shira doesn't work, I would like to kindly ask you to [please make a GitHub issue](https://github.com/KraXen72/shira/issues/new/choose) about what exactly doesn't work. Thanks!  
 To uninstall, run the appropriate command. If unsure which way you installed shira, run both.  
 - **uv:** `uv tool uninstall shiradl`
 - **pipx:** `pipx uninstall shiradl`
 
 ### Installing ffmpeg
 #### Installing ffmpeg with scoop
-- Scoop is a package manager for windows. It allows easy installing of programs and their updating from the commandline.
+- Scoop is a package manager for windows. It allows easy installing of programs and their updating from the command line.
 - Install [scoop](https://scoop.sh) by running a powershell command (on their website)
 - Run `scoop install main/ffmpeg`
 - Scoop automatically adds it to path. you can update ffmpeg by doing `scoop update` and `scoop update ffmpeg`/`*`
@@ -169,7 +169,7 @@ To uninstall, run the appropriate command. If unsure which way you installed shi
 #### Installing ffmpeg on Windows (manual install)
 - Related: [Comprehensive tutorial with screenshots](https://phoenixnap.com/kb/ffmpeg-windows)
 - Download an auto-built zip of latest ffmpeg: [download](https://www.gyan.dev/ffmpeg/builds/) / [mirror](https://github.com/BtbN/FFmpeg-Builds/releases).
-- Extract it somewhere, for example into `C:\ffmpeg`. It's best if the path doesen't have spaces.
+- Extract it somewhere, for example into `C:\ffmpeg`. It's best if the path doesn't have spaces.
 ##### Adding ffmpeg to PATH
 - Look for `Edit the system environment variables` in the Start Menu, launch it.
 - Find the `Path` user variable, click `Edit`
@@ -203,10 +203,11 @@ To uninstall, run the appropriate command. If unsure which way you installed shi
 ### Running tests
 - **Install dev dependencies:** `uv sync` (includes dev deps automatically)
 - There are different types of tests
-  - **Metadata-only** `uv run task test:meta`: has shira grab some files, but skips downloading and only verifies metadata
-  - **Full download tests:** `uv run task test:dl`: preforms real downloads as well as checking metadata
-  - To record or refresh inline snapshots run: `uv run task test:meta -- --inline-snapshot=review`  
-  - You can append additional pytest args after `--` when using the `uv run task` helpers.
+  - **Smoke** `uv run task test:smoke`: Downloads only like 3 songs, checking both resulting file size & metadata
+  - **Metadata** `uv run task test:meta`: Skips downloading, only checking metadata
+  - **Download** `uv run task test:dl`: performs real downloads, checking only if the files are large enough
+- To record or refresh inline snapshots run: e.g. `uv run pytest tests/metadata.test.py -v --inline-snapshot=review`
+- You can append additional pytest args after `--` when using the `uv run task` helpers
 
 ### Publishing a new release
 1. Bump the version: `uv version --bump patch` (or `minor` / `major`)

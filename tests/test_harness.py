@@ -9,19 +9,12 @@ from shiradl.cli import cli
 TESTS_DIR = Path(__file__).parent
 CONFIG_FILE = TESTS_DIR / "test_config.json"
 DOWNLOADS_DIR = TESTS_DIR / "downloads"
-
-# Tracks lines printed to stdout during the current test for ANSI clearing.
-_output_line_count = [0]
-
+MB_TAGS = ["mb_artistid","mb_albumartistid","mb_releasetrackid","mb_releasegroupid"]
 
 def _print_invoke_output(text: str) -> None:
-	if not text:
-		return	
-	if not text.endswith("\n"):
-		text += "\n"
-	sys.stdout.write(text)
-	sys.stdout.flush()
-	_output_line_count[0] += text.count("\n")
+	if text:
+		sys.stdout.write(text if text.endswith("\n") else text + "\n")
+		sys.stdout.flush()
 
 
 def invoke(url: str, final_path: Path, extra_args: list[str] | None = None):
@@ -31,6 +24,7 @@ def invoke(url: str, final_path: Path, extra_args: list[str] | None = None):
 		cli,
 		[url, "--config-location", str(CONFIG_FILE), "--final-path", str(final_path), *(extra_args or [])],
 		catch_exceptions=False,
+		
 	)
 	_print_invoke_output(result.output)
 	return result
@@ -43,18 +37,20 @@ def audio_files(path: Path) -> list[Path]:
 		if f.suffix in {".m4a", ".mp3", ".opus", ".flac"}
 	)
 
+def mediafile_dict(path: Path, include_none = False) -> dict:
+	_allowed_types = [str, int, float, bool]
+	if include_none:
+		_allowed_types.append(type(None))
+	allowed_types = tuple(_allowed_types)
+	excluded_fields = {"lyrics"}
+
+	mf = MediaFile(path)
+	return {
+		field: v
+		for field in MediaFile.fields()
+		if field not in excluded_fields and isinstance(v := getattr(mf, field), allowed_types)
+	}
 
 def read_metadata(path: Path) -> list[dict]:
 	"""Read basic metadata tags from all audio files under path."""
-	return [
-		{
-			"title": mf.title,
-			"artist": mf.artist,
-			"album": mf.album,
-			"albumartist": mf.albumartist,
-			"track": mf.track,
-			"tracktotal": mf.tracktotal,
-		}
-		for f in audio_files(path)
-		for mf in [MediaFile(f)]
-	]
+	return [mediafile_dict(f) for f in audio_files(path)]

@@ -1,6 +1,6 @@
 [project]
 name = "shiradl"
-version = "1.8.1"
+version = "1.8.2"
 description = "Download music from YouTube, YouTube Music and Soundcloud, with great metadata and little effort."
 requires-python = ">=3.11"
 authors = [{ name = "KraXen72" }, { name = "glomatico" }]
@@ -13,14 +13,15 @@ dependencies = [
 	"requests_cache",
 	"python-dateutil",
 ]
-optional-dependencies.dev = [
-	"pytest",
-	"pytest-timeout",
-	"inline-snapshot",
-	"taskipy"
-]
-
 readme = "README.md"
+
+[dependency-groups]
+dev = [
+    "pytest",
+    "pytest-timeout",
+    "inline-snapshot",
+    "taskipy"
+]
 
 [project.scripts]
 shiradl = "shiradl.cli:cli"
@@ -33,16 +34,21 @@ repository = "https://github.com/KraXen72/shira"
 requires = ["hatchling"]
 build-backend = "hatchling.build"
 
+[tool.hatch.build]
+exclude = ["tests/"]
+
 [tool.pytest.ini_options]
 python_files = ["*.test.py", "test_*.py"]
 testpaths = ["tests"]
 pythonpath = ["tests"]
 addopts = "--import-mode=importlib -s"
 markers = [
-	"metadata: tests requiring network access",
 	"download: tests that perform actual file downloads",
+	"metadata: tests requiring network access",
+	"smoke: basic sanity-check tests, checking both metadata & download size"
 ]
 
 [tool.taskipy.tasks]
-"test:meta" = "pytest tests/metadata.test.py -v -x"
 "test:dl" = "pytest tests/download.test.py -v -x"
+"test:meta" = "pytest tests/metadata.test.py -v -x"
+"test:smoke" = "pytest tests/smoke.test.py -v -x"

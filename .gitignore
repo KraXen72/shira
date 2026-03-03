@@ -11,3 +11,4 @@ __pycache__
 !test_config.json
 !renovate.json
 repomix-output*
+tests/downloads

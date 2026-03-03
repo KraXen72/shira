@@ -32,7 +32,7 @@ LABELS = [
 @pytest.mark.timeout(120)
 @pytest.mark.parametrize("url,label", zip(LINKS, LABELS), ids=LABELS)
 def test_download(url, label):
-	final_path = DOWNLOADS_DIR / "download" / label
+	final_path = DOWNLOADS_DIR / label
 	final_path.mkdir(parents=True, exist_ok=True)
 
 	result = invoke(url, final_path)

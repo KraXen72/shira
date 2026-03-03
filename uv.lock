@@ -465,7 +465,7 @@ wheels = [
 
 [[package]]
 name = "shiradl"
-version = "1.8.1"
+version = "1.8.2"
 source = { editable = "." }
 dependencies = [
     { name = "click" },
@@ -477,7 +477,7 @@ dependencies = [
     { name = "ytmusicapi" },
 ]
 
-[package.optional-dependencies]
+[package.dev-dependencies]
 dev = [
     { name = "inline-snapshot" },
     { name = "pytest" },
@@ -488,18 +488,21 @@ dev = [
 [package.metadata]
 requires-dist = [
     { name = "click" },
-    { name = "inline-snapshot", marker = "extra == 'dev'" },
     { name = "mediafile" },
     { name = "pillow" },
-    { name = "pytest", marker = "extra == 'dev'" },
-    { name = "pytest-timeout", marker = "extra == 'dev'" },
     { name = "python-dateutil" },
     { name = "requests-cache" },
-    { name = "taskipy", marker = "extra == 'dev'" },
     { name = "yt-dlp", specifier = ">=2026.2.21" },
     { name = "ytmusicapi", specifier = ">=1.10.2" },
 ]
-provides-extras = ["dev"]
+
+[package.metadata.requires-dev]
+dev = [
+    { name = "inline-snapshot" },
+    { name = "pytest" },
+    { name = "pytest-timeout" },
+    { name = "taskipy" },
+]
 
 [[package]]
 name = "six"

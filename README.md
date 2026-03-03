@@ -213,10 +213,10 @@ To uninstall, run the appropriate command. If unsure which way you installed shi
 
 ### Publishing a new release
 1. Bump the version: `uv version --bump patch` (or `minor` / `major`)
-2. Commit, tag and push (replace `X.Y.Z` with the new version):
+2. Commit the version bump (replace `X.Y.Z` with the new version):
    ```bash
    git commit -am "chore: bump version to X.Y.Z"
-   git tag "vX.Y.Z"
-   git push && git push --tags
    ```
-   Pushing the tag automatically triggers the CI workflow, which runs `uv build` + `uv publish` to release the new version to PyPI.
+3. Tag and push: `uv run task release` (see `./scripts/release.sh`)
+   This automatically creates a `vX.Y.Z` git tag and runs `git push && git push --tags`.  
+   Pushing the tag triggers the CI workflow, which runs `uv build` + `uv publish` to release the new version to PyPI.

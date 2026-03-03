@@ -54,7 +54,7 @@ If you have previously installed shira, it's important to update it to the last 
 - Uses [MusicBrainz API](https://musicbrainz.org/doc/MusicBrainz_API) to resolve MusicBrainz ID's from their api 
   - `track`, `album`, `artist`, `albumartist` ids
     - falls back to `artist`, `albumartist` if this recording can't be found, but artist can.
-- uses my custom smart-metadata system from [tiger](https://github.com/KraXen72/tiger) for non-music videos
+- Uses my custom smart-metadata system from [tiger](https://github.com/KraXen72/tiger) for non-music videos
   - collects as much information as possible for each tag, and selects the value with most occurrences (with fallbacks)
 - Cleans up messy titles into more reasonable ones:
   - `IDOL【ENGLISH EDM COVER】「アイドル」 by ARTIST【Artist1 x @Artist2 】` =>
@@ -202,6 +202,7 @@ To uninstall, run the appropriate command. If unsure which way you installed shi
 
 ### Running tests
 - **Install dev dependencies:** `uv sync` (includes dev deps automatically)
+- Run all tests: `uv run task test` (will take a couple of minutes, has to download stuff)
 - There are different types of tests
   - **Smoke** `uv run task test:smoke`: Downloads only like 3 songs, checking both resulting file size & metadata
   - **Metadata** `uv run task test:meta`: Skips downloading, only checking metadata

@@ -192,6 +192,7 @@ def cli(
 					# 	tagger_mp3(tags, fixed_location, dl.exclude_tags, dl.cover_format)
 					logger.debug("Moving to final location")
 					dl.move_to_final_location(fixed_location, final_location)
+					logger.info(f'Saved to "{final_location}"')
 				else:
 					logger.warning("File already exists at final location, skipping")
 				if save_cover:

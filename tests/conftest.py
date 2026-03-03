@@ -2,6 +2,7 @@ import shutil
 import sys
 
 import pytest
+import requests_cache
 from test_harness import DOWNLOADS_DIR
 
 
@@ -18,6 +19,13 @@ def pytest_runtest_logreport(report):
 	if report.when == "call":
 		sys.stdout.write("\n")
 		sys.stdout.flush()
+
+
+@pytest.fixture(scope="session", autouse=True)
+def disable_requests_cache():
+	"""Tests should never read from or write to the requests cache."""
+	with requests_cache.disabled():
+		yield
 
 
 @pytest.fixture(scope="session", autouse=True)

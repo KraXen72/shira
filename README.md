@@ -197,11 +197,11 @@ To uninstall, run the appropriate command. If unsure which way you installed shi
   - To install the required python version, you can use either:
     - [mise](https://mise.jdx.dev): `mise install` (what I use) 
     - [uv](https://docs.astral.sh/uv/concepts/python-versions/): `uv sync` or `uv python install 3.12` (you will need uv anyway)
-	- Fork this repo
-	- Have `ffmpeg` and [uv](https://docs.astral.sh/uv/getting-started/installation/) installed
-	- Install dependencies locally with `uv sync`
-	- Make changes (`uv run shiradl` to test)
-	- Open a pull request
+  - Fork this repo
+  - Have `ffmpeg` and [uv](https://docs.astral.sh/uv/getting-started/installation/) installed
+  - Install dependencies locally with `uv sync`
+  - Make changes (`uv run shiradl` to test)
+  - Open a pull request
 - If you're planning on implementing something big / that changes a lot, it's worth opening an issue about it to discuss it first.
 - Thanks!
 

@@ -3,10 +3,10 @@
 <h4 align="center">A smart music downloader</h4>
 <p align="center">
 <em>Download music from YouTube, YouTube Music and Soundcloud, </br> with great metadata and little effort.</em>
-<p align="center">
+<!-- <p align="center">
   <a href="https://github.com/astral-sh/uv"><img alt="uv" src="https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/astral-sh/uv/main/assets/badge/v0.json"></img></a>
   <a href="https://pypi.python.org/pypi/shiradl"><img alt="pypi" src="https://img.shields.io/pypi/v/shiradl.svg"></img></a>
-</p>
+</p> -->
 </p>
 
 ## Installation 

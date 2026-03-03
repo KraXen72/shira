@@ -77,6 +77,7 @@ If you have previously installed shira, it's important to update it to the last 
 - It also means ['poetry', 'singing' or 'music'](https://www.wikiwand.com/en/Shira_(given_name)) in Hebrew.
 - The project is based on my previous [YouTube downloader tiger](https://github.com/KraXen72/tiger) and [Glomatico's YouTube Music Downloader](https://github.com/glomatico/gytmdl)
 - Project logo is based on this [DeviantArt fanart](https://www.deviantart.com/f-a-e-l-e-s/art/Ice-age-5-Shira-and-Diego-757174602), which has been modified, vectorized and cleaned up.
+- Thanks to [this pydantic blogpost](https://pydantic.dev/articles/inline-snapshot) for introducing me to `inline-snapshot`, because otherwise shira probably wouldn't have tests. :)
 
 ### Support development
 [![Recurring donation via Liberapay](https://liberapay.com/assets/widgets/donate.svg)](https://liberapay.com/KraXen72) [![One-time donation via ko-fi.com](https://ko-fi.com/img/githubbutton_sm.svg)](https://ko-fi.com/kraxen72)  

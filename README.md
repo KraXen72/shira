@@ -1,226 +1,342 @@
-<h1 align="center">shira</h1>
-<p align="center"><img src="logo.svg" height=200></img></p>
-<h4 align="center">A smart music downloader</h4>
-<p align="center">
-<em>Download music from YouTube, YouTube Music and Soundcloud, </br> with great metadata and little effort.</em>
-<!-- <p align="center">
-  <a href="https://github.com/astral-sh/uv"><img alt="uv" src="https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/astral-sh/uv/main/assets/badge/v0.json"></img></a>
-  <a href="https://pypi.python.org/pypi/shiradl"><img alt="pypi" src="https://img.shields.io/pypi/v/shiradl.svg"></img></a>
-</p> -->
-</p>
+# Shira UI
 
-## Installation 
-You need to have:  
-- [python](https://www.python.org/downloads/) (**3.11+**) installed
-- `ffmpeg` installed (See [Installing ffmpeg](#installing-ffmpeg)) and added to PATH, or [specify it with `--ffmpeg-location`](#configuration)/[config](#configuration)
-  
-Installation methods:
-1. **uv** (preferred) -> [install uv](https://docs.astral.sh/uv/getting-started/installation/), then run:
-    ```bash
-    uv tool install shiradl
-    ```
-2. **pipx** -> [install pipx](https://pipx.pypa.io/stable/installation/#installing-pipx), then run:
-    ```bash
-    pipx install shiradl
-    ```
-3. local installation with uv (for development) - see [Contributing](#Contributing)  
-  
-> If you don't want to install shira and just want to try it out / use it once, run `uvx shiradl <args>`  
+A desktop interface for [shira](https://github.com/KraXen72/shira) — smart music downloader for YouTube, YouTube Music and SoundCloud.
 
-### Updating
-If you have previously installed shira, it's important to update it to the last version, otherwise it may not work.
-- [uv](https://docs.astral.sh/uv/getting-started/installation/): `uv tool upgrade shiradl`
-- [pipx](https://pipx.pypa.io/stable/installation/#installing-pipx): `pipx upgrade shiradl --pip-args='--upgrade-strategy=eager'`
-  
-  
-**Guides**: [Using a cookies file](#setting-a-cookies-file), [**Troubleshooting**](#troubleshooting)
+Paste some links, pick a folder, press Download. No command line needed.
 
-## Usage Examples
-- `shiradl https://music.youtube.com/watch?v=HdX2COsY2Xk` **YouTube Music**
-- `shiradl "https://music.youtube.com/watch?v=8YwKlPH93Ps&list=PLC1og_v3eb4jE0bmdkWtizrSQ4zt86-3D"`
-- `shiradl https://www.youtube.com/watch?v=X0-AvRA7kB0` **YouTube (video)**
-- `shiradl https://soundcloud.com/neffexmusic/fight-back` **SoundCloud**
-- `shiradl https://music.youtube.com/playlist?list=PLC1og_v3eb4jE0bmdkWtizrSQ4zt86-3D` **Album/Playlist**
-- `shiradl -u ./links.txt` **List of links to download**
-  - [See all cli options/flags](#Configuration)
+### Features
+- Supports YouTube, YouTube Music, and SoundCloud
+- Light and dark themes, remembered between launches
+- Queue several links at once, or drop a `links.txt` onto the window
+- Live progress, a working Cancel button, and a colour-coded activity log
+- Plain-language advanced options, collapsed by default
+- Your settings are remembered and are always what actually runs
 
-## Goals
-- Provide an easy way to download audio from YouTube Music, YouTube or SoundCloud
-  - Instead of a GUI/manual input for some steps like in [tiger](https://github.com/KraXen72/tiger), shira requires no additional user input once ran.
-- Provide objectively correct or at least very reasonable music metadata & properly tag music files.
-  - <ins>objectively correct</ins>: Shira queries the [MusicBrainz Database](https://musicbrainz.org) and [YouTube Music's API](https://github.com/sigma67/ytmusicapi) to get metadata
-  - <ins>very reasonable</ins>: When downloading a Youtube video, tags will be inferred from the video info: `title`, `channel_name`, `description`, `upload_date`, etc.
+---
 
-## Tagging
-- Adds a [lot of metadata](#tag-variables) to music files, in these [native tags](https://github.com/OxygenCobalt/Auxio/wiki/Supported-Metadata) (m4a, mp3)
-- Embeds proper `m4a` (iTunes) and `.mp3` (ID3v2.4) tags with [mediafile](https://github.com/beetbox/mediafile)
-- Uses [YouTube Music's API](https://github.com/sigma67/ytmusicapi) to get info.
-- Uses [MusicBrainz API](https://musicbrainz.org/doc/MusicBrainz_API) to resolve MusicBrainz ID's from their api 
-  - `track`, `album`, `artist`, `albumartist` ids
-    - falls back to `artist`, `albumartist` if this recording can't be found, but artist can.
-- Uses my custom smart-metadata system from [tiger](https://github.com/KraXen72/tiger) for non-music videos
-  - collects as much information as possible for each tag, and selects the value with most occurrences (with fallbacks)
-- Cleans up messy titles into more reasonable ones:
-  - `IDOL【ENGLISH EDM COVER】「アイドル」 by ARTIST【Artist1 x @Artist2 】` =>
-  - `IDOL [ENGLISH EDM COVER] [アイドル] by ARTIST`
-- Is smart about turning a video's thumbnail into a square album cover
-  
-<details id="smartcrop">
-<summary>More info about YouTube thumbnail to Album Art algorithm</summary>
-<ol>
-<li>samples 4 pixels near the corners of the thumbnail (which is first smoothed and reduced to 64 colors)</li>
-<li>decides to crop if average of standard deviations of r, g and b color channels from each sample point is lower than a than a threshold</li>
-<li>otherwise pads the image to 1:1 with it's dominant color</li>
-</ol>
+## Installing from scratch
+
+This assumes a machine with **nothing** installed yet. It takes about five
+minutes. Every command goes in a terminal — PowerShell on Windows, Terminal on
+macOS or Linux.
+
+### What you need, and why
+
+| | Why |
+|---|---|
+| **Python 3.12 or newer** | Runs the app. See the note below about 3.11. |
+| **FFmpeg** (including **ffprobe**) | Shira converts and tags every file with it. Downloads cannot work without it. `ffprobe` ships alongside `ffmpeg`; both are needed. If you skip this, the app offers a **Get FFmpeg** button that downloads it for you. |
+| **Git** | To download the code. |
+
+> **Use Python 3.12+, not 3.11.** `shiradl`'s own `pyproject.toml` says `>=3.11`,
+> but that is wrong: `shiradl/mbtag.py` uses f-string syntax introduced in 3.12.
+> On 3.11 the app installs and downloads fine, but the separate `mbtag`
+> re-tagging tool fails with a `SyntaxError`. 3.12+ avoids the whole question.
+
+### Step 1 — install the prerequisites
+
+**Windows**
+
+```powershell
+winget install Python.Python.3.13 Gyan.FFmpeg Git.Git
+```
+
+**Close and reopen your terminal afterwards**, so the new programs are picked up.
+
+<details>
+<summary>macOS / Linux</summary>
+
+macOS, with [Homebrew](https://brew.sh):
+
+```bash
+brew install python@3.13 ffmpeg git
+```
+
+Debian / Ubuntu:
+
+```bash
+sudo apt install python3 python3-venv ffmpeg git
+```
+
 </details>
 
-## About & Credits
-- **This software is for educational purposes only and comes without any warranty**; See [LICENSE](./LICENSE).
-- Credits for copyright-free example tracks used: [Andy Leech](https://soundcloud.com/andyleechmusic), [4lienetic](https://soundcloud.com/4lienetic), [NEFFEX](https://soundcloud.com/neffexmusic)
-- The name **Shira** was inspired by a saber-toothed [tiger](https://github.com/KraXen72/tiger) from [Ice Age](https://iceage.fandom.com/wiki/Shira). 
-- It also means ['poetry', 'singing' or 'music'](https://www.wikiwand.com/en/Shira_(given_name)) in Hebrew.
-- The project is based on my previous [YouTube downloader tiger](https://github.com/KraXen72/tiger) and [Glomatico's YouTube Music Downloader](https://github.com/glomatico/gytmdl)
-- Project logo is based on this [DeviantArt fanart](https://www.deviantart.com/f-a-e-l-e-s/art/Ice-age-5-Shira-and-Diego-757174602), which has been modified, vectorized and cleaned up.
-- Thanks to [this pydantic blogpost](https://pydantic.dev/articles/inline-snapshot) for introducing me to `inline-snapshot`, because otherwise shira probably wouldn't have tests. :)
+Check they are all available before continuing. Each should print a version:
 
-### Support development
-[![Recurring donation via Liberapay](https://liberapay.com/assets/widgets/donate.svg)](https://liberapay.com/KraXen72) [![One-time donation via ko-fi.com](https://ko-fi.com/img/githubbutton_sm.svg)](https://ko-fi.com/kraxen72)  
-Any donations are highly appreciated! <3
+```powershell
+python --version; ffmpeg -version; ffprobe -version; git --version
+```
 
-## Configuration
-Shira can be configured using the command line arguments or the config file.  
-The config file is created automatically when you run shira for the first time at `~/.shiradl/config.json` on Linux and `%USERPROFILE%\.shiradl\config.json` on Windows. Config file values can be overridden using command line arguments.
+If any says "not recognized", it did not install or your terminal still has the
+old `PATH` — reopen the terminal and try again.
 
-| Command line argument / Config file key | Description | Default value |
-| --- | --- | --- |
-| `-f`, `--final-path` / `final_path` | Path where the downloaded files will be saved. | `./YouTube Music` |
-| `-t`, `--temp-path` / `temp_path` | Path where the temporary files will be saved. | `./temp` |
-| `-c`, `--cookies-location` / `cookies_location` | Location of the cookies file. | `null` |
-| `--ffmpeg-location` / `ffmpeg_location` | Location of the FFmpeg binary. | `ffmpeg` |
-| `--config-location` / - | Location of the config file. | `<home folder>/.shiradl/config.json` |
-| `-i`, `--itag` / `itag` | Itag (audio quality/format). [More info](#itags) | `140` |
-| `--cover-size` / `cover_size` | Size of the cover.  `size >= 0` and `<= 16383` | `1200` |
-| `--cover-format` / `cover_format` | Format of the cover. `jpg` or `png` | `jpg` |
-| `--cover-quality` / `cover_quality` | JPEG quality of the cover.  [1<=x<=100] | `94` |
-| `--cover-img` / `cover_img` | Path to image or folder of images. [More info](#cover-img)  | `null` |
-| `--cover-crop` / `cover_crop` |  'crop' takes a 1:1 square from the center, pad always pads top & bottom. `auto`, `crop` or `pad` | `auto` - [More info](#smartcrop) |
-| `--template-folder` / `template_folder` | Template of the album folders as a format string. | `{albumartist}/{album}` |
-| `--template-file` / `template_file` | Template of the track files as a format string. | `{track:02d} {title}` |
-| `-e`, `--exclude-tags` / `exclude_tags` | List of tags to exclude from file tagging separated by commas without spaces. | `null` |
-| `--truncate` / `truncate` | Maximum length of the file/folder names. | `40` |
-| `-l`, `--log-level` / `log_level` | Log level. | `INFO` |
-| `-s`, `--save-cover` / `save_cover` | Save cover as a separate file. | `false` |
-| `-o`, `--overwrite` / `overwrite` | Overwrite existing files. | `false` |
-| `-p`, `--print-exceptions` / `print_exceptions` | Print exceptions. | `false` |
-| `-u`, `--url-txt` / - | Read URLs as location of text files containing URLs. | `false` |
-| `-n`, `--no-config-file` / - | Don't use the config file. | `false` |
-| `-w`, `--single-folder` / - | Wrap singles in their own folder instead of placing them directly into artist's folder. | `false` |
+### Step 2 — download Shira UI
 
-### Itags
-The following itags are available:
-- `140` (128kbps AAC) - default, because it's the result of `bestaudio/best` on a free account
-- `141` (256kbps AAC) - use if you have premium alongside `--cookies-location`
-- `251` (128kbps Opus) - most stuff will error with `Failed to check URL 1/1`. Better to use `140`
-  
-SoundCloud will always download in 128kbps MP3
-- SoundCloud also offers OPUS, which is currently not supported. [Some people were complaining](https://www.factmag.com/2018/01/04/soundcloud-mp3-opus-format-sound-quality-change-64-128-kbps/) that the quality is worse  
-- [These are questionable claims](https://old.reddit.com/r/Techno/comments/bzodax/soundcloud_compression_128kbps_mp3_vs_64_kbps/) at best, but better safe than sorry.   
+```powershell
+git clone https://github.com/Maxikozie/shira-ui.git
+```
 
-### Tag variables
-The following variables can be used in the template folder/file and/or in the `exclude_tags` list:  
-`title`, `album`, `artist`, `albumartist`, `track`, `tracktotal`, `year`, `date`, `cover`, `comments`, `lyrics`, `media_type`, `rating`, `track`, `tracktotal`, `mb_releasetrackid`, `mb_releasegroupid`, `mb_artistid`, `mb_albumartistid`  
-To exclude all musicbrainz tags, you can add `mb*` to `exclude_tags`. (This does not work for other types of tags).
+```powershell
+cd shira-ui
+```
 
-### Cover formats
-Can be either `jpg` or `png`.
+### Step 3 — create a private environment for it
 
-### Cover img
-- Pass in a path to an image file, and it will get used for all of the links you're currently downloading.
-- Pass in a path to a folder, and the script will use the first image matching the track/video id and jpeg/png format
-  - You don't have to create covers for all tracks/videos in the playlist/album/etc.
-  - SoundCloud will also consider images based on the URL slug instead of id
-  - *for example*: `https://soundcloud.com/yatashi-gang-63564467/lovely-bastards-yatashigang` => `lovely-bastards-yatashigang.jpg` / `.png`
+This keeps Shira's dependencies out of your system Python. It creates a `.venv`
+folder inside the project.
+
+```powershell
+py -3.13 -m venv .venv
+```
+
+On macOS or Linux use `python3 -m venv .venv`.
+
+### Step 4 — install everything
+
+```powershell
+.venv\Scripts\python.exe -m pip install -e . PyQt6
+```
+
+On macOS or Linux: `.venv/bin/python -m pip install -e . PyQt6`
+
+That one command installs **everything**: `shiradl` itself plus `yt-dlp`,
+`ytmusicapi`, `mediafile`, `pillow`, `requests-cache`, `click`, and the PyQt6
+interface toolkit. You do not install `shiradl` separately — `-e .` installs the
+copy inside the folder you just cloned.
+
+> **The `-e` is required, not a preference.** Since v1.8.x, `shiradl` looks up
+> its own version through `importlib.metadata`, which only works for a properly
+> installed package. Without it, every single track fails with a confusing
+> error rather than one clear message at startup.
+
+Optional — nicer button icons. The app looks correct without it:
+
+```powershell
+.venv\Scripts\python.exe -m pip install qtawesome
+```
+
+### Step 5 — run it
+
+```powershell
+.venv\Scripts\python.exe shira_ui.py
+```
+
+On macOS or Linux: `.venv/bin/python shira_ui.py`
+
+If the window opens and the status card says **Ready**, you are done. If
+something is missing, a banner at the top of the window will say what and how
+to fix it.
+
+### Check the install worked
+
+```powershell
+.venv\Scripts\python.exe -m shiradl --version
+```
+
+Should print `python -m shiradl, version 1.8.5` or newer. If it prints a
+`PackageNotFoundError` instead, Step 4 did not complete — re-run it.
+
+### Making it easier to launch
+
+Rather than typing the command each time, create a shortcut with this as its
+target (adjust the path to where you cloned it):
+
+```
+C:\path\to\shira-ui\.venv\Scripts\pythonw.exe C:\path\to\shira-ui\shira_ui.py
+```
+
+`pythonw.exe` rather than `python.exe` opens the app without a console window
+behind it.
+
+---
+
+## Updating
+
+Get the newest Shira UI:
+
+```powershell
+git pull
+```
+
+```powershell
+.venv\Scripts\python.exe -m pip install -e . PyQt6
+```
+
+Re-running the install is what picks up any new or updated dependencies.
+
+<details>
+<summary>Pulling in a newer upstream shiradl</summary>
+
+This fork shares git history with upstream, so syncing is a real merge:
+
+```bash
+git remote add upstream https://github.com/KraXen72/shira.git
+git fetch upstream && git merge upstream/master
+```
+
+Then reinstall and run the tests **first**:
+
+```bash
+pip install -e . && python -m pytest tests_ui
+```
+
+Those tests check the interface against the `shiradl` you actually have
+installed. If upstream renamed a command-line flag or reworded a log message,
+they fail and name exactly what to reconcile — both of which otherwise break
+quietly, the second one while downloads appear to keep working.
+
+</details>
+
+---
 
 ## Troubleshooting
-- if shira can't download songs, first try [updating](#updating); the issue is likely that `yt-dlp` or something else needs updating
-- In case shira still can't download songs / you're having other issues:
-- If the PyPI version is outdated or broken, you can install directly from git as a workaround:
-  - uv: `uv tool install git+https://github.com/KraXen72/shira`
-  - pipx: `pipx install git+https://github.com/KraXen72/shira`
-  - uvx: `uvx --from git+https://github.com/KraXen72/shira shiradl <args>` (doesn't install, only runs)
-	- as a temporary measure, you can [try these steps](https://github.com/KraXen72/shira/issues/19#issuecomment-2661907637)
-- `python: No module named shiradl` 
-  - Make sure you are not already in the `shiradl` directory, e.g. `/shira/shiradl`. if yes, move up one directory with `cd ..` and retry.
-- I really need to run this on `python` 3.8+ and updating to 3.11+ is not an option
-  - run `uv add typing-extensions` and modify `tagging.py` accordingly:
-  ```diff
-  - from typing import NotRequired, TypedDict
-  + from typing_extensions import NotRequired, TypedDict
-  ```
 
-### Uninstalling
-If you're uninstalling because shira doesn't work, I would like to kindly ask you to [please make a GitHub issue](https://github.com/KraXen72/shira/issues/new/choose) about what exactly doesn't work. Thanks!  
-To uninstall, run the appropriate command. If unsure which way you installed shira, run both.  
-- **uv:** `uv tool uninstall shiradl`
-- **pipx:** `pipx uninstall shiradl`
+**The window doesn't open, or `ModuleNotFoundError: No module named 'PyQt6'`**
 
-### Installing ffmpeg
-#### Installing ffmpeg with scoop
-- Scoop is a package manager for windows. It allows easy installing of programs and their updating from the command line.
-- Install [scoop](https://scoop.sh) by running a powershell command (on their website)
-- Run `scoop install main/ffmpeg`
-- Scoop automatically adds it to path. you can update ffmpeg by doing `scoop update` and `scoop update ffmpeg`/`*`
-- If installing scoop/with scoop is not an option, continue reading:
-#### Installing ffmpeg on Windows (manual install)
-- Related: [Comprehensive tutorial with screenshots](https://phoenixnap.com/kb/ffmpeg-windows)
-- Download an auto-built zip of latest ffmpeg: [download](https://www.gyan.dev/ffmpeg/builds/) / [mirror](https://github.com/BtbN/FFmpeg-Builds/releases).
-- Extract it somewhere, for example into `C:\ffmpeg`. It's best if the path doesn't have spaces.
-##### Adding ffmpeg to PATH
-- Look for `Edit the system environment variables` in the Start Menu, launch it.
-- Find the `Path` user variable, click `Edit`
-- Click `New` on the side and enter the path to the `ffmpeg\bin` folder which has `ffmpeg.exe` in it, e.g. `C:\ffmpeg\bin`
-- Click `Ok`. To verify that `ffmpeg` is installed, run `ffmpeg -version` in the terminal.
-#### Pointing to ffmpeg manually
-- If you do not want to add `ffmpeg` to path, you can point to it manually.
-- Use the [config](#configuration) option `ffmpeg_location` or the cli flag `--ffmpeg-location` to point to the `ffmpeg.exe` file.
-- Keep the `ffplay.exe` and `ffprobe.exe` files in the same directory.
-#### Installing ffmpeg on linux
-- use your distro's package manager to install `ffmpeg` - 
+The install in Step 4 did not finish, or you are running the wrong Python. Use
+the one inside `.venv`, not a bare `python`.
 
-### Setting a cookies file
-- By setting a cookies file, you can download age restricted tracks, private playlists and songs in 256kbps AAC if you are a premium user.
-- You can export your cookies to a file by using this [Google Chrome extension](https://chrome.google.com/webstore/detail/gdocmgbfkjnnpapoeobnolbbkoibbcif) or [Firefox extension](https://addons.mozilla.org/en-US/firefox/addon/cookies-txt/) on `https://music.youtube.com`
+**`PackageNotFoundError: No package metadata was found for shiradl`**
 
-## Contributing
-- Please report any bugs in Issues. Pull requests are welcome!
-- To contribute, you'll (likely) need a local installation of shira
-  - To install the required python version, you can use either:
-    - [mise](https://mise.jdx.dev): `mise install` (what I use) 
-    - [uv](https://docs.astral.sh/uv/concepts/python-versions/): `uv sync` or `uv python install 3.12` (you will need uv anyway)
-  - Fork this repo
-  - Have `ffmpeg` and [uv](https://docs.astral.sh/uv/getting-started/installation/) installed
-  - Install dependencies locally with `uv sync`
-  - Make changes (`uv run shiradl` to test)
-  - Open a pull request
-- If you're planning on implementing something big / that changes a lot, it's worth opening an issue about it to discuss it first.
-- Thanks!
+You are running against an uninstalled copy of the source. From the project
+folder, run:
 
-### Running tests
-- **Install dev dependencies:** `uv sync` (includes dev deps automatically)
-- Run all tests: `uv run task test` (will take a couple of minutes, has to download stuff)
-- There are different types of tests
-  - **Smoke** `uv run task test:smoke`: Downloads only like 3 songs, checking both resulting file size & metadata
-  - **Metadata** `uv run task test:meta`: Skips downloading, only checking metadata
-  - **Download** `uv run task test:dl`: performs real downloads, checking only if the files are large enough
-- To record or refresh inline snapshots run: e.g. `uv run pytest tests/metadata.test.py -v --inline-snapshot=review`
-- You can append additional pytest args after `--` when using the `uv run task` helpers
+```powershell
+.venv\Scripts\python.exe -m pip install -e .
+```
 
-### Publishing a new release
-1. Bump the version: `uv version --bump patch` (or `minor` / `major`)
-2. Commit the version bump (replace `X.Y.Z` with the new version):
-   ```bash
-   git commit -am "chore: bump version to X.Y.Z"
-   ```
-3. Tag and push: `uv run task release` (see `./scripts/release.sh`)  
-   This automatically creates a `vX.Y.Z` git tag and runs `git push && git push --tags`.    
-   Pushing the tag triggers the CI workflow, which runs `uv build` + `uv publish` to release the new version to PyPI.  
+**A red banner says FFmpeg wasn't found**
+
+Press **Get FFmpeg** in the banner and Shira downloads it for you (about
+111 MB) into its own folder — no terminal needed. If you already have
+`ffmpeg.exe` somewhere, press **Locate** and point at it instead. Installing it
+yourself with `winget install Gyan.FFmpeg` and pressing **Recheck** also works.
+
+**A red banner says FFprobe wasn't found**
+
+`ffprobe` normally ships with `ffmpeg`. Reinstall FFmpeg so both sit in the
+same folder — Shira looks for `ffprobe` next to `ffmpeg` automatically.
+
+**Downloads fail, or "no formats available"**
+
+YouTube changes frequently and `yt-dlp` needs to keep up:
+
+```powershell
+.venv\Scripts\python.exe -m pip install -U yt-dlp
+```
+
+For private, members-only or age-restricted tracks, export a `cookies.txt` from
+your browser and switch on **Use my cookies.txt** under *Advanced options →
+When things go wrong*.
+
+**A `SyntaxError` mentioning `mbtag.py`**
+
+You are on Python 3.11. Re-create the environment with 3.12 or newer:
+
+```powershell
+rmdir /s /q .venv
+py -3.13 -m venv .venv
+.venv\Scripts\python.exe -m pip install -e . PyQt6
+```
+
+**Everything downloads but nothing appears in my folder**
+
+Open *Advanced options* and check the **Preview** line under the naming
+patterns — it shows exactly where files will land. The **Open** button next to
+*Save music to* opens the destination.
+
+---
+
+## Building a standalone .exe (Windows)
+
+Produces a folder you can zip and hand to someone who has no Python at all.
+They still need FFmpeg — see the note below.
+
+Build with a **non-conda** Python. A conda interpreter links `_ctypes` against
+a `libffi` that PyInstaller does not collect, and the resulting build fails at
+startup with `DLL load failed while importing _ctypes`.
+
+```powershell
+py -3.14 -m venv .venv-build
+```
+
+```powershell
+.venv-build\Scripts\python.exe -m pip install -e . PyQt6 pyinstaller
+```
+
+```powershell
+.venv-build\Scripts\python.exe -m PyInstaller shira-ui.spec --noconfirm --clean
+```
+
+The result is `dist\Shira UI\Shira UI.exe`, about 116 MB unpacked. Ship the
+whole `Shira UI` folder, not just the .exe — the `_internal` folder beside it
+is required.
+
+The window and taskbar icon comes from `logo.ico`. Regenerate it after editing
+`logo.svg`:
+
+```powershell
+python tools\make_icon.py
+```
+
+To produce a release archive (about 53 MB zipped):
+
+```powershell
+Compress-Archive -Path "dist\Shira UI" -DestinationPath "dist\Shira-UI-windows-x64.zip"
+```
+
+Note the .exe is unsigned, so Windows SmartScreen warns on first run —
+"More info" then "Run anyway". Code signing requires a purchased certificate.
+
+**FFmpeg is not bundled — the app fetches it instead.** On first run, if
+FFmpeg is missing, the banner offers a **Get FFmpeg** button that downloads it
+(about 111 MB) into the app's own folder and verifies it runs. So someone using
+the .exe never has to open a terminal.
+
+It is downloaded rather than shipped so that this project redistributes
+nothing: the user triggers the download themselves, which sidesteps FFmpeg's
+GPL redistribution obligations entirely. **Locate** remains available for
+anyone who already has `ffmpeg.exe`, and `winget install Gyan.FFmpeg` still
+works if they prefer.
+
+The download is pinned to a specific FFmpeg build and checked against a
+SHA-256 hash before anything is unpacked; a mismatch is discarded and nothing
+is installed. To move to a newer FFmpeg, update `SOURCE_URL` and
+`EXPECTED_SHA256` in `shiraui/ffmpeg_setup.py` — the publisher serves the hash
+at `<url>.sha256`.
+
+<details>
+<summary>How the packaged app runs downloads</summary>
+
+Normally the app spawns `pythonw.exe -m shiradl` for each link. In a frozen
+build there is no interpreter to spawn — `sys.executable` is the .exe itself,
+so `-m shiradl` would just relaunch the GUI.
+
+Instead the executable re-runs *itself* with `--shiradl-child`, which
+`shira_ui.py` detects before Qt is imported and routes into `shiradl.cli`.
+That also makes the packaged app usable as a CLI:
+
+```powershell
+"dist\Shira UI\Shira UI.exe" --shiradl-child --version
+```
+
+`shira-ui.spec` bundles shiradl's `.dist-info`, because shiradl reads its own
+version through `importlib.metadata`; without it every track fails. It also
+bundles `ytmusicapi`'s locale files, which it loads via `gettext` while
+constructing `YTMusic()` — missing them kills the run before any track starts.
+
+</details>
+
+---
+
+## For developers
+
+The interface lives in the `shiraui/` package; `shira_ui.py` is a small
+launcher shim. `shiradl/` is vendored upstream code, kept byte-identical so
+merges stay clean — fixes belong in `shiraui/`.
+
+```bash
+python -m pytest tests_ui
+```
+
+`tests_ui/` is the interface's own suite; `tests/` belongs to upstream.
+See [CLAUDE.md](CLAUDE.md) for architecture notes.

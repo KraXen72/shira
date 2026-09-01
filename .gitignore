@@ -12,3 +12,9 @@ __pycache__
 !renovate.json
 repomix-output*
 tests/downloads
+test.py
+cookies.txt
+.venv-build
+build/
+dist/
+*.spec.bak

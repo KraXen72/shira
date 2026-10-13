@@ -7,7 +7,7 @@ authors = [{ name = "KraXen72" }, { name = "glomatico" }]
 dependencies = [
 	"click",
 	"yt-dlp==2026.6.9",
-	"ytmusicapi==1.12.1",
+	"ytmusicapi==1.12.3",
 	"mediafile",
 	"pillow",
 	"requests_cache",

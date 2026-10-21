@@ -1,3 +1,10 @@
+> [!IMPORTANT] 
+> **status update 2026-10-21**  
+> I don't have time to maintain shira right now, and the current design has revealed a few issues which cause it to not work properly quite often. I will eventually rewrite it and it'll come back simpler & more useful than ever. If you'd like to help out with the development of shira, message me on discord: kraxen72  
+> Thank you to everyone who used this version of shira!  
+>
+> \- kraxen
+
 <h1 align="center">shira</h1>
 <p align="center"><img src="logo.svg" height=200></img></p>
 <h4 align="center">A smart music downloader</h4>
